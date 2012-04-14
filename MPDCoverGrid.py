@@ -17,11 +17,23 @@ class MPDCoverGrid:
 
 
 	def connect(self):
-		self.client.connect(self._host, self._port)
-		if self._password:
-			self.client.password(self._password)
+		try:
+			self.client.connect(self._host, self._port)
+			if self._password:
+				self.client.password(self._password)
+		except CommandError as e:
+			# TODO Error
+			print(e)
+		except IOError as e:
+			# TODO Error
+			print(e)
 
 
 	def disconnect(self):
-		self.client.disconnect()
+		try:
+			self.client.disconnect()
+		except IOError as e:
+			# TODO Error
+			print(e)
+			self.client = MPDClient()
 
