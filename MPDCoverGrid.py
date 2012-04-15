@@ -5,6 +5,7 @@
 
 from mpd import MPDClient
 import os
+from threading import Thread
 
 
 
@@ -18,6 +19,7 @@ class MPDCoverGrid:
 		self._host = host
 		self._port = port
 		self._password = password
+		self.updateCallback = None
 
 
 	def connect(self):
@@ -44,14 +46,26 @@ class MPDCoverGrid:
 		return self.albums
 
 
+	def connectUpdate(self, updateCallback):
+		self.updateCallback = updateCallback
+
+
 	def update(self):
+		Thread(target=self._update, args=()).start()
+
+
+	def _update(self):
 		for song in self.client.listallinfo():
 			try:
+				new = False
 				if song['album'] not in self.albums:
 					self.albums[song['album']] = MCGAlbum(song['artist'], song['album'], os.path.dirname(song['file']))
+					new = True
 				
 				album = self.albums[song['album']]
 				album.addTrack(song['title'])
+				if new and self.updateCallback is not None:
+					self.updateCallback(album)
 			except KeyError:
 				pass
 
