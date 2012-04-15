@@ -26,7 +26,7 @@ class MPDCoverGridGTK(Gtk.Window):
 		self.add(VPaned)
 		# HPaned
 		HPaned = Gtk.HPaned()
-		VPaned.add(HPaned)
+		VPaned.pack1(HPaned, resize=True)
 		
 		# Image
 		self.coverImage = Gtk.Image()
@@ -36,7 +36,7 @@ class MPDCoverGridGTK(Gtk.Window):
 		# Viewport
 		self.coverView = Gtk.Viewport()
 		self.coverView.add(self.coverBox)
-		HPaned.add(self.coverView)
+		HPaned.pack1(self.coverView, resize=True)
 		
 		# GridModel
 		self.coverGridModel = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
@@ -52,12 +52,12 @@ class MPDCoverGridGTK(Gtk.Window):
 		self.coverGrid.set_item_padding(0)
 		self.coverGrid.set_reorderable(False)
 		self.coverGrid.set_selection_mode(Gtk.SelectionMode.SINGLE)
-		color = self.get_style_context().lookup_color('bg_color')[1]
-		self.coverGrid.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(color.red, color.green, color.blue, 1))
+		#color = self.get_style_context().lookup_color('bg_color')[1]
+		#self.coverGrid.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(color.red, color.green, color.blue, 1))
 		# Scroll
 		coverGridScroll = Gtk.ScrolledWindow()
 		coverGridScroll.add_with_viewport(self.coverGrid)
-		HPaned.add(coverGridScroll)
+		HPaned.pack2(coverGridScroll, resize=False)
 		
 		# ListModel
 		self.songListModel = Gtk.ListStore(str, str)
@@ -69,7 +69,11 @@ class MPDCoverGridGTK(Gtk.Window):
 		self.songList.append_column(column1)
 		self.songList.append_column(column2)
 		self.songList.set_headers_visible(True)
-		VPaned.add(self.songList)
+		VPaned.pack2(self.songList, resize=False)
+		
+		# Signals
+		self.coverGrid.connect("selection-changed", self.coverGridShow)
+		self.coverGrid.connect("item-activated", self.coverGridPlay)
 
 		self._initClient()
 		self.mcg.connectUpdate(self.updateCallback)
@@ -103,6 +107,21 @@ class MPDCoverGridGTK(Gtk.Window):
 				self.coverGridModel.append([pixbuf, album.getTitle(), ' von '.join([album.getTitle(), album.getArtist()])])
 			else:
 				print("pixbuf none: "+album.getTitle())
+
+
+	def coverGridShow(self, widget):
+		# TODO coverGridShow()
+		pass
+
+
+	def coverGridSelected(self, widget, index, data):
+		# TODO coverGridSelected()
+		pass
+
+
+	def coverGridPlay(self, widget, item):
+		# TODO coverGridPlay()
+		pass
 
 
 
