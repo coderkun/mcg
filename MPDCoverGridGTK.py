@@ -3,7 +3,7 @@
 
 
 
-from gi.repository import Gtk, Gdk, GdkPixbuf
+from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
 from MPDCoverGrid import MPDCoverGrid
 import inspect
 
@@ -17,7 +17,9 @@ class MPDCoverGridGTK(Gtk.Window):
 	def __init__(self):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
 		self.set_default_size(400, 400)
-		self.connect("delete-event", Gtk.main_quit)
+		self.connect("focus", self.updateSignal)
+		self.connect("delete-event", self._destroy)
+		GObject.threads_init()
 
 		# GridModel
 		self.coverGridModel = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
@@ -41,12 +43,7 @@ class MPDCoverGridGTK(Gtk.Window):
 		self.add(coverGridScroll)
 
 		self._initClient()
-
-
-	def __del__(self):
-		#if self.mcg is not None:
-			#self.mcg.disconnect()
-		pass
+		self.mcg.connectUpdate(self.updateCallback)
 
 
 	def _initClient(self):
@@ -54,17 +51,29 @@ class MPDCoverGridGTK(Gtk.Window):
 		self.mcg.connect()
 
 
+	def _destroy(self, widget, state):
+		if self.mcg is not None:
+			self.mcg.disconnect()
+		Gtk.main_quit()
+
+
+	def updateSignal(self, widget, state):
+		self.update()
+
+
 	def update(self):
 		if self.mcg is None:
 			return
+		self.mcg.update()
 
-		for title, album in self.mcg.getAlbums().items():
-			if album.getCover() is not None:
-				pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.getCover(), self.size, self.size)
-				if pixbuf is not None:
-					self.coverGridModel.append([pixbuf, album.getTitle(), ' von '.join([album.getTitle(), album.getArtist()])])
-				else:
-					print("pixbuf none: "+album.getTitle())
+
+	def updateCallback(self, album):
+		if album.getCover() is not None:
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.getCover(), self.size, self.size)
+			if pixbuf is not None:
+				self.coverGridModel.append([pixbuf, album.getTitle(), ' von '.join([album.getTitle(), album.getArtist()])])
+			else:
+				print("pixbuf none: "+album.getTitle())
 
 
 
@@ -72,6 +81,5 @@ class MPDCoverGridGTK(Gtk.Window):
 if __name__ == "__main__":
 	mcgg = MPDCoverGridGTK()
 	mcgg.show_all()
-	mcgg.update()
 	Gtk.main()
 
