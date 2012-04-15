@@ -16,11 +16,28 @@ class MPDCoverGridGTK(Gtk.Window):
 
 	def __init__(self):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
-		self.set_default_size(400, 400)
+		self.set_default_size(600, 400)
 		self.connect("focus", self.updateSignal)
 		self.connect("delete-event", self._destroy)
 		GObject.threads_init()
 
+		# VPaned
+		VPaned = Gtk.VPaned()
+		self.add(VPaned)
+		# HPaned
+		HPaned = Gtk.HPaned()
+		VPaned.add(HPaned)
+		
+		# Image
+		self.coverImage = Gtk.Image()
+		# EventBox
+		self.coverBox = Gtk.EventBox()
+		self.coverBox.add(self.coverImage)
+		# Viewport
+		self.coverView = Gtk.Viewport()
+		self.coverView.add(self.coverBox)
+		HPaned.add(self.coverView)
+		
 		# GridModel
 		self.coverGridModel = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
 		# GridView
@@ -40,7 +57,19 @@ class MPDCoverGridGTK(Gtk.Window):
 		# Scroll
 		coverGridScroll = Gtk.ScrolledWindow()
 		coverGridScroll.add_with_viewport(self.coverGrid)
-		self.add(coverGridScroll)
+		HPaned.add(coverGridScroll)
+		
+		# ListModel
+		self.songListModel = Gtk.ListStore(str, str)
+		# ListView
+		self.songList = Gtk.TreeView(self.songListModel)
+		renderer = Gtk.CellRendererText()
+		column1 = Gtk.TreeViewColumn("Artist", renderer, text=0)
+		column2 = Gtk.TreeViewColumn("Album", renderer, text=0)
+		self.songList.append_column(column1)
+		self.songList.append_column(column2)
+		self.songList.set_headers_visible(True)
+		VPaned.add(self.songList)
 
 		self._initClient()
 		self.mcg.connectUpdate(self.updateCallback)
