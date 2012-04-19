@@ -25,8 +25,8 @@ class MPDCoverGridGTK(Gtk.Window):
 	def __init__(self):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
 		self.set_default_size(600, 400)
-		self.connect("focus", self._focus)
-		self.connect("delete-event", self._destroy)
+		self.connect("focus", self.focus)
+		self.connect("delete-event", self.destroy)
 		self._cover_pixbuf = None
 
 		# Box
@@ -43,7 +43,7 @@ class MPDCoverGridGTK(Gtk.Window):
 		ui_manager.insert_action_group(action_group)
 		
 		self._action_connect = Gtk.Action("Connect", "_Connect", "Connect to server", Gtk.STOCK_DISCONNECT)
-		self._action_connect.connect("activate", self._on_toolbar_connect)
+		self._action_connect.connect("activate", self.on_toolbar_connect)
 		action_group.add_action_with_accel(self._action_connect, None)
 		
 		# Toolbar
@@ -54,7 +54,7 @@ class MPDCoverGridGTK(Gtk.Window):
 		
 		# Image
 		self._cover_image = Gtk.Image()
-		self._cover_image.connect('size-allocate', self._on_resize)
+		self._cover_image.connect('size-allocate', self.on_resize)
 		# EventBox
 		self._cover_box = Gtk.EventBox()
 		self._cover_box.add(self._cover_image)
@@ -89,37 +89,56 @@ class MPDCoverGridGTK(Gtk.Window):
 		# Signals
 		#self.coverGrid.connect("selection-changed", self.coverGridShow)
 		self._cover_grid.connect("item-activated", self._cover_grid_play)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_CONNECT, self._connect_callback)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_IDLE_PLAYER, self._idle_player_callback)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_UPDATE, self._update_callback)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_CONNECT, self.connect_callback)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_UPDATE, self.update_callback)
 
 
-	def _on_toolbar_connect(self, widget):
+	def destroy(self, widget, state):
+		if self._mcg is not None:
+			self._mcg.disconnect()
+		Gtk.main_quit()
+
+
+	def focus(self, widget, state):
+		self._update()
+
+
+	def on_toolbar_connect(self, widget):
 		if self._mcg.is_connected():
 			self._mcg.disconnect()
 		else:
 			self._mcg.connect()
 
 
-	def _connect_callback(self, connected, message):
+	def on_resize(self, widget, allocation):
+		self._resize_image()
+
+
+	def connect_callback(self, connected, message):
 		if connected:
 			self._action_connect.set_stock_id(Gtk.STOCK_CONNECT)
 		else:
 			self._action_connect.set_stock_id(Gtk.STOCK_DISCONNECT)
 
 
-	def _idle_player_callback(self, state, album):
+	def idle_player_callback(self, state, album):
 		self._set_album(album.get_cover())
 
 
-	def _destroy(self, widget, state):
-		if self._mcg is not None:
-			self._mcg.disconnect()
-		Gtk.main_quit()
+	def update_callback(self, album):
+		if album.get_cover() is not None:
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.get_cover(), self._default_cover_size, self._default_cover_size)
+			if pixbuf is not None:
+				self._cover_grid_model.append([pixbuf, album.get_title(), "\n".join([album.get_title(), album.get_artist()])])
+			else:
+				print("pixbuf none: "+album.get_title())
 
 
-	def _on_resize(self, widget, allocation):
-		self._resize_image()
+	def _update(self):
+		if self._mcg is None or not self._mcg.is_connected():
+			return
+		self._mcg.update()
 
 
 	def _set_album(self, url):
@@ -155,33 +174,6 @@ class MPDCoverGridGTK(Gtk.Window):
 		height = int(round(pixbuf.get_height()*ratio))
 		# Pixelpuffer auf Oberfläche zeichnen
 		self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
-	
-	
-	
-	
-
-
-	def _focus(self, widget, state):
-		self._update()
-
-
-	def _update(self):
-		if self._mcg is None:
-			return
-		self._mcg.update()
-
-
-	def _update_callback(self, album):
-		if album.get_cover() is not None:
-			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.get_cover(), self._default_cover_size, self._default_cover_size)
-			if pixbuf is not None:
-				self._cover_grid_model.append([pixbuf, album.get_title(), "\n".join([album.get_title(), album.get_artist()])])
-			else:
-				print("pixbuf none: "+album.get_title())
-
-
-	def _player_callback(self, state):
-		print(state)
 
 
 	def _cover_grid_play(self, widget, item):
