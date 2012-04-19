@@ -13,6 +13,7 @@ UI_INFO = """
 <ui>
 	<toolbar name='ToolBar'>
 		<toolitem action='Connect' />
+		<toolitem action='Update' />
 	</toolbar>
 </ui>
 """
@@ -39,8 +40,11 @@ class MCGGtk(Gtk.Window):
 		self.add_accel_group(accel_group)
 		ui_manager.insert_action_group(action_group)
 		self._action_connect = Gtk.Action("Connect", "_Connect", "Connect to server", Gtk.STOCK_DISCONNECT)
-		self._action_connect.connect("activate", self.on_toolbar_connect)
+		self._action_connect.connect("activate", self.toolbar_callback)
 		action_group.add_action_with_accel(self._action_connect, None)
+		self._action_update = Gtk.Action("Update", "_Update", "Update library", Gtk.STOCK_REFRESH)
+		self._action_update.connect("activate", self.toolbar_callback)
+		action_group.add_action_with_accel(self._action_update, None)
 		# Toolbar
 		toolbar = ui_manager.get_widget("/ToolBar")
 		toolbar_context = toolbar.get_style_context()
@@ -97,11 +101,14 @@ class MCGGtk(Gtk.Window):
 		self._update()
 
 
-	def on_toolbar_connect(self, widget):
-		if self._mcg.is_connected():
-			self._mcg.disconnect()
-		else:
-			self._mcg.connect()
+	def toolbar_callback(self, widget):
+		if widget == self._action_connect:
+			if self._mcg.is_connected():
+				self._mcg.disconnect()
+			else:
+				self._mcg.connect()
+		elif widget == self._action_update:
+			self._update()
 
 
 	def on_resize(self, widget, allocation):
@@ -182,6 +189,6 @@ if __name__ == "__main__":
 	mcgg.show_all()
 	try:
 		Gtk.main()
-	except KeyboardInterrupt:
+	except (KeyboardInterrupt, SystemExit):
 		pass
 
