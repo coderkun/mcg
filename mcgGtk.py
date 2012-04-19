@@ -123,7 +123,7 @@ class MCGGtk(Gtk.Window):
 		if album.get_cover() is not None:
 			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.get_cover(), self._default_cover_size, self._default_cover_size)
 			if pixbuf is not None:
-				self._cover_grid_model.append([pixbuf, album.get_title(), "\n".join([album.get_title(), album.get_artist()])])
+				self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()]))])
 			else:
 				print("pixbuf none: "+album.get_title())
 
@@ -180,5 +180,8 @@ if __name__ == "__main__":
 	GObject.threads_init()
 	mcgg = MCGGtk()
 	mcgg.show_all()
-	Gtk.main()
+	try:
+		Gtk.main()
+	except KeyboardInterrupt:
+		pass
 
