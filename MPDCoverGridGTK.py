@@ -5,121 +5,186 @@
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
 from MPDCoverGrid import MPDCoverGrid
-import inspect
 
 
+
+
+UI_INFO = """
+<ui>
+	<toolbar name='ToolBar'>
+		<toolitem action='Connect' />
+	</toolbar>
+</ui>
+"""
 
 
 class MPDCoverGridGTK(Gtk.Window):
-	size = 128
+	_default_cover_size = 128
 
 
 	def __init__(self):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
 		self.set_default_size(600, 400)
-		self.connect("focus", self.updateSignal)
+		self.connect("focus", self._focus)
 		self.connect("delete-event", self._destroy)
-		GObject.threads_init()
+		self._cover_pixbuf = None
 
-		# VPaned
-		VPaned = Gtk.VPaned()
-		self.add(VPaned)
+		# Box
+		_main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		# HPaned
-		HPaned = Gtk.HPaned()
-		VPaned.pack1(HPaned, resize=True)
+		hpaned = Gtk.HPaned()
+		
+		# UIManager
+		action_group = Gtk.ActionGroup("toolbar")
+		ui_manager = Gtk.UIManager()
+		ui_manager.add_ui_from_string(UI_INFO)
+		accel_group = ui_manager.get_accel_group()
+		self.add_accel_group(accel_group)
+		ui_manager.insert_action_group(action_group)
+		
+		self._action_connect = Gtk.Action("Connect", "_Connect", "Connect to server", Gtk.STOCK_DISCONNECT)
+		self._action_connect.connect("activate", self._on_toolbar_connect)
+		action_group.add_action_with_accel(self._action_connect, None)
+		
+		# Toolbar
+		toolbar = ui_manager.get_widget("/ToolBar")
+		toolbar_context = toolbar.get_style_context()
+		toolbar_context.add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
+		_main_box.pack_start(toolbar, False, False, 0)
 		
 		# Image
-		self.coverImage = Gtk.Image()
+		self._cover_image = Gtk.Image()
+		self._cover_image.connect('size-allocate', self._on_resize)
 		# EventBox
-		self.coverBox = Gtk.EventBox()
-		self.coverBox.add(self.coverImage)
-		# Viewport
-		self.coverView = Gtk.Viewport()
-		self.coverView.add(self.coverBox)
-		HPaned.pack1(self.coverView, resize=True)
+		self._cover_box = Gtk.EventBox()
+		self._cover_box.add(self._cover_image)
+		hpaned.pack1(self._cover_box, resize=True)
 		
 		# GridModel
-		self.coverGridModel = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
+		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
 		# GridView
-		self.coverGrid = Gtk.IconView.new_with_model(self.coverGridModel)
-		self.coverGrid.set_pixbuf_column(0)
-		self.coverGrid.set_text_column(-1)
-		self.coverGrid.set_tooltip_column(2)
-		self.coverGrid.set_columns(-1)
-		self.coverGrid.set_margin(0)
-		self.coverGrid.set_row_spacing(0)
-		self.coverGrid.set_column_spacing(0)
-		self.coverGrid.set_item_padding(0)
-		self.coverGrid.set_reorderable(False)
-		self.coverGrid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+		self._cover_grid = Gtk.IconView.new_with_model(self._cover_grid_model)
+		self._cover_grid.set_pixbuf_column(0)
+		self._cover_grid.set_text_column(-1)
+		self._cover_grid.set_tooltip_column(2)
+		self._cover_grid.set_columns(-1)
+		self._cover_grid.set_margin(0)
+		self._cover_grid.set_row_spacing(0)
+		self._cover_grid.set_column_spacing(0)
+		self._cover_grid.set_item_padding(0)
+		self._cover_grid.set_reorderable(False)
+		self._cover_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
 		#color = self.get_style_context().lookup_color('bg_color')[1]
-		#self.coverGrid.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(color.red, color.green, color.blue, 1))
+		#self._cover_grid.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(color.red, color.green, color.blue, 1))
 		# Scroll
-		coverGridScroll = Gtk.ScrolledWindow()
-		coverGridScroll.add_with_viewport(self.coverGrid)
-		HPaned.pack2(coverGridScroll, resize=False)
+		_cover_grid_scroll = Gtk.ScrolledWindow()
+		_cover_grid_scroll.add_with_viewport(self._cover_grid)
+		hpaned.pack2(_cover_grid_scroll, resize=False)
 		
-		# ListModel
-		self.songListModel = Gtk.ListStore(str, str)
-		# ListView
-		self.songList = Gtk.TreeView(self.songListModel)
-		renderer = Gtk.CellRendererText()
-		column1 = Gtk.TreeViewColumn("Artist", renderer, text=0)
-		column2 = Gtk.TreeViewColumn("Album", renderer, text=0)
-		self.songList.append_column(column1)
-		self.songList.append_column(column2)
-		self.songList.set_headers_visible(True)
-		VPaned.pack2(self.songList, resize=False)
+		_main_box.pack_start(hpaned, True, True, 0)
+		self.add(_main_box)
+		
+		self._mcg = MPDCoverGrid()
 		
 		# Signals
-		self.coverGrid.connect("selection-changed", self.coverGridShow)
-		self.coverGrid.connect("item-activated", self.coverGridPlay)
+		#self.coverGrid.connect("selection-changed", self.coverGridShow)
+		self._cover_grid.connect("item-activated", self._cover_grid_play)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_CONNECT, self._connect_callback)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_IDLE_PLAYER, self._idle_player_callback)
+		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_UPDATE, self._update_callback)
 
-		self._initClient()
-		self.mcg.connectUpdate(self.updateCallback)
+
+	def _on_toolbar_connect(self, widget):
+		if self._mcg.is_connected():
+			self._mcg.disconnect()
+		else:
+			self._mcg.connect()
 
 
-	def _initClient(self):
-		self.mcg = MPDCoverGrid()
-		self.mcg.connect()
+	def _connect_callback(self, connected, message):
+		if connected:
+			self._action_connect.set_stock_id(Gtk.STOCK_CONNECT)
+		else:
+			self._action_connect.set_stock_id(Gtk.STOCK_DISCONNECT)
+
+
+	def _idle_player_callback(self, state, album):
+		self._set_album(album.get_cover())
 
 
 	def _destroy(self, widget, state):
-		if self.mcg is not None:
-			self.mcg.disconnect()
+		if self._mcg is not None:
+			self._mcg.disconnect()
 		Gtk.main_quit()
 
 
-	def updateSignal(self, widget, state):
-		self.update()
+	def _on_resize(self, widget, allocation):
+		self._resize_image()
 
 
-	def update(self):
-		if self.mcg is None:
+	def _set_album(self, url):
+		# Pfad überprüfen
+		if url is not None and url != "":
+			# Bild laden und zeichnen
+			self._cover_pixbuf = GdkPixbuf.Pixbuf.new_from_file(url)
+			self._resize_image()
+		else:
+			# Bild zurücksetzen
+			self._cover_pixbuf = None
+			self._cover_image.clear()
+
+
+	def _resize_image(self):
+		"""Diese Methode skaliert das geladene Bild aus dem Pixelpuffer
+		auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
+		"""
+		pixbuf = self._cover_pixbuf
+		size = self._cover_image.get_allocation()
+		## Pixelpuffer überprüfen
+		if pixbuf is None:
 			return
-		self.mcg.update()
+		
+		# Skalierungswert für Breite und Höhe ermitteln
+		ratioW = float(size.width) / float(pixbuf.get_width())
+		ratioH = float(size.height) / float(pixbuf.get_height())
+		# Kleineren beider Skalierungswerte nehmen, nicht Hochskalieren
+		ratio = min(ratioW, ratioH)
+		ratio = min(ratio, 1)
+		# Neue Breite und Höhe berechnen
+		width = int(round(pixbuf.get_width()*ratio))
+		height = int(round(pixbuf.get_height()*ratio))
+		# Pixelpuffer auf Oberfläche zeichnen
+		self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+	
+	
+	
+	
 
 
-	def updateCallback(self, album):
-		if album.getCover() is not None:
-			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.getCover(), self.size, self.size)
+	def _focus(self, widget, state):
+		self._update()
+
+
+	def _update(self):
+		if self._mcg is None:
+			return
+		self._mcg.update()
+
+
+	def _update_callback(self, album):
+		if album.get_cover() is not None:
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.get_cover(), self._default_cover_size, self._default_cover_size)
 			if pixbuf is not None:
-				self.coverGridModel.append([pixbuf, album.getTitle(), ' von '.join([album.getTitle(), album.getArtist()])])
+				self._cover_grid_model.append([pixbuf, album.get_title(), "\n".join([album.get_title(), album.get_artist()])])
 			else:
-				print("pixbuf none: "+album.getTitle())
+				print("pixbuf none: "+album.get_title())
 
 
-	def coverGridShow(self, widget):
-		# TODO coverGridShow()
-		pass
+	def _player_callback(self, state):
+		print(state)
 
 
-	def coverGridSelected(self, widget, index, data):
-		# TODO coverGridSelected()
-		pass
-
-
-	def coverGridPlay(self, widget, item):
+	def _cover_grid_play(self, widget, item):
 		# TODO coverGridPlay()
 		pass
 
@@ -127,6 +192,7 @@ class MPDCoverGridGTK(Gtk.Window):
 
 
 if __name__ == "__main__":
+	GObject.threads_init()
 	mcgg = MPDCoverGridGTK()
 	mcgg.show_all()
 	Gtk.main()
