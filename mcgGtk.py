@@ -24,16 +24,13 @@ class MCGGtk(Gtk.Window):
 
 	def __init__(self):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
-		self.set_default_size(600, 400)
-		self.connect("focus", self.focus)
-		self.connect("delete-event", self.destroy)
+		self._mcg = mcg.MCGClient()
 		self._cover_pixbuf = None
+		self.set_default_size(600, 400)
 
 		# Box
 		_main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-		# HPaned
-		hpaned = Gtk.HPaned()
-		
+		self.add(_main_box)
 		# UIManager
 		action_group = Gtk.ActionGroup("toolbar")
 		ui_manager = Gtk.UIManager()
@@ -41,17 +38,17 @@ class MCGGtk(Gtk.Window):
 		accel_group = ui_manager.get_accel_group()
 		self.add_accel_group(accel_group)
 		ui_manager.insert_action_group(action_group)
-		
 		self._action_connect = Gtk.Action("Connect", "_Connect", "Connect to server", Gtk.STOCK_DISCONNECT)
 		self._action_connect.connect("activate", self.on_toolbar_connect)
 		action_group.add_action_with_accel(self._action_connect, None)
-		
 		# Toolbar
 		toolbar = ui_manager.get_widget("/ToolBar")
 		toolbar_context = toolbar.get_style_context()
 		toolbar_context.add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
 		_main_box.pack_start(toolbar, False, False, 0)
-		
+		# HPaned
+		hpaned = Gtk.HPaned()
+		_main_box.pack_start(hpaned, True, True, 0)
 		# Image
 		self._cover_image = Gtk.Image()
 		self._cover_image.connect('size-allocate', self.on_resize)
@@ -59,7 +56,6 @@ class MCGGtk(Gtk.Window):
 		self._cover_box = Gtk.EventBox()
 		self._cover_box.add(self._cover_image)
 		hpaned.pack1(self._cover_box, resize=True)
-		
 		# GridModel
 		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
 		# GridView
@@ -80,13 +76,10 @@ class MCGGtk(Gtk.Window):
 		_cover_grid_scroll = Gtk.ScrolledWindow()
 		_cover_grid_scroll.add_with_viewport(self._cover_grid)
 		hpaned.pack2(_cover_grid_scroll, resize=False)
-		
-		_main_box.pack_start(hpaned, True, True, 0)
-		self.add(_main_box)
-		
-		self._mcg = mcg.MCGClient()
-		
+
 		# Signals
+		self.connect("focus", self.focus)
+		self.connect("delete-event", self.destroy)
 		#self.coverGrid.connect("selection-changed", self.coverGridShow)
 		self._cover_grid.connect("item-activated", self._cover_grid_play)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
