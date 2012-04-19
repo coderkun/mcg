@@ -125,9 +125,14 @@ class MCGClient:
 		for song in self._client.listallinfo():
 			try:
 				if song['album'] not in self._albums:
-					album = MCGAlbum(song['artist'], song['album'], os.path.dirname(song['file']))
+					album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
 					self._albums[song['album']] = album
 					self._callback(self.SIGNAL_UPDATE, album)
+				else:
+					album = self._albums[song['album']]
+
+				track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
+				album.add_track(track)
 			except KeyError:
 				pass
 		self._start_idle()
@@ -173,12 +178,14 @@ class MCGAlbum:
 	_file_exts = ['jpg', 'jpeg', 'png']
 
 
-	def __init__(self, artist, title, path):
+	def __init__(self, artist, title, date, path):
 		self._artist = artist
 		if type(self._artist) is list:
 			self._artist = self._artist[0]
 		self._title = title
+		self._date = date
 		self._path = path
+		self._tracks = []
 		self._cover = None
 		self._find_cover()
 
@@ -191,8 +198,21 @@ class MCGAlbum:
 		return self._title
 
 
+	def get_date(self):
+		return self._date
+
+
 	def get_path(self):
 		return self._path
+
+
+	def add_track(self, track):
+		if track not in self._tracks:
+			self._tracks.append(track)
+
+
+	def get_tracks(self):
+		return self._tracks
 
 
 	def get_cover(self):
@@ -213,4 +233,30 @@ class MCGAlbum:
 					break
 			if self._cover is not None:
 				break
+
+
+
+
+class MCGTrack:
+	def __init__(self, title, track, time, file):
+		self._title = title
+		self._track = track
+		self._time = time
+		self._file = file
+
+
+	def get_title(self):
+		return self._title
+
+
+	def get_track(self):
+		return self._track
+
+
+	def get_time(self):
+		return self._time
+
+
+	def get_file(self):
+		return self._file
 
