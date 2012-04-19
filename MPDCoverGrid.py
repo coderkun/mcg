@@ -116,7 +116,8 @@ class MPDCoverGrid:
 
 
 	def update(self):
-		self._start_thread(self.SIGNAL_UPDATE, self._update)
+		if self.is_connected():
+			self._start_thread(self.SIGNAL_UPDATE, self._update)
 
 
 	def _update(self):
