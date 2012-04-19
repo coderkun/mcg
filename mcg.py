@@ -10,7 +10,7 @@ from threading import Thread
 
 
 
-class MPDCoverGrid:
+class MCGClient:
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_IDLE = 'idle'
 	SIGNAL_IDLE_PLAYER = 'idlePlayer'

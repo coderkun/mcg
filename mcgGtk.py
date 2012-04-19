@@ -4,7 +4,7 @@
 
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
-from MPDCoverGrid import MPDCoverGrid
+import mcg
 
 
 
@@ -18,7 +18,7 @@ UI_INFO = """
 """
 
 
-class MPDCoverGridGTK(Gtk.Window):
+class MCGGtk(Gtk.Window):
 	_default_cover_size = 128
 
 
@@ -84,14 +84,14 @@ class MPDCoverGridGTK(Gtk.Window):
 		_main_box.pack_start(hpaned, True, True, 0)
 		self.add(_main_box)
 		
-		self._mcg = MPDCoverGrid()
+		self._mcg = mcg.MCGClient()
 		
 		# Signals
 		#self.coverGrid.connect("selection-changed", self.coverGridShow)
 		self._cover_grid.connect("item-activated", self._cover_grid_play)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_CONNECT, self.connect_callback)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
-		self._mcg.connect_signal(MPDCoverGrid.SIGNAL_UPDATE, self.update_callback)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.update_callback)
 
 
 	def destroy(self, widget, state):
@@ -185,7 +185,7 @@ class MPDCoverGridGTK(Gtk.Window):
 
 if __name__ == "__main__":
 	GObject.threads_init()
-	mcgg = MPDCoverGridGTK()
+	mcgg = MCGGtk()
 	mcgg.show_all()
 	Gtk.main()
 
