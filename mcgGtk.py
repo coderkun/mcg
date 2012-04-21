@@ -126,13 +126,21 @@ class MCGGtk(Gtk.Window):
 		self._set_album(album.get_cover())
 
 
-	def update_callback(self, album):
-		if album.get_cover() is not None:
-			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(album.get_cover(), self._default_cover_size, self._default_cover_size)
-			if pixbuf is not None:
-				self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()]))])
-			else:
-				print("pixbuf none: "+album.get_title())
+	def update_callback(self, albums):
+		self._cover_grid.set_model(None)
+		self._cover_grid.freeze_child_notify()
+		self._cover_grid_model.clear()
+		for hash in albums.keys():
+			album = albums[hash]
+			file = album.get_cover()
+			if file is None:
+				continue
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(file, self._default_cover_size, self._default_cover_size)
+			if pixbuf is None:
+				continue
+			self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()]))])
+		self._cover_grid.set_model(self._cover_grid_model)
+		self._cover_grid.thaw_child_notify()
 
 
 	def _update(self):
