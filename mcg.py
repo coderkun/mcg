@@ -5,6 +5,7 @@
 
 import mpd
 import os
+from hashlib import md5
 from threading import Thread
 
 
@@ -23,23 +24,16 @@ class MCGClient:
 		self._password = password
 		self._connected = False
 
+		self._albums = {}
 		self._callbacks = {}
-		self._threads = {}
+		self._actions = []
+		self._worker = None
 
 		self._client = mpd.MPDClient()
-		self._albums = {}
 
 
 	def connect(self):
-		self._start_thread(self.SIGNAL_CONNECT, self._connect)
-
-
-	def disconnect(self):
-		self._disconnect()
-
-
-	def is_connected(self):
-		return self._connected
+		self._add_action(self._connect)
 
 
 	def _connect(self):
@@ -50,17 +44,23 @@ class MCGClient:
 			# TODO Verbindung testen
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
-			#self._start_idle()
 			self.update()
 		except IOError as e:
 			self._connected = False
 			self._callback(self.SIGNAL_CONNECT, self._connected, e)
 
 
+	def is_connected(self):
+		return self._connected
+
+
+	def disconnect(self):
+		self._add_action(self._disconnect)
+
+
 	def _disconnect(self):
 		if not self.is_connected():
 			return
-		self._stop_idle()
 		try:
 			#self._client.close()
 			self._client.disconnect()
@@ -70,39 +70,42 @@ class MCGClient:
 		self._callback(self.SIGNAL_CONNECT, self._connected, None)
 
 
-	def _start_idle(self):
-		self._start_thread(self.SIGNAL_IDLE, self._idle)
+	def update(self):
+		self._add_action(self._update)
 
 
-	def _stop_idle(self):
-		if not self._is_doing(self.SIGNAL_IDLE):
+	def _update(self):
+		for song in self._client.listallinfo():
+			try:
+				if song['album'] not in self._albums:
+					album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
+					self._albums[album.get_hash()] = album
+				else:
+					album = self._albums[MCGAlbum.hash(song['artist'], song['album'])]
+
+				track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
+				album.add_track(track)
+			except KeyError:
+				pass
+		# TODO Alben sortieren
+		self._callback(self.SIGNAL_UPDATE, self._albums)
+
+
+	def _idle(self, modules):
+		if not modules:
 			return
 
-		try:
-			del self._threads[self.SIGNAL_IDLE]
-			self._client.noidle()
-		except TypeError as e:
+		if 'player' in modules:
+			self._idlePlayer()
+		if 'database' in modules:
+			# TODO update DB
 			pass
-
-	def _idle(self):
-		while not self._is_doing(self.SIGNAL_IDLE):
+		if 'update' in modules:
+			# TODO update
 			pass
-		while self._client is not None and self._connected and self._is_doing(self.SIGNAL_IDLE):
-			self._client.send_idle()
-			if self._is_doing(self.SIGNAL_IDLE):
-				modules = self._client.fetch_idle()
-				if 'player' in modules:
-					self._idlePlayer()
-				if 'database' in modules:
-					# TODO update DB
-					# self.update()?
-					pass
-				if 'update' in modules:
-					# TODO update
-					#self._idleUpdate()
-					pass
-				if 'mixer' in modules:
-					pass
+		if 'mixer' in modules:
+			# TODO mixer
+			pass
 
 
 	def _idlePlayer(self):
@@ -111,33 +114,8 @@ class MCGClient:
 		status = self._client.status()
 		state = status['state']
 		song = self._client.currentsong()
-		album = MCGAlbum(song['artist'], song['album'], os.path.dirname(song['file']))
+		album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
 		self._callback(self.SIGNAL_IDLE_PLAYER, state, album)
-
-
-	def update(self):
-		if self.is_connected():
-			self._start_thread(self.SIGNAL_UPDATE, self._update)
-
-
-	def _update(self):
-		self._stop_idle()
-		for song in self._client.listallinfo():
-			try:
-				if song['album'] not in self._albums:
-					album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
-					self._albums[song['album']] = album
-					self._callback(self.SIGNAL_UPDATE, album)
-				else:
-					album = self._albums[song['album']]
-
-				track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
-				album.add_track(track)
-			except KeyError:
-				pass
-		self._start_idle()
-
-
 
 
 
@@ -155,20 +133,32 @@ class MCGClient:
 			callback(*args)
 
 
-	def _start_thread(self, signal, method):
-		self._threads[signal] = Thread(target=method, args=()).start()
+	def _add_action(self, method):
+		self._actions.append(method)
+		self._start_worker()
 
 
-	def _is_doing(self, signal):
-		return signal in self._threads
+	def _start_worker(self):
+		if self._worker is None or not self._worker.is_alive():
+			self._worker = Thread(target=self._work, name='worker', args=())
+			self._worker.start()
+		else:
+			try:
+				self._client.noidle()
+			except TypeError as e:
+				pass
 
 
-
-
-
-	def play(self):
-		# TODO play()
-		pass
+	def _work(self):
+		while True:
+			if self._actions:
+				action = self._actions.pop(0)
+				action()
+			else:
+				if not self.is_connected():
+					break
+				modules = self._client.idle()
+				self._idle(modules)
 
 
 
@@ -187,6 +177,8 @@ class MCGAlbum:
 		self._path = path
 		self._tracks = []
 		self._cover = None
+		
+		self._set_hash()
 		self._find_cover()
 
 
@@ -233,6 +225,21 @@ class MCGAlbum:
 					break
 			if self._cover is not None:
 				break
+
+
+	def hash(self, artist, title):
+		h = md5()
+		h.update(artist.encode('utf-8'))
+		h.update(title.encode('utf-8'))
+		return h.digest()
+
+
+	def _set_hash(self):
+		self._hash = self.hash(self._artist, self._title)
+
+
+	def get_hash(self):
+		return self._hash
 
 
 
