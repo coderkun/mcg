@@ -18,21 +18,21 @@ class MCGClient:
 	SIGNAL_UPDATE = 'update'
 
 
-	def __init__(self, host="localhost", port=6600, password=None):
-		self._host = host
-		self._port = port
-		self._password = password
+	def __init__(self):
 		self._connected = False
-
 		self._albums = {}
 		self._callbacks = {}
 		self._actions = []
 		self._worker = None
-
 		self._client = mpd.MPDClient()
+		self._go = True
 
 
-	def connect(self):
+	def connect(self, host="localhost", port="6600", password=None):
+		# TODO als Parameter an _add_action() übergeben, nicht speichern
+		self._host = host
+		self._port = port
+		self._password = password
 		self._add_action(self._connect)
 
 
@@ -68,6 +68,17 @@ class MCGClient:
 			self._client = mpd.MPDClient()
 		self._connected = False
 		self._callback(self.SIGNAL_CONNECT, self._connected, None)
+
+
+	def close(self):
+		if not self.is_connected():
+			return
+		try:
+			self._go = False
+			self._client.noidle()
+			self._client.disconnect()
+		except TypeError as e:
+			pass
 
 
 	def update(self):
@@ -158,6 +169,8 @@ class MCGClient:
 				if not self.is_connected():
 					break
 				modules = self._client.idle()
+				if not self._go:
+					break
 				self._idle(modules)
 
 
