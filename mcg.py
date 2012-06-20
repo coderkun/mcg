@@ -14,7 +14,7 @@ from threading import Thread
 class MCGClient:
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_IDLE = 'idle'
-	SIGNAL_IDLE_PLAYER = 'idlePlayer'
+	SIGNAL_IDLE_PLAYER = 'idle_player'
 	SIGNAL_UPDATE = 'update'
 
 
@@ -45,6 +45,7 @@ class MCGClient:
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
 			self.update()
+			self.idle_player()
 		except IOError as e:
 			self._connected = False
 			self._callback(self.SIGNAL_CONNECT, self._connected, e)
@@ -107,7 +108,7 @@ class MCGClient:
 			return
 
 		if 'player' in modules:
-			self._idlePlayer()
+			self._idle_player()
 		if 'database' in modules:
 			# TODO update DB
 			pass
@@ -119,7 +120,11 @@ class MCGClient:
 			pass
 
 
-	def _idlePlayer(self):
+	def idle_player(self):
+		self._add_action(self._idle_player)
+
+
+	def _idle_player(self):
 		if not self._has_callback(self.SIGNAL_IDLE_PLAYER):
 			return
 		status = self._client.status()
