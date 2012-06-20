@@ -12,7 +12,7 @@ import mcg
 class MCGGtk(Gtk.Window):
 
 	def __init__(self):
-		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
+		Gtk.Window.__init__(self, title="MPDCoverGrid (Gtk)")
 		self._mcg = mcg.MCGClient()
 		self._config = Configuration()
 		self._maximized = False
@@ -31,10 +31,10 @@ class MCGGtk(Gtk.Window):
 		self._cover_panel = CoverPanel(self._config)
 
 		# Signals
-		self.connect("focus", self.focus)
-		self.connect("size-allocate", self.save_size)
-		self.connect("window-state-event", self.save_state)
-		self.connect("delete-event", self.destroy)
+		self.connect('focus', self.focus)
+		self.connect('size-allocate', self.save_size)
+		self.connect('window-state-event', self.save_state)
+		self.connect('delete-event', self.destroy)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self._connect)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self._update)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.update_start_callback)
@@ -144,8 +144,8 @@ class Toolbar(Gtk.Toolbar):
 		self.add(self._update_button)
 		
 		# Signals
-		self._connection_button.connect("clicked", self._callback)
-		self._update_button.connect("clicked", self._callback)
+		self._connection_button.connect('clicked', self._callback)
+		self._update_button.connect('clicked', self._callback)
 
 
 	def connect_signal(self, signal, callback):
@@ -199,7 +199,6 @@ class ConnectionPanel(Gtk.Box):
 		self._table.attach(host_label, 0, 1, 0, 1)
 		self._host_entry = Gtk.Entry()
 		self._host_entry.set_text("localhost")
-		self._host_entry.connect("focus-out-event", self._lost_focus)
 		self._table.attach(self._host_entry, 1, 2, 0, 1)
 		# Port
 		port_label = Gtk.Label("Port:")
@@ -208,7 +207,6 @@ class ConnectionPanel(Gtk.Box):
 		adjustment = Gtk.Adjustment(6600, 1024, 9999, 1, 10, 10)
 		self._port_spinner = Gtk.SpinButton()
 		self._port_spinner.set_adjustment(adjustment)
-		self._port_spinner.connect("focus-out-event", self._lost_focus)
 		self._table.attach(self._port_spinner, 1, 2, 1, 2)
 		# Passwort
 		password_label = Gtk.Label("Password:")
@@ -216,8 +214,12 @@ class ConnectionPanel(Gtk.Box):
 		self._table.attach(password_label, 0, 1, 2, 3)
 		self._password_entry = Gtk.Entry()
 		self._password_entry.set_visibility(False)
-		self._password_entry.connect("focus-out-event", self._lost_focus)
 		self._table.attach(self._password_entry, 1, 2, 2, 3)
+
+		# Signals
+		self._host_entry.connect('focus-out-event', self._lost_focus)
+		self._port_spinner.connect('focus-out-event', self._lost_focus)
+		self._password_entry.connect('focus-out-event', self._lost_focus)
 		
 		self._load_config()
 
@@ -286,8 +288,8 @@ from threading import Thread
 
 
 class CoverPanel(Gtk.HPaned):
-	SIGNAL_UPDATE_START = "update-start"
-	SIGNAL_UPDATE_END = "update-end"
+	SIGNAL_UPDATE_START = 'update-start'
+	SIGNAL_UPDATE_END = 'update-end'
 	_default_cover_size = 128
 
 
@@ -439,7 +441,7 @@ class Configuration:
 	def __init__(self):
 		self._config = configparser.RawConfigParser()
 		
-		self.host = 'localhost'
+		self.host = "localhost"
 		self.port = 6600
 		self.password = ""
 		self.window_width = 600
