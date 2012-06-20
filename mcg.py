@@ -103,6 +103,11 @@ class MCGClient:
 		self._callback(self.SIGNAL_UPDATE, self._albums)
 
 
+	def play(self, album):
+		# TODO play()
+		print("play: ", self._albums[album].get_title())
+
+
 	def _idle(self, modules):
 		if not modules:
 			return
@@ -246,10 +251,7 @@ class MCGAlbum:
 
 
 	def hash(self, artist, title):
-		h = md5()
-		h.update(artist.encode('utf-8'))
-		h.update(title.encode('utf-8'))
-		return h.digest()
+		return md5(artist.encode('utf-8')+title.encode('utf-8')).hexdigest()
 
 
 	def _set_hash(self):
