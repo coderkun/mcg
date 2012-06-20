@@ -15,6 +15,7 @@ class MCGGtk(Gtk.Window):
 		Gtk.Window.__init__(self, title="MPDCoverGridGTK")
 		self._mcg = mcg.MCGClient()
 		self._config = Configuration()
+		self._maximized = False
 		self._quit = False
 		
 		# Box
@@ -24,33 +25,53 @@ class MCGGtk(Gtk.Window):
 		self._toolbar = Toolbar()
 		self._main_box.pack_start(self._toolbar, False, False, 0)
 		# Connection Panel
-		self.set_default_size(600, 400)
 		self._connection_panel = ConnectionPanel(self._config)
 		self._main_box.pack_end(self._connection_panel, True, True, 0)
 		# Cover Panel
-		self._cover_panel = CoverPanel()
+		self._cover_panel = CoverPanel(self._config)
 
 		# Signals
 		self.connect("focus", self.focus)
+		self.connect("size-allocate", self.save_size)
+		self.connect("window-state-event", self.save_state)
 		self.connect("delete-event", self.destroy)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self._connect)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self._update)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.update_start_callback)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.update_end_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.update_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
+
+		self.set_hide_titlebar_when_maximized(True)
+		self.resize_to_geometry(self._config.window_width, self._config.window_height)
+		if self._config.window_maximized:
+			self.maximize()
 
 
 	def focus(self, widget, state):
 		self._connect()
 
 
+	def save_size(self, widget, state):
+		if not self._maximized:
+			self._config.window_width = self.get_allocation().width
+			self._config.window_height = self.get_allocation().height
+
+
+	def save_state(self, widget, event):
+		self._config.window_maximized = (event.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+		self._maximized = (event.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+
+
 	def destroy(self, widget, state):
 		self._mcg.close()
+		self._config.save()
 		GObject.idle_add(Gtk.main_quit)
 
 
 	def _connect(self):
 		if self._mcg.is_connected():
-			self._cover_panel.stop_update()
 			self._mcg.disconnect()
 		else:
 			self._connection_panel.lock()
@@ -83,9 +104,21 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.disconnected()
 
 
+	def _update(self):
+		self._mcg.update()
+
+
 
 	def update_callback(self, albums):
 		self._cover_panel.update(albums)
+
+
+	def update_start_callback(self):
+		GObject.idle_add(self._toolbar.lock)
+
+
+	def update_end_callback(self):
+		GObject.idle_add(self._toolbar.unlock)
 
 
 	def idle_player_callback(self, state, album):
@@ -96,16 +129,23 @@ class MCGGtk(Gtk.Window):
 
 class Toolbar(Gtk.Toolbar):
 	SIGNAL_CONNECT = 'connect'
+	SIGNAL_UPDATE = 'update'
 
 	def __init__(self):
 		Gtk.Toolbar.__init__(self)
-		
 		self._callbacks = {}
 		
 		self.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
+		
+		# Widgets
 		self._connection_button = Gtk.ToolButton(Gtk.STOCK_DISCONNECT)
-		self._connection_button.connect("clicked", self._callback)
 		self.add(self._connection_button)
+		self._update_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
+		self.add(self._update_button)
+		
+		# Signals
+		self._connection_button.connect("clicked", self._callback)
+		self._update_button.connect("clicked", self._callback)
 
 
 	def connect_signal(self, signal, callback):
@@ -120,10 +160,20 @@ class Toolbar(Gtk.Toolbar):
 		self._connection_button.set_stock_id(Gtk.STOCK_DISCONNECT)
 
 
+	def lock(self):
+		self.set_sensitive(False)
+
+
+	def unlock(self):
+		self.set_sensitive(True)
+
+
 	def _callback(self, widget):
 		signal = None
 		if widget == self._connection_button:
 			signal = self.SIGNAL_CONNECT
+		if widget == self._update_button:
+			signal = self.SIGNAL_UPDATE
 
 		if signal in self._callbacks:
 			callback = self._callbacks[signal]
@@ -236,16 +286,19 @@ from threading import Thread
 
 
 class CoverPanel(Gtk.HPaned):
+	SIGNAL_UPDATE_START = "update-start"
+	SIGNAL_UPDATE_END = "update-end"
 	_default_cover_size = 128
 
 
-	def __init__(self):
+	def __init__(self, config):
 		Gtk.HPaned.__init__(self)
+		self._config = config
+		self._callbacks = {}
 		
 		# Image
 		self._cover_pixbuf = None
 		self._cover_image = Gtk.Image()
-		self._cover_image.connect('size-allocate', self.on_resize)
 		# EventBox
 		self._cover_box = Gtk.EventBox()
 		self._cover_box.add(self._cover_image)
@@ -274,17 +327,30 @@ class CoverPanel(Gtk.HPaned):
 		self._progress_bar = Gtk.ProgressBar()
 		self._progress_box.pack_start(self._progress_bar, True, False, 0)
 
+		# Signals
+		self.connect('size-allocate', self.resize_pane_callback)
+		self._cover_image.connect('size-allocate', self.resize_image_callback)
+
+		self.set_position(self._config.pane_position)
+
+
+	def connect_signal(self, signal, callback):
+		self._callbacks[signal] = callback
+
+
+	def _callback(self, signal):
+		if signal in self._callbacks:
+			callback = self._callbacks[signal]
+			callback()
+
 
 	def update(self, albums):
 		self._go = True
 		Thread(target=self._update, args=(albums,)).start()
 
 
-	def stop_update(self):
-		self._go = False
-
-
 	def _update(self, albums):
+		self._callback(self.SIGNAL_UPDATE_START)
 		Gdk.threads_enter()
 		self.remove(self._cover_grid_scroll)
 		self._progress_bar.set_fraction(0.0)
@@ -308,10 +374,6 @@ class CoverPanel(Gtk.HPaned):
 			self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()]))])
 			i += 1
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
-
-			if not self._go:
-				self._cover_grid_model.clear()
-				break
 			
 		Gdk.threads_enter()
 		self._cover_grid.set_model(self._cover_grid_model)
@@ -319,6 +381,7 @@ class CoverPanel(Gtk.HPaned):
 		self.remove(self._progress_box)
 		self.pack2(self._cover_grid_scroll, False)
 		Gdk.threads_leave()
+		self._callback(self.SIGNAL_UPDATE_END)
 
 
 	def set_album(self, url):
@@ -333,7 +396,11 @@ class CoverPanel(Gtk.HPaned):
 			self._cover_image.clear()
 
 
-	def on_resize(self, widget, allocation):
+	def resize_pane_callback(self, widget, allocation):
+		self._config.pane_position = self.get_position()
+
+
+	def resize_image_callback(self, widget, allocation):
 		self._resize_image()
 
 
@@ -375,6 +442,10 @@ class Configuration:
 		self.host = 'localhost'
 		self.port = 6600
 		self.password = ""
+		self.window_width = 600
+		self.window_height = 400
+		self.window_maximized = False
+		self.pane_position = 300
 		self.load()
 
 
@@ -390,6 +461,15 @@ class Configuration:
 				self.port = self._config.getint('connection', 'port')
 			if self._config.has_option('connection', 'password'):
 				self.password = self._config.get('connection', 'password')
+		if self._config.has_section('gui'):
+			if self._config.has_option('gui', 'window_width'):
+				self.window_width = self._config.getint('gui', 'window_width')
+			if self._config.has_option('gui', 'window_height'):
+				self.window_height = self._config.getint('gui', 'window_height')
+			if self._config.has_option('gui', 'window_maximized'):
+				self.window_maximized = self._config.getboolean('gui', 'window_maximized')
+			if self._config.has_option('gui', 'pane_position'):
+				self.pane_position = self._config.getint('gui', 'pane_position')
 
 
 	def save(self):
@@ -400,6 +480,12 @@ class Configuration:
 		self._config.remove_option('connection', 'password')
 		if self.password is not "":
 			self._config.set('connection', 'password', self.password)
+		if not self._config.has_section('gui'):
+			self._config.add_section('gui')
+		self._config.set('gui', 'window_width', self.window_width)
+		self._config.set('gui', 'window_height', self.window_height)
+		self._config.set('gui', 'window_maximized', self.window_maximized)
+		self._config.set('gui', 'pane_position', self.pane_position)
 			
 
 		with open(self._get_filename(), 'w') as configfile:
