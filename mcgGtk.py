@@ -39,6 +39,7 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self._update)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.update_start_callback)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.update_end_callback)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.play_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.update_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
@@ -105,6 +106,7 @@ class MCGGtk(Gtk.Window):
 
 
 	def _update(self):
+		self._toolbar.lock()
 		self._mcg.update()
 
 
@@ -123,6 +125,10 @@ class MCGGtk(Gtk.Window):
 
 	def idle_player_callback(self, state, album):
 		GObject.idle_add(self._cover_panel.set_album, album.get_cover())
+
+
+	def play_callback(self, album):
+		self._mcg.play(album)
 
 
 
@@ -290,6 +296,7 @@ from threading import Thread
 class CoverPanel(Gtk.HPaned):
 	SIGNAL_UPDATE_START = 'update-start'
 	SIGNAL_UPDATE_END = 'update-end'
+	SIGNAL_PLAY = 'play'
 	_default_cover_size = 128
 
 
@@ -306,7 +313,7 @@ class CoverPanel(Gtk.HPaned):
 		self._cover_box.add(self._cover_image)
 		self.pack1(self._cover_box, resize=True)
 		# GridModel
-		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
+		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
 		# GridView
 		self._cover_grid = Gtk.IconView.new_with_model(self._cover_grid_model)
 		self._cover_grid.set_pixbuf_column(0)
@@ -332,6 +339,7 @@ class CoverPanel(Gtk.HPaned):
 		# Signals
 		self.connect('size-allocate', self.resize_pane_callback)
 		self._cover_image.connect('size-allocate', self.resize_image_callback)
+		self._cover_grid.connect('item-activated', self.click_grid_callback)
 
 		self.set_position(self._config.pane_position)
 
@@ -340,10 +348,10 @@ class CoverPanel(Gtk.HPaned):
 		self._callbacks[signal] = callback
 
 
-	def _callback(self, signal):
+	def _callback(self, signal, *args):
 		if signal in self._callbacks:
 			callback = self._callbacks[signal]
-			callback()
+			callback(*args)
 
 
 	def update(self, albums):
@@ -373,7 +381,7 @@ class CoverPanel(Gtk.HPaned):
 			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(file, self._default_cover_size, self._default_cover_size)
 			if pixbuf is None:
 				continue
-			self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()]))])
+			self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()])), hash])
 			i += 1
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
 			
@@ -428,6 +436,10 @@ class CoverPanel(Gtk.HPaned):
 		# Pixelpuffer auf Oberfläche zeichnen
 		self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
 
+
+	def click_grid_callback(self, widget, path):
+		iter = self._cover_grid_model.get_iter(path)
+		self._callback(self.SIGNAL_PLAY, self._cover_grid_model.get_value(iter, 3))
 
 
 
