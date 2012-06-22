@@ -86,10 +86,8 @@ class MCGClient:
 	def play(self, album):
 		"""Plays the given album.
 		"""
-		# TODO play()
-		# mpd-Befehle: add, play
-		# https://github.com/Mic92/python-mpd2/blob/master/mpd.py
-		print("play: ", self._albums[album].get_title())
+		# TODO Pass parameters
+		self._add_action(self._play)
 
 
 	def connect_signal(self, signal, callback):
@@ -150,25 +148,6 @@ class MCGClient:
 				self._idle(modules)
 
 
-	def _idle(self, modules):
-		"""Reacts to idle events from MPD.
-		"""
-		if not modules:
-			return
-
-		if 'player' in modules:
-			self._idle_player()
-		if 'database' in modules:
-			# TODO update DB
-			pass
-		if 'update' in modules:
-			# TODO update
-			pass
-		if 'mixer' in modules:
-			# TODO mixer
-			pass
-
-
 	def _connect(self):
 		"""Action: Performs the real connect to MPD.
 		"""
@@ -217,6 +196,32 @@ class MCGClient:
 				pass
 		# TODO Alben sortieren
 		self._callback(self.SIGNAL_UPDATE, self._albums)
+
+
+	def _play(self):
+		"""Action: Performs the real play command.
+		"""
+		# TODO _play()
+		pass
+
+
+	def _idle(self, modules):
+		"""Reacts to idle events from MPD.
+		"""
+		if not modules:
+			return
+
+		if 'player' in modules:
+			self._idle_player()
+		if 'database' in modules:
+			# TODO update DB
+			pass
+		if 'update' in modules:
+			# TODO update
+			pass
+		if 'mixer' in modules:
+			# TODO mixer
+			pass
 
 
 	def _idle_player(self):
