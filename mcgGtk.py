@@ -124,7 +124,8 @@ class MCGGtk(Gtk.Window):
 
 
 	def idle_player_callback(self, state, album):
-		GObject.idle_add(self._cover_panel.set_album, album.get_cover())
+		if album:
+			GObject.idle_add(self._cover_panel.set_album, album.get_cover())
 
 
 	def play_callback(self, album):
