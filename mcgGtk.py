@@ -1,13 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# Author: coderkun <olli@coderkun.de>
+
+
 
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
 import mcg
-
-
-
 
 class MCGGtk(Gtk.Window):
 
@@ -292,7 +292,6 @@ class ConnectionPanel(Gtk.Box):
 
 from threading import Thread
 
-
 class CoverPanel(Gtk.HPaned):
 	SIGNAL_UPDATE_START = 'update-start'
 	SIGNAL_UPDATE_END = 'update-end'
@@ -440,6 +439,7 @@ class CoverPanel(Gtk.HPaned):
 	def click_grid_callback(self, widget, path):
 		iter = self._cover_grid_model.get_iter(path)
 		self._callback(self.SIGNAL_PLAY, self._cover_grid_model.get_value(iter, 3))
+
 
 
 
