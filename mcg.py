@@ -190,6 +190,7 @@ class MCGClient:
 
 				track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
 				album.add_track(track)
+				count += 1
 			except KeyError:
 				pass
 		# TODO Alben sortieren
@@ -199,8 +200,12 @@ class MCGClient:
 	def _play(self, album):
 		"""Action: Performs the real play command.
 		"""
-		# TODO _play()
-		pass
+		track_ids = []
+		for track in self._albums[album].get_tracks():
+			track_id = self._client.addid(track.get_file())
+			track_ids.append(track_id)
+			self._client.moveid(track_id, len(track_ids)-1)
+		self._client.playid(track_ids[0])
 
 
 	def _idle(self, modules):
@@ -230,8 +235,16 @@ class MCGClient:
 		status = self._client.status()
 		state = status['state']
 		song = self._client.currentsong()
-		album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
+		album = None
+		if song:
+			album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
 		self._callback(self.SIGNAL_IDLE_PLAYER, state, album)
+
+
+	def _idle_playlist(self):
+		""" Reacts on the playlist idle event.
+		"""
+		pass
 
 
 
