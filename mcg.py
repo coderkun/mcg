@@ -182,15 +182,14 @@ class MCGClient:
 		"""
 		for song in self._client.listallinfo():
 			try:
-				if song['album'] not in self._albums:
+				hash = MCGAlbum.hash(song['artist'], song['album'])
+				if hash in self._albums.keys():
+					album = self._albums[hash]
+				else:
 					album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
 					self._albums[album.get_hash()] = album
-				else:
-					album = self._albums[MCGAlbum.hash(song['artist'], song['album'])]
-
 				track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
 				album.add_track(track)
-				count += 1
 			except KeyError:
 				pass
 		# TODO Alben sortieren
@@ -313,12 +312,14 @@ class MCGAlbum:
 				break
 
 
-	def hash(self, artist, title):
+	def hash(artist, title):
+		if type(artist) is list:
+			artist = artist[0]
 		return md5(artist.encode('utf-8')+title.encode('utf-8')).hexdigest()
 
 
 	def _set_hash(self):
-		self._hash = self.hash(self._artist, self._title)
+		self._hash = MCGAlbum.hash(self._artist, self._title)
 
 
 	def get_hash(self):
