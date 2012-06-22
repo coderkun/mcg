@@ -44,11 +44,7 @@ class MCGClient:
 		"""Connects to MPD with the given host, port and password or
 		with standard values.
 		"""
-		# TODO als Parameter an _add_action() übergeben, nicht speichern
-		self._host = host
-		self._port = port
-		self._password = password
-		self._add_action(self._connect)
+		self._add_action(self._connect, host, port, password)
 
 
 	def is_connected(self):
@@ -86,8 +82,7 @@ class MCGClient:
 	def play(self, album):
 		"""Plays the given album.
 		"""
-		# TODO Pass parameters
-		self._add_action(self._play)
+		self._add_action(self._play, album)
 
 
 	def connect_signal(self, signal, callback):
@@ -111,10 +106,11 @@ class MCGClient:
 			callback(*args)
 
 
-	def _add_action(self, method):
+	def _add_action(self, method, *args):
 		"""Adds an action to the action list.
 		"""
-		self._actions.append(method)
+		action = [method, args]
+		self._actions.append(action)
 		self._start_worker()
 
 
@@ -138,7 +134,9 @@ class MCGClient:
 		while True:
 			if self._actions:
 				action = self._actions.pop(0)
-				action()
+				method = action[0]
+				params = action[1]
+				method(*params)
 			else:
 				if not self.is_connected():
 					break
@@ -148,13 +146,13 @@ class MCGClient:
 				self._idle(modules)
 
 
-	def _connect(self):
+	def _connect(self, host, port, password):
 		"""Action: Performs the real connect to MPD.
 		"""
 		try:
-			self._client.connect(self._host, self._port)
-			if self._password:
-				self._client.password(self._password)
+			self._client.connect(host, port)
+			if password:
+				self._client.password(password)
 			# TODO Verbindung testen
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
@@ -198,7 +196,7 @@ class MCGClient:
 		self._callback(self.SIGNAL_UPDATE, self._albums)
 
 
-	def _play(self):
+	def _play(self, album):
 		"""Action: Performs the real play command.
 		"""
 		# TODO _play()
