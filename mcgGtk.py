@@ -37,7 +37,6 @@ class MCGGtk(Gtk.Window):
 		self.connect('delete-event', self.destroy)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.toolbar_connect_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.toolbar_update_cb)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_PREV, self.toolbar_prev_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.toolbar_next_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.cover_panel_play_cb)
@@ -85,19 +84,12 @@ class MCGGtk(Gtk.Window):
 		self._mcg.update()
 
 
-	def toolbar_prev_cb(self):
-		"""TODO prev()
-		"""
-		pass
-
 	def toolbar_playpause_cb(self):
 		self._mcg.playpause()
 
 
 	def toolbar_next_cb(self):
-		"""TODO next()
-		"""
-		pass
+		self._mcg.next()
 
 
 	# Cover panel callbacks
@@ -170,9 +162,8 @@ class MCGGtk(Gtk.Window):
 class Toolbar(Gtk.Toolbar):
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_UPDATE = 'update'
-	SIGNAL_PREV = 'prev'
-	SIGNAL_NEXT = 'next'
 	SIGNAL_PLAYPAUSE = 'playpause'
+	SIGNAL_NEXT = 'next'
 
 	def __init__(self):
 		Gtk.Toolbar.__init__(self)
@@ -186,8 +177,6 @@ class Toolbar(Gtk.Toolbar):
 		self._update_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
 		self.add(self._update_button)
 		self.add(Gtk.SeparatorToolItem())
-		self._prev_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_PREVIOUS)
-		self.add(self._prev_button)
 		self._playpause_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_PLAY)
 		self.add(self._playpause_button)
 		self._next_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_NEXT)
@@ -196,7 +185,6 @@ class Toolbar(Gtk.Toolbar):
 		# Signals
 		self._connection_button.connect('clicked', self._callback)
 		self._update_button.connect('clicked', self._callback)
-		self._prev_button.connect('clicked', self._callback)
 		self._playpause_button.connect('clicked', self._callback)
 		self._next_button.connect('clicked', self._callback)
 
@@ -240,8 +228,6 @@ class Toolbar(Gtk.Toolbar):
 			signal = self.SIGNAL_CONNECT
 		if widget == self._update_button:
 			signal = self.SIGNAL_UPDATE
-		if widget == self._prev_button:
-			signal = self.SIGNAL_PREV
 		if widget == self._playpause_button:
 			signal = self.SIGNAL_PLAYPAUSE
 		if widget == self._next_button:
