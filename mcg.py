@@ -22,8 +22,8 @@ class MCGClient:
 	SIGNAL_CONNECT = 'connect'
 	# Signal: general idle event
 	SIGNAL_IDLE = 'idle'
-	# Signal: player idle event
-	SIGNAL_IDLE_PLAYER = 'idle_player'
+	# Signal: status event
+	SIGNAL_STATUS = 'status'
 	# Signal: update event
 	SIGNAL_UPDATE = 'update'
 
@@ -79,10 +79,22 @@ class MCGClient:
 		self._add_action(self._update)
 
 
-	def play(self, album):
+	def get_status(self):
+		"""Determines the current status.
+		"""
+		self._add_action(self._get_status)
+
+
+	def play_album(self, album):
 		"""Plays the given album.
 		"""
 		self._add_action(self._play, album)
+
+
+	def playpause(self):
+		"""Plays or pauses the current state.
+		"""
+		self._add_action(self._playpause)
 
 
 	def connect_signal(self, signal, callback):
@@ -157,7 +169,7 @@ class MCGClient:
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
 			self.update()
-			self._add_action(self._idle_player)
+			self._add_action(self._get_status)
 		except IOError as e:
 			self._connected = False
 			self._callback(self.SIGNAL_CONNECT, self._connected, e)
@@ -196,6 +208,20 @@ class MCGClient:
 		self._callback(self.SIGNAL_UPDATE, self._albums)
 
 
+	def _get_status(self):
+		"""Action: Performs the real status determination
+		"""
+		if not self._has_callback(self.SIGNAL_STATUS):
+			return
+		status = self._client.status()
+		state = status['state']
+		song = self._client.currentsong()
+		album = None
+		if song:
+			album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
+		self._callback(self.SIGNAL_STATUS, state, album)
+
+
 	def _play(self, album):
 		"""Action: Performs the real play command.
 		"""
@@ -207,6 +233,18 @@ class MCGClient:
 		self._client.playid(track_ids[0])
 
 
+	def _playpause(self):
+		"""Action: Performs the real play/pause command.
+		"""
+		status = self._client.status()
+		state = status['state']
+		
+		if state == 'play':
+			self._client.pause()
+		else:
+			self._client.play()
+
+
 	def _idle(self, modules):
 		"""Reacts to idle events from MPD.
 		"""
@@ -214,7 +252,7 @@ class MCGClient:
 			return
 
 		if 'player' in modules:
-			self._idle_player()
+			self._get_status()
 		if 'database' in modules:
 			# TODO update DB
 			pass
@@ -224,20 +262,6 @@ class MCGClient:
 		if 'mixer' in modules:
 			# TODO mixer
 			pass
-
-
-	def _idle_player(self):
-		"""Reacts on the player idle event.
-		"""
-		if not self._has_callback(self.SIGNAL_IDLE_PLAYER):
-			return
-		status = self._client.status()
-		state = status['state']
-		song = self._client.currentsong()
-		album = None
-		if song:
-			album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
-		self._callback(self.SIGNAL_IDLE_PLAYER, state, album)
 
 
 	def _idle_playlist(self):
