@@ -35,17 +35,17 @@ class MCGGtk(Gtk.Window):
 		self.connect('size-allocate', self.save_size)
 		self.connect('window-state-event', self.save_state)
 		self.connect('delete-event', self.destroy)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self._connect)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.update)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_PREV, self.prev)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.playpause)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.next)
-		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.update_start_callback)
-		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.update_end_callback)
-		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.play_callback)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.status_callback)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.update_callback)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.toolbar_connect_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.toolbar_update_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_PREV, self.toolbar_prev_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.toolbar_next_cb)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.cover_panel_play_cb)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.cover_panel_update_start_cb)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.cover_panel_update_end_cb)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.mcg_connect_cb)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.mcg_status_cb)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.mcg_update_cb)
 
 		self.set_hide_titlebar_when_maximized(True)
 		self.resize_to_geometry(self._config.window_width, self._config.window_height)
@@ -74,44 +74,56 @@ class MCGGtk(Gtk.Window):
 		GObject.idle_add(Gtk.main_quit)
 
 
-	def _connect(self):
-		if self._mcg.is_connected():
-			self._mcg.disconnect()
-		else:
-			self._connection_panel.lock()
-			host = self._connection_panel.get_host()
-			port = self._connection_panel.get_port()
-			password = self._connection_panel.get_password()
-			self._mcg.connect(host, port, password)
+	# Toolbar callbacks
+
+	def toolbar_connect_cb(self):
+		self._connect()
 
 
-	def connect_callback(self, connected, message):
+	def toolbar_update_cb(self):
+		self._toolbar.lock()
+		self._mcg.update()
+
+
+	def toolbar_prev_cb(self):
+		"""TODO prev()
+		"""
+		pass
+
+	def toolbar_playpause_cb(self):
+		self._mcg.playpause()
+
+
+	def toolbar_next_cb(self):
+		"""TODO next()
+		"""
+		pass
+
+
+	# Cover panel callbacks
+
+	def cover_panel_play_cb(self, album):
+		self._mcg.play_album(album)
+
+
+	def cover_panel_update_start_cb(self):
+		GObject.idle_add(self._toolbar.lock)
+
+
+	def cover_panel_update_end_cb(self):
+		GObject.idle_add(self._toolbar.unlock)
+
+
+	# MCG callbacks
+
+	def mcg_connect_cb(self, connected, message):
 		if connected:
 			GObject.idle_add(self._connect_connected)
 		else:
 			GObject.idle_add(self._connect_disconnected)
 
 
-	def prev(self):
-		"""TODO prev()
-		"""
-		pass
-
-	def playpause(self):
-		self._mcg.playpause()
-
-
-	def next(self):
-		"""TODO next()
-		"""
-		pass
-
-
-	def play_callback(self, album):
-		self._mcg.play_album(album)
-
-
-	def status_callback(self, state, album):
+	def mcg_status_cb(self, state, album):
 		if state == 'play':
 			GObject.idle_add(self._toolbar.set_pause)
 		elif state == 'pause' or state == 'stop':
@@ -121,21 +133,21 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._cover_panel.set_album, album.get_cover())
 
 
-	def update(self):
-		self._toolbar.lock()
-		self._mcg.update()
-
-
-	def update_callback(self, albums):
+	def mcg_update_cb(self, albums):
 		self._cover_panel.update(albums)
 
 
-	def update_start_callback(self):
-		GObject.idle_add(self._toolbar.lock)
+	# Private methods
 
-
-	def update_end_callback(self):
-		GObject.idle_add(self._toolbar.unlock)
+	def _connect(self):
+		if self._mcg.is_connected():
+			self._mcg.disconnect()
+		else:
+			self._connection_panel.lock()
+			host = self._connection_panel.get_host()
+			port = self._connection_panel.get_port()
+			password = self._connection_panel.get_password()
+			self._mcg.connect(host, port, password)
 
 
 	def _connect_connected(self):
