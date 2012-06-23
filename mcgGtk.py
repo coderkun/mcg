@@ -36,13 +36,16 @@ class MCGGtk(Gtk.Window):
 		self.connect('window-state-event', self.save_state)
 		self.connect('delete-event', self.destroy)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self._connect)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self._update)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.update)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_PREV, self.prev)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.playpause)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.next)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.update_start_callback)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.update_end_callback)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.play_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.connect_callback)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.status_callback)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.update_callback)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_IDLE_PLAYER, self.idle_player_callback)
 
 		self.set_hide_titlebar_when_maximized(True)
 		self.resize_to_geometry(self._config.window_width, self._config.window_height)
@@ -87,7 +90,52 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._connect_connected)
 		else:
 			GObject.idle_add(self._connect_disconnected)
-			
+
+
+	def prev(self):
+		"""TODO prev()
+		"""
+		pass
+
+	def playpause(self):
+		self._mcg.playpause()
+
+
+	def next(self):
+		"""TODO next()
+		"""
+		pass
+
+
+	def play_callback(self, album):
+		self._mcg.play_album(album)
+
+
+	def status_callback(self, state, album):
+		if state == 'play':
+			GObject.idle_add(self._toolbar.set_pause)
+		elif state == 'pause' or state == 'stop':
+			GObject.idle_add(self._toolbar.set_play)
+
+		if album:
+			GObject.idle_add(self._cover_panel.set_album, album.get_cover())
+
+
+	def update(self):
+		self._toolbar.lock()
+		self._mcg.update()
+
+
+	def update_callback(self, albums):
+		self._cover_panel.update(albums)
+
+
+	def update_start_callback(self):
+		GObject.idle_add(self._toolbar.lock)
+
+
+	def update_end_callback(self):
+		GObject.idle_add(self._toolbar.unlock)
 
 
 	def _connect_connected(self):
@@ -105,38 +153,14 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.disconnected()
 
 
-	def _update(self):
-		self._toolbar.lock()
-		self._mcg.update()
-
-
-
-	def update_callback(self, albums):
-		self._cover_panel.update(albums)
-
-
-	def update_start_callback(self):
-		GObject.idle_add(self._toolbar.lock)
-
-
-	def update_end_callback(self):
-		GObject.idle_add(self._toolbar.unlock)
-
-
-	def idle_player_callback(self, state, album):
-		if album:
-			GObject.idle_add(self._cover_panel.set_album, album.get_cover())
-
-
-	def play_callback(self, album):
-		self._mcg.play(album)
-
-
 
 
 class Toolbar(Gtk.Toolbar):
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_UPDATE = 'update'
+	SIGNAL_PREV = 'prev'
+	SIGNAL_NEXT = 'next'
+	SIGNAL_PLAYPAUSE = 'playpause'
 
 	def __init__(self):
 		Gtk.Toolbar.__init__(self)
@@ -149,10 +173,20 @@ class Toolbar(Gtk.Toolbar):
 		self.add(self._connection_button)
 		self._update_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
 		self.add(self._update_button)
+		self.add(Gtk.SeparatorToolItem())
+		self._prev_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_PREVIOUS)
+		self.add(self._prev_button)
+		self._playpause_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_PLAY)
+		self.add(self._playpause_button)
+		self._next_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_NEXT)
+		self.add(self._next_button)
 		
 		# Signals
 		self._connection_button.connect('clicked', self._callback)
 		self._update_button.connect('clicked', self._callback)
+		self._prev_button.connect('clicked', self._callback)
+		self._playpause_button.connect('clicked', self._callback)
+		self._next_button.connect('clicked', self._callback)
 
 
 	def connect_signal(self, signal, callback):
@@ -175,12 +209,31 @@ class Toolbar(Gtk.Toolbar):
 		self.set_sensitive(True)
 
 
+	def set_play(self):
+		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
+
+
+	def set_pause(self):
+		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
+
+
+	def lock_playpause(self):
+		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
+		self._playpause_button.set_sensitive(False);
+
+
 	def _callback(self, widget):
 		signal = None
 		if widget == self._connection_button:
 			signal = self.SIGNAL_CONNECT
 		if widget == self._update_button:
 			signal = self.SIGNAL_UPDATE
+		if widget == self._prev_button:
+			signal = self.SIGNAL_PREV
+		if widget == self._playpause_button:
+			signal = self.SIGNAL_PLAYPAUSE
+		if widget == self._next_button:
+			signal = self.SIGNAL_NEXT
 
 		if signal in self._callbacks:
 			callback = self._callbacks[signal]
