@@ -97,6 +97,12 @@ class MCGClient:
 		self._add_action(self._playpause)
 
 
+	def next(self):
+		"""Plays the next album in the current order
+		"""
+		self._add_action(self._next)
+
+
 	def connect_signal(self, signal, callback):
 		"""Connects a callback function to a signal (event).
 		"""
@@ -169,7 +175,7 @@ class MCGClient:
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
 			self.update()
-			self._add_action(self._get_status)
+			self.get_status()
 		except IOError as e:
 			self._connected = False
 			self._callback(self.SIGNAL_CONNECT, self._connected, e)
@@ -243,6 +249,15 @@ class MCGClient:
 			self._client.pause()
 		else:
 			self._client.play()
+
+
+	def _next(self):
+		"""Action: Performs the real next command.
+		"""
+		song = self._client.currentsong()
+		if song:
+			current_album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
+			# TODO _next()
 
 
 	def _idle(self, modules):
