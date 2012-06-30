@@ -16,6 +16,7 @@ class MCGGtk(Gtk.Window):
 		self._mcg = mcg.MCGClient()
 		self._config = Configuration()
 		self._maximized = False
+		self._fullscreened = False
 		self._quit = False
 		
 		# Box
@@ -31,10 +32,11 @@ class MCGGtk(Gtk.Window):
 		self._cover_panel = CoverPanel(self._config)
 
 		# Signals
-		self.connect('focus', self.focus)
-		self.connect('size-allocate', self.save_size)
-		self.connect('window-state-event', self.save_state)
-		self.connect('delete-event', self.destroy)
+		self.connect('focus', self.focus_cb)
+		self.connect('key-press-event', self.key_press_cb)
+		self.connect('size-allocate', self.resize_cb)
+		self.connect('window-state-event', self.state_cb)
+		self.connect('delete-event', self.destroy_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.toolbar_connect_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.toolbar_update_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
@@ -43,32 +45,38 @@ class MCGGtk(Gtk.Window):
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.cover_panel_play_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.cover_panel_update_start_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.cover_panel_update_end_cb)
+		self._cover_panel.connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.cover_panel_toggle_fullscreen_cb)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.mcg_connect_cb)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.mcg_status_cb)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_UPDATE, self.mcg_update_cb)
 
 		self.set_hide_titlebar_when_maximized(True)
-		self.resize_to_geometry(self._config.window_width, self._config.window_height)
+		self.resize(self._config.window_width, self._config.window_height)
 		if self._config.window_maximized:
 			self.maximize()
 
 
-	def focus(self, widget, state):
+	def focus_cb(self, widget, state):
 		self._connect()
 
 
-	def save_size(self, widget, state):
-		if not self._maximized:
-			self._config.window_width = self.get_allocation().width
-			self._config.window_height = self.get_allocation().height
+	def resize_cb(self, widget, event):
+		self._save_size()
 
 
-	def save_state(self, widget, event):
-		self._config.window_maximized = (event.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
-		self._maximized = (event.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+	def key_press_cb(self, widget, event):
+		if (event.state & Gdk.ModifierType.MOD1_MASK and event.keyval == Gdk.KEY_Return) or (
+			self._fullscreened and event.type == Gdk.EventType.KEY_PRESS and event.keyval == Gdk.KEY_Escape):
+			self._toggle_fullscreen()
 
 
-	def destroy(self, widget, state):
+	def state_cb(self, widget, state):
+		self._fullscreened = (state.new_window_state & Gdk.WindowState.FULLSCREEN > 0)
+		self._update_fullscreen()
+		self._save_state(state)
+
+
+	def destroy_cb(self, widget, state):
 		self._mcg.close()
 		self._config.save()
 		GObject.idle_add(Gtk.main_quit)
@@ -111,11 +119,18 @@ class MCGGtk(Gtk.Window):
 		GObject.idle_add(self._toolbar.unlock)
 
 
+	def cover_panel_toggle_fullscreen_cb(self, event):
+		if event.type == Gdk.EventType._2BUTTON_PRESS:
+			self._toggle_fullscreen()
+
+
 	# MCG callbacks
 
 	def mcg_connect_cb(self, connected, message):
 		if connected:
 			GObject.idle_add(self._connect_connected)
+			self._mcg.update()
+			self._mcg.get_status()
 		else:
 			GObject.idle_add(self._connect_disconnected)
 
@@ -160,6 +175,31 @@ class MCGGtk(Gtk.Window):
 		self._main_box.show_all()
 		self._connection_panel.unlock()
 		self._toolbar.disconnected()
+
+
+	def _save_size(self):
+		if not self._maximized:
+			self._config.window_width = self.get_allocation().width
+			self._config.window_height = self.get_allocation().height
+
+
+	def _save_state(self, state):
+		self._config.window_maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+		self._maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+
+
+	def _toggle_fullscreen(self):
+		if not self._fullscreened:
+			self.fullscreen()
+		else:
+			self.unfullscreen()
+
+
+	def _update_fullscreen(self):
+		if self._fullscreened:
+			self._toolbar.hide()
+		else:
+			self._toolbar.show()
 
 
 
@@ -357,6 +397,7 @@ class CoverPanel(Gtk.HPaned):
 	SIGNAL_UPDATE_START = 'update-start'
 	SIGNAL_UPDATE_END = 'update-end'
 	SIGNAL_PLAY = 'play'
+	SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
 	_default_cover_size = 128
 
 
@@ -365,15 +406,20 @@ class CoverPanel(Gtk.HPaned):
 		self._config = config
 		self._callbacks = {}
 		self._albums = []
+		self._cover_pixbuf = None
 		self._filter_string = ""
+		self._is_fullscreen = False
 		
 		# Image
-		self._cover_pixbuf = None
 		self._cover_image = Gtk.Image()
 		# EventBox
 		self._cover_box = Gtk.EventBox()
 		self._cover_box.add(self._cover_image)
-		self.pack1(self._cover_box, resize=True)
+		# Scroll
+		self._cover_scroll = Gtk.ScrolledWindow()
+		self._cover_scroll.add_with_viewport(self._cover_box)
+		self._cover_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
+		self.pack1(self._cover_scroll, True, True)
 		# GridModel
 		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
 		self._cover_grid_filter = self._cover_grid_model.filter_new()
@@ -394,7 +440,7 @@ class CoverPanel(Gtk.HPaned):
 		self._cover_grid_scroll = Gtk.ScrolledWindow()
 		self._cover_grid_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
 		self._cover_grid_scroll.add(self._cover_grid)
-		self.pack2(self._cover_grid_scroll, resize=False)
+		self.pack2(self._cover_grid_scroll, False, True)
 		# Progress Bar
 		self._progress_box = Gtk.VBox()
 		self._progress_bar = Gtk.ProgressBar()
@@ -402,8 +448,9 @@ class CoverPanel(Gtk.HPaned):
 
 		# Signals
 		self.connect('size-allocate', self.resize_pane_callback)
-		self._cover_image.connect('size-allocate', self.resize_image_callback)
+		self._cover_scroll.connect('size-allocate', self.resize_image_callback)
 		self._cover_grid.connect('item-activated', self.click_grid_callback)
+		self._cover_box.connect('button-press-event',  self.toggle_fullscreen_cb)
 
 		self.set_position(self._config.pane_position)
 
@@ -484,7 +531,7 @@ class CoverPanel(Gtk.HPaned):
 		auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
 		"""
 		pixbuf = self._cover_pixbuf
-		size = self._cover_image.get_allocation()
+		size = self._cover_scroll.get_allocation()
 		## Check pixelbuffer
 		if pixbuf is None:
 			return
@@ -516,6 +563,10 @@ class CoverPanel(Gtk.HPaned):
 		hash = model.get_value(iter, 3)
 		album = self._albums[hash]
 		return album.filter(self._filter_string)
+
+
+	def toggle_fullscreen_cb(self, widget, event):
+		self._callback(self.SIGNAL_TOGGLE_FULLSCREEN, event)
 
 
 
