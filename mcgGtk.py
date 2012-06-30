@@ -422,6 +422,8 @@ class CoverPanel(Gtk.HPaned):
 		self.pack1(self._cover_scroll, True, True)
 		# GridModel
 		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
+		self._cover_grid_model.set_sort_func(3, self.compare_albums, mcg.MCGAlbum.SORT_BY_TITLE)
+		self._cover_grid_model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
 		self._cover_grid_filter = self._cover_grid_model.filter_new()
 		self._cover_grid_filter.set_visible_func(self.filter_visible_cb)
 		# GridView
@@ -445,12 +447,44 @@ class CoverPanel(Gtk.HPaned):
 		self._progress_box = Gtk.VBox()
 		self._progress_bar = Gtk.ProgressBar()
 		self._progress_box.pack_start(self._progress_bar, True, False, 0)
+		# Context Menu
+		self._cover_grid_menu = Gtk.Menu()
+		cover_grid_menu_group_sort = None
+		item = Gtk.RadioMenuItem("Sort by artist")
+		item.connect('activate', self.cover_grid_menu_sort, mcg.MCGAlbum.SORT_BY_ARTIST)
+		item.show()
+		self._cover_grid_menu.add(item)
+		cover_grid_menu_group_sort = item
+		item = Gtk.RadioMenuItem(group=cover_grid_menu_group_sort, label="Sort by title")
+		item.set_active(True)
+		item.connect('activate', self.cover_grid_menu_sort, mcg.MCGAlbum.SORT_BY_TITLE)
+		item.show()
+		self._cover_grid_menu.add(item)
+		item = Gtk.RadioMenuItem(group=cover_grid_menu_group_sort, label="Sort by year")
+		item.connect('activate', self.cover_grid_menu_sort, mcg.MCGAlbum.SORT_BY_YEAR)
+		item.show()
+		self._cover_grid_menu.add(item)
+		item = Gtk.SeparatorMenuItem()
+		item.show()
+		self._cover_grid_menu.add(item)
+		item = Gtk.RadioMenuItem("Ascending")
+		cover_grid_menu_group_sort_type = item
+		item.set_active(True)
+		item.connect('activate', lambda widget: self._cover_grid_model.set_sort_column_id(3, Gtk.SortType.ASCENDING))
+		item.show()
+		self._cover_grid_menu.add(item)
+		item = Gtk.RadioMenuItem(group=cover_grid_menu_group_sort_type, label="Descending")
+		item.connect('activate', lambda widget: self._cover_grid_model.set_sort_column_id(3, Gtk.SortType.DESCENDING))
+		item.show()
+		self._cover_grid_menu.add(item)
+		self._cover_grid_menu.show()
 
 		# Signals
 		self.connect('size-allocate', self.resize_pane_callback)
 		self._cover_scroll.connect('size-allocate', self.resize_image_callback)
-		self._cover_grid.connect('item-activated', self.click_grid_callback)
 		self._cover_box.connect('button-press-event',  self.toggle_fullscreen_cb)
+		self._cover_grid.connect('item-activated', self.cover_grid_click_cb)
+		self._cover_grid.connect('button-press-event', self.cover_grid_button_press_cb)
 
 		self.set_position(self._config.pane_position)
 
@@ -549,9 +583,18 @@ class CoverPanel(Gtk.HPaned):
 		self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
 
 
-	def click_grid_callback(self, widget, path):
+	def cover_grid_click_cb(self, widget, path):
 		iter = self._cover_grid_model.get_iter(path)
 		self._callback(self.SIGNAL_PLAY, self._cover_grid_model.get_value(iter, 3))
+
+
+	def cover_grid_button_press_cb(self, widget, event):
+		if event.button == 3:
+			self._cover_grid_menu.popup(None, None, None, None, event.button, event.time)
+
+
+	def cover_grid_menu_sort(self, widget, criterion):
+		self._cover_grid_model.set_sort_func(3, self.compare_albums, criterion)
 
 
 	def filter(self, filter_string):
@@ -568,6 +611,13 @@ class CoverPanel(Gtk.HPaned):
 	def toggle_fullscreen_cb(self, widget, event):
 		self._callback(self.SIGNAL_TOGGLE_FULLSCREEN, event)
 
+
+	def compare_albums(self, model, row1, row2, criterion):
+		hash1 = model.get_value(row1, 3)
+		hash2 = model.get_value(row2, 3)
+
+		return mcg.MCGAlbum.compare(self._albums[hash1], self._albums[hash2], criterion)
+	
 
 
 

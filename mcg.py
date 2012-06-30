@@ -288,6 +288,9 @@ class MCGClient:
 class MCGAlbum:
 	_file_names = ['folder', 'cover']
 	_file_exts = ['jpg', 'jpeg', 'png']
+	SORT_BY_ARTIST = 'artist'
+	SORT_BY_TITLE = 'title'
+	SORT_BY_YEAR = 'year'
 
 
 	def __init__(self, artist, title, date, path):
@@ -370,6 +373,25 @@ class MCGAlbum:
 			if filter_string.lower() in value.lower():
 				return True
 		return False
+
+
+	def compare(album1, album2, criterion=None):
+		if criterion == None:
+			criterion = MCGAlbum.SORT_BY_TITLE
+
+		if criterion == MCGAlbum.SORT_BY_ARTIST:
+			value_function = "get_artist"
+		if criterion == MCGAlbum.SORT_BY_TITLE:
+			value_function = "get_title"
+		if criterion == MCGAlbum.SORT_BY_YEAR:
+			value_function = "get_date"
+
+		if getattr(album1, value_function)() < getattr(album2, value_function)():
+			return -1
+		elif getattr(album1, value_function)() == getattr(album2, value_function)():
+			return 0
+		else:
+			return 1
 
 
 
