@@ -174,8 +174,6 @@ class MCGClient:
 			# TODO Verbindung testen
 			self._connected = True
 			self._callback(self.SIGNAL_CONNECT, self._connected, None)
-			self.update()
-			self.get_status()
 		except IOError as e:
 			self._connected = False
 			self._callback(self.SIGNAL_CONNECT, self._connected, e)
