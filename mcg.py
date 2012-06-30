@@ -365,6 +365,15 @@ class MCGAlbum:
 		return self._hash
 
 
+	def filter(self, filter_string):
+		values = [self._artist, self._title, self._date]
+		values.extend(map(lambda track: track.get_title(), self._tracks))
+		for value in values:
+			if filter_string.lower() in value.lower():
+				return True
+		return False
+
+
 
 
 class MCGTrack:

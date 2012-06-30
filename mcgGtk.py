@@ -39,6 +39,7 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.toolbar_update_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.toolbar_next_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_FILTER, self.toolbar_filter_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.cover_panel_play_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.cover_panel_update_start_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.cover_panel_update_end_cb)
@@ -90,6 +91,10 @@ class MCGGtk(Gtk.Window):
 
 	def toolbar_next_cb(self):
 		self._mcg.next()
+
+
+	def toolbar_filter_cb(self, filter_string):
+		self._cover_panel.filter(filter_string)
 
 
 	# Cover panel callbacks
@@ -164,6 +169,7 @@ class Toolbar(Gtk.Toolbar):
 	SIGNAL_UPDATE = 'update'
 	SIGNAL_PLAYPAUSE = 'playpause'
 	SIGNAL_NEXT = 'next'
+	SIGNAL_FILTER = 'filter'
 
 	def __init__(self):
 		Gtk.Toolbar.__init__(self)
@@ -181,12 +187,21 @@ class Toolbar(Gtk.Toolbar):
 		self.add(self._playpause_button)
 		self._next_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_NEXT)
 		self.add(self._next_button)
+		separator = Gtk.SeparatorToolItem()
+		separator.set_draw(False)
+		separator.set_expand(True)
+		self.add(separator)
+		self._filter_item = Gtk.ToolItem()
+		self._filter_entry = Gtk.Entry()
+		self._filter_item.add(self._filter_entry)
+		self.add(self._filter_item)
 		
 		# Signals
-		self._connection_button.connect('clicked', self._callback)
-		self._update_button.connect('clicked', self._callback)
-		self._playpause_button.connect('clicked', self._callback)
-		self._next_button.connect('clicked', self._callback)
+		self._connection_button.connect('clicked', self._callback, self.SIGNAL_CONNECT)
+		self._update_button.connect('clicked', self._callback, self.SIGNAL_UPDATE)
+		self._playpause_button.connect('clicked', self._callback, self.SIGNAL_PLAYPAUSE)
+		self._next_button.connect('clicked', self._callback, self.SIGNAL_NEXT)
+		self._filter_entry.connect('changed', self._callback, self.SIGNAL_FILTER, self._filter_entry.get_text)
 
 
 	def connect_signal(self, signal, callback):
@@ -222,20 +237,14 @@ class Toolbar(Gtk.Toolbar):
 		self._playpause_button.set_sensitive(False);
 
 
-	def _callback(self, widget):
-		signal = None
-		if widget == self._connection_button:
-			signal = self.SIGNAL_CONNECT
-		if widget == self._update_button:
-			signal = self.SIGNAL_UPDATE
-		if widget == self._playpause_button:
-			signal = self.SIGNAL_PLAYPAUSE
-		if widget == self._next_button:
-			signal = self.SIGNAL_NEXT
-
+	def _callback(self, widget, signal, data_function=None):
 		if signal in self._callbacks:
 			callback = self._callbacks[signal]
-			callback()
+			
+			data = []
+			if data_function is not None:
+				data = {data_function()}
+			callback(*data)
 
 
 
@@ -355,6 +364,8 @@ class CoverPanel(Gtk.HPaned):
 		Gtk.HPaned.__init__(self)
 		self._config = config
 		self._callbacks = {}
+		self._albums = []
+		self._filter_string = ""
 		
 		# Image
 		self._cover_pixbuf = None
@@ -365,8 +376,10 @@ class CoverPanel(Gtk.HPaned):
 		self.pack1(self._cover_box, resize=True)
 		# GridModel
 		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
+		self._cover_grid_filter = self._cover_grid_model.filter_new()
+		self._cover_grid_filter.set_visible_func(self.filter_visible_cb)
 		# GridView
-		self._cover_grid = Gtk.IconView.new_with_model(self._cover_grid_model)
+		self._cover_grid = Gtk.IconView(self._cover_grid_filter)
 		self._cover_grid.set_pixbuf_column(0)
 		self._cover_grid.set_text_column(-1)
 		self._cover_grid.set_tooltip_column(2)
@@ -407,6 +420,7 @@ class CoverPanel(Gtk.HPaned):
 
 	def update(self, albums):
 		self._go = True
+		self._albums = albums
 		Thread(target=self._update, args=(albums,)).start()
 
 
@@ -437,7 +451,7 @@ class CoverPanel(Gtk.HPaned):
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
 			
 		Gdk.threads_enter()
-		self._cover_grid.set_model(self._cover_grid_model)
+		self._cover_grid.set_model(self._cover_grid_filter)
 		self._cover_grid.thaw_child_notify()
 		self.remove(self._progress_box)
 		self.pack2(self._cover_grid_scroll, False)
@@ -491,6 +505,17 @@ class CoverPanel(Gtk.HPaned):
 	def click_grid_callback(self, widget, path):
 		iter = self._cover_grid_model.get_iter(path)
 		self._callback(self.SIGNAL_PLAY, self._cover_grid_model.get_value(iter, 3))
+
+
+	def filter(self, filter_string):
+		self._filter_string = filter_string
+		self._cover_grid_filter.refilter()
+
+
+	def filter_visible_cb(self, model, iter, data):
+		hash = model.get_value(iter, 3)
+		album = self._albums[hash]
+		return album.filter(self._filter_string)
 
 
 
