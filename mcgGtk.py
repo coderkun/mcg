@@ -449,6 +449,17 @@ class CoverPanel(Gtk.HPaned):
 		self._progress_box.pack_start(self._progress_bar, True, False, 0)
 		# Context Menu
 		self._cover_grid_menu = Gtk.Menu()
+		# Infos
+		item_infos = Gtk.MenuItem("Infos")
+		item_infos.show()
+		self._cover_grid_menu.add(item_infos)
+		menu_infos = Gtk.Menu()
+		menu_infos.show()
+		item_infos.set_submenu(menu_infos)
+		item = Gtk.CheckMenuItem("Title")
+		item.connect('activate', self.cover_grid_menu_infos)
+		item.show()
+		menu_infos.add(item)
 		# Sorting
 		item_sorting = Gtk.MenuItem("Sorting")
 		item_sorting.show()
@@ -602,6 +613,13 @@ class CoverPanel(Gtk.HPaned):
 
 	def cover_grid_menu_sort(self, widget, criterion):
 		self._cover_grid_model.set_sort_func(3, self.compare_albums, criterion)
+
+
+	def cover_grid_menu_infos(self, widget):
+		if widget.get_active():
+			self._cover_grid.set_text_column(1)
+		else:
+			self._cover_grid.set_text_column(-1)
 
 
 	def filter(self, filter_string):
