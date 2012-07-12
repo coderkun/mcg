@@ -210,8 +210,10 @@ class MCGGtk(Gtk.Window):
 	def _update_fullscreen(self):
 		if self._fullscreened:
 			self._toolbar.hide()
+			self._cover_panel.fullscreen();
 		else:
 			self._toolbar.show()
+			self._cover_panel.unfullscreen();
 
 
 
@@ -464,7 +466,6 @@ class CoverPanel(Gtk.HPaned):
 		# Scroll
 		self._cover_scroll = Gtk.ScrolledWindow()
 		self._cover_scroll.add_with_viewport(self._cover_box)
-		self._cover_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.NEVER)
 		self.pack1(self._cover_scroll, True, True)
 		# GridModel
 		self._cover_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
@@ -718,6 +719,14 @@ class CoverPanel(Gtk.HPaned):
 
 	def toggle_fullscreen_cb(self, widget, event):
 		self._callback(self.SIGNAL_TOGGLE_FULLSCREEN, event)
+
+
+	def fullscreen(self):
+		self.remove(self._cover_grid_scroll)
+
+
+	def unfullscreen(self):
+		self.pack2(self._cover_grid_scroll, False, True)
 
 
 	def compare_albums(self, model, row1, row2, criterion):
