@@ -42,6 +42,8 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.toolbar_next_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_FILTER, self.toolbar_filter_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE_TEMP, self.toolbar_grid_size_temp_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE, self.toolbar_grid_size_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_PLAY, self.cover_panel_play_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_START, self.cover_panel_update_start_cb)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_UPDATE_END, self.cover_panel_update_end_cb)
@@ -103,6 +105,16 @@ class MCGGtk(Gtk.Window):
 
 	def toolbar_filter_cb(self, filter_string):
 		self._cover_panel.filter(filter_string)
+
+
+	def toolbar_grid_size_temp_cb(self, size):
+		self._cover_panel.set_grid_size(size)
+
+
+	def toolbar_grid_size_cb(self, size):
+		self._cover_panel.set_grid_size(size)
+		self._toolbar.lock()
+		self._mcg.update()
 
 
 	# Cover panel callbacks
@@ -210,6 +222,8 @@ class Toolbar(Gtk.Toolbar):
 	SIGNAL_PLAYPAUSE = 'playpause'
 	SIGNAL_NEXT = 'next'
 	SIGNAL_FILTER = 'filter'
+	SIGNAL_GRID_SIZE_TEMP = 'grid-size-temp'
+	SIGNAL_GRID_SIZE = 'grid-size'
 
 	def __init__(self):
 		Gtk.Toolbar.__init__(self)
@@ -235,13 +249,24 @@ class Toolbar(Gtk.Toolbar):
 		self._filter_entry = Gtk.Entry()
 		self._filter_item.add(self._filter_entry)
 		self.add(self._filter_item)
+		self._grid_size_item = Gtk.ToolItem()
+		self._grid_size_scale = Gtk.HScale()
+		self._grid_size_scale.set_range(100,500)
+		self._grid_size_scale.set_round_digits(0)
+		self._grid_size_scale.set_value(128)
+		self._grid_size_scale.set_size_request(100, -1)
+		self._grid_size_scale.set_draw_value(False)
+		self._grid_size_item.add(self._grid_size_scale)
+		self.add(self._grid_size_item)
 		
 		# Signals
-		self._connection_button.connect('clicked', self._callback, self.SIGNAL_CONNECT)
-		self._update_button.connect('clicked', self._callback, self.SIGNAL_UPDATE)
-		self._playpause_button.connect('clicked', self._callback, self.SIGNAL_PLAYPAUSE)
-		self._next_button.connect('clicked', self._callback, self.SIGNAL_NEXT)
-		self._filter_entry.connect('changed', self._callback, self.SIGNAL_FILTER, self._filter_entry.get_text)
+		self._connection_button.connect('clicked', self._callback_with_function, self.SIGNAL_CONNECT)
+		self._update_button.connect('clicked', self._callback_with_function, self.SIGNAL_UPDATE)
+		self._playpause_button.connect('clicked', self._callback_with_function, self.SIGNAL_PLAYPAUSE)
+		self._next_button.connect('clicked', self._callback_with_function, self.SIGNAL_NEXT)
+		self._filter_entry.connect('changed', self._callback_with_function, self.SIGNAL_FILTER, self._filter_entry.get_text)
+		self._grid_size_scale.connect('change-value', self.grid_size_temp_cb)
+		self._grid_size_scale.connect('button-release-event', self.grid_size_cb)
 
 
 	def connect_signal(self, signal, callback):
@@ -277,14 +302,33 @@ class Toolbar(Gtk.Toolbar):
 		self._playpause_button.set_sensitive(False);
 
 
-	def _callback(self, widget, signal, data_function=None):
+	def grid_size_temp_cb(self, widget, scroll, value):
+		value = round(value)
+		range =  self._grid_size_scale.get_adjustment()
+		if value < range.get_lower() or value > range.get_upper():
+			return
+		self._callback(self.SIGNAL_GRID_SIZE_TEMP, value)
+
+
+	def grid_size_cb(self, widget, event):
+		value = round(self._grid_size_scale.get_value())
+		range =  self._grid_size_scale.get_adjustment()
+		if value < range.get_lower() or value > range.get_upper():
+			return
+		self._callback(self.SIGNAL_GRID_SIZE, value)
+
+
+	def _callback(self, signal, *data):
 		if signal in self._callbacks:
 			callback = self._callbacks[signal]
-			
-			data = []
-			if data_function is not None:
-				data = {data_function()}
 			callback(*data)
+
+
+	def _callback_with_function(self, widget, signal, data_function=None):
+		data = []
+		if data_function is not None:
+			data = {data_function()}
+		self._callback(signal, *data)
 
 
 
@@ -392,13 +436,13 @@ class ConnectionPanel(Gtk.Box):
 
 
 from threading import Thread
+import math
 
 class CoverPanel(Gtk.HPaned):
 	SIGNAL_UPDATE_START = 'update-start'
 	SIGNAL_UPDATE_END = 'update-end'
 	SIGNAL_PLAY = 'play'
 	SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
-	_default_cover_size = 128
 
 
 	def __init__(self, config):
@@ -407,8 +451,10 @@ class CoverPanel(Gtk.HPaned):
 		self._callbacks = {}
 		self._albums = []
 		self._cover_pixbuf = None
+		self._grid_pixbufs = {}
 		self._filter_string = ""
 		self._is_fullscreen = False
+		self._old_range = None
 		
 		# Image
 		self._cover_image = Gtk.Image()
@@ -542,9 +588,10 @@ class CoverPanel(Gtk.HPaned):
 			file = album.get_cover()
 			if file is None:
 				continue
-			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(file, self._default_cover_size, self._default_cover_size)
+			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(file, self._config.grid_item_size, self._config.grid_item_size)
 			if pixbuf is None:
 				continue
+			self._grid_pixbufs[album.get_hash()] = pixbuf
 			self._cover_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()])), hash])
 			i += 1
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
@@ -554,6 +601,8 @@ class CoverPanel(Gtk.HPaned):
 		self._cover_grid.thaw_child_notify()
 		self.remove(self._progress_box)
 		self.pack2(self._cover_grid_scroll, False)
+		self._dummy_pixbuf = None
+		self._old_range = None
 		Gdk.threads_leave()
 		self._callback(self.SIGNAL_UPDATE_END)
 
@@ -568,6 +617,38 @@ class CoverPanel(Gtk.HPaned):
 			# Reset image
 			self._cover_pixbuf = None
 			self._cover_image.clear()
+
+
+	def set_grid_size(self, size):
+		self._config.grid_item_size = size
+		self._cover_grid.set_item_width(self._config.grid_item_size)
+
+		if self._old_range is None:
+			self._old_range = range(0, len(self._cover_grid_model))
+		old_start = self._old_range[0]
+		old_end = self._old_range[len(self._old_range)-1]
+
+		vis_range = self._cover_grid.get_visible_range()
+		(vis_start,), (vis_end,) = vis_range
+		vis_range = range(vis_start, vis_end+1)
+		self._old_range = vis_range
+		
+		cur_range = range(min(vis_start, old_start), max(vis_end+1, old_end+1))
+		for path in cur_range:
+			iter = self._cover_grid_model.get_iter(path)
+			hash = self._cover_grid_model.get_value(iter, 3)
+			if path in vis_range:
+				pixbuf = self._grid_pixbufs[hash]
+				self._cover_grid_model.set_value(iter, 0, pixbuf.scale_simple(self._config.grid_item_size, self._config.grid_item_size, GdkPixbuf.InterpType.NEAREST))
+
+				vis_range = self._cover_grid.get_visible_range()
+				(vis_start,), (vis_end,) = vis_range
+				vis_range = range(vis_start, vis_end+1)
+			else:
+				pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, 1, 1)
+				self._cover_grid_model.set_value(iter, 0, pixbuf)
+
+		self._cover_grid.set_item_width(self._config.grid_item_size)
 
 
 	def resize_pane_callback(self, widget, allocation):
@@ -629,6 +710,8 @@ class CoverPanel(Gtk.HPaned):
 
 	def filter_visible_cb(self, model, iter, data):
 		hash = model.get_value(iter, 3)
+		if hash == "":
+			return
 		album = self._albums[hash]
 		return album.filter(self._filter_string)
 
@@ -641,6 +724,8 @@ class CoverPanel(Gtk.HPaned):
 		hash1 = model.get_value(row1, 3)
 		hash2 = model.get_value(row2, 3)
 
+		if hash1 == "" or hash2 == "":
+			return
 		return mcg.MCGAlbum.compare(self._albums[hash1], self._albums[hash2], criterion)
 	
 
@@ -663,6 +748,7 @@ class Configuration:
 		self.window_height = 400
 		self.window_maximized = False
 		self.pane_position = 300
+		self.grid_item_size = 128
 		self.load()
 
 
@@ -687,6 +773,8 @@ class Configuration:
 				self.window_maximized = self._config.getboolean('gui', 'window_maximized')
 			if self._config.has_option('gui', 'pane_position'):
 				self.pane_position = self._config.getint('gui', 'pane_position')
+			if self._config.has_option('gui', 'grid_item_size'):
+				self.grid_item_size = self._config.getint('gui', 'grid_item_size')
 
 
 	def save(self):
@@ -703,6 +791,7 @@ class Configuration:
 		self._config.set('gui', 'window_height', self.window_height)
 		self._config.set('gui', 'window_maximized', self.window_maximized)
 		self._config.set('gui', 'pane_position', self.pane_position)
+		self._config.set('gui', 'grid_item_size', self.grid_item_size)
 			
 
 		with open(self._get_filename(), 'w') as configfile:
