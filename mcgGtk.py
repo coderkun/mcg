@@ -457,11 +457,13 @@ class CoverPanel(Gtk.HPaned):
 		self._filter_string = ""
 		self._is_fullscreen = False
 		self._old_range = None
+		self._cover_background_color = None
 		
 		# Image
 		self._cover_image = Gtk.Image()
 		# EventBox
 		self._cover_box = Gtk.EventBox()
+		self._cover_background_color = self._cover_box.get_style_context().get_background_color(Gtk.StateFlags.NORMAL)
 		self._cover_box.add(self._cover_image)
 		# Scroll
 		self._cover_scroll = Gtk.ScrolledWindow()
@@ -723,10 +725,12 @@ class CoverPanel(Gtk.HPaned):
 
 	def fullscreen(self):
 		self.remove(self._cover_grid_scroll)
+		self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
 
 
 	def unfullscreen(self):
 		self.pack2(self._cover_grid_scroll, False, True)
+		self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, self._cover_background_color)
 
 
 	def compare_albums(self, model, row1, row2, criterion):
