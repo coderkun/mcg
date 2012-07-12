@@ -229,6 +229,7 @@ class MCGClient:
 	def _play(self, album):
 		"""Action: Performs the real play command.
 		"""
+		self._client.clear()
 		track_ids = []
 		for track in self._albums[album].get_tracks():
 			track_id = self._client.addid(track.get_file())
