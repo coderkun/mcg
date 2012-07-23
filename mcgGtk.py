@@ -40,7 +40,7 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.toolbar_connect_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.toolbar_update_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.toolbar_playpause_cb)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT, self.toolbar_next_cb)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_NEXT_SONG, self.toolbar_next_song_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_FILTER, self.toolbar_filter_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE_TEMP, self.toolbar_grid_size_temp_cb)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE, self.toolbar_grid_size_cb)
@@ -99,8 +99,8 @@ class MCGGtk(Gtk.Window):
 		self._mcg.playpause()
 
 
-	def toolbar_next_cb(self):
-		self._mcg.next()
+	def toolbar_next_song_cb(self):
+		self._mcg.next_song()
 
 
 	def toolbar_filter_cb(self, filter_string):
@@ -223,7 +223,7 @@ class Toolbar(Gtk.Toolbar):
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_UPDATE = 'update'
 	SIGNAL_PLAYPAUSE = 'playpause'
-	SIGNAL_NEXT = 'next'
+	SIGNAL_NEXT_SONG = 'next-song'
 	SIGNAL_FILTER = 'filter'
 	SIGNAL_GRID_SIZE_TEMP = 'grid-size-temp'
 	SIGNAL_GRID_SIZE = 'grid-size'
@@ -271,7 +271,7 @@ class Toolbar(Gtk.Toolbar):
 		self._connection_button.connect('clicked', self._callback_with_function, self.SIGNAL_CONNECT)
 		self._update_button.connect('clicked', self._callback_with_function, self.SIGNAL_UPDATE)
 		self._playpause_button.connect('clicked', self._callback_with_function, self.SIGNAL_PLAYPAUSE)
-		self._next_button.connect('clicked', self._callback_with_function, self.SIGNAL_NEXT)
+		self._next_button.connect('clicked', self._callback_with_function, self.SIGNAL_NEXT_SONG)
 		self._filter_entry.connect('changed', self._callback_with_function, self.SIGNAL_FILTER, self._filter_entry.get_text)
 		self._grid_size_scale.connect('change-value', self.grid_size_temp_cb)
 		self._grid_size_scale.connect('button-release-event', self.grid_size_cb)

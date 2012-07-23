@@ -97,10 +97,10 @@ class MCGClient:
 		self._add_action(self._playpause)
 
 
-	def next(self):
+	def next_song(self):
 		"""Plays the next album in the current order
 		"""
-		self._add_action(self._next)
+		self._add_action(self._next_song)
 
 
 	def connect_signal(self, signal, callback):
@@ -251,13 +251,10 @@ class MCGClient:
 			self._client.play()
 
 
-	def _next(self):
+	def _next_song(self):
 		"""Action: Performs the real next command.
 		"""
-		song = self._client.currentsong()
-		if song:
-			current_album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
-			# TODO _next()
+		self._client.next()
 
 
 	def _idle(self, modules):
