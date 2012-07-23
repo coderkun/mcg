@@ -311,7 +311,8 @@ class Toolbar(Gtk.Toolbar):
 
 
 	def set_album(self, album, pos):
-		info = "{0} – {1} –  {2} – {3}".format(album.get_tracks()[pos].get_title(), pos+1, album.get_title(), album.get_artist())
+		info = "{0} – {1} ({2}. {3})".format(album.get_artist(), album.get_title(), pos+1, album.get_tracks()[pos].get_title())
+		#info = "{0} – {1} –  {2} – {3}".format(album.get_tracks()[pos].get_title(), pos+1, album.get_title(), album.get_artist())
 		self._track_label.set_text(info)
 
 
