@@ -147,14 +147,15 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._connect_disconnected)
 
 
-	def mcg_status_cb(self, state, album):
+	def mcg_status_cb(self, state, album, pos):
 		if state == 'play':
 			GObject.idle_add(self._toolbar.set_pause)
 		elif state == 'pause' or state == 'stop':
 			GObject.idle_add(self._toolbar.set_play)
 
 		if album:
-			GObject.idle_add(self._cover_panel.set_album, album.get_cover())
+			GObject.idle_add(self._cover_panel.set_album, album)
+			GObject.idle_add(self._toolbar.set_album, album, pos);
 
 
 	def mcg_update_cb(self, albums):
@@ -243,6 +244,11 @@ class Toolbar(Gtk.Toolbar):
 		self.add(self._playpause_button)
 		self._next_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_NEXT)
 		self.add(self._next_button)
+		self.add(Gtk.SeparatorToolItem())
+		self._track_item = Gtk.ToolItem()
+		self._track_label = Gtk.Label("hi")
+		self._track_item.add(self._track_label)
+		self.add(self._track_item)
 		separator = Gtk.SeparatorToolItem()
 		separator.set_draw(False)
 		separator.set_expand(True)
@@ -302,6 +308,11 @@ class Toolbar(Gtk.Toolbar):
 	def lock_playpause(self):
 		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
 		self._playpause_button.set_sensitive(False);
+
+
+	def set_album(self, album, pos):
+		info = "{0} – {1} –  {2} – {3}".format(album.get_tracks()[pos].get_title(), pos+1, album.get_title(), album.get_artist())
+		self._track_label.set_text(info)
 
 
 	def grid_size_temp_cb(self, widget, scroll, value):
@@ -590,6 +601,7 @@ class CoverPanel(Gtk.HPaned):
 			album = albums[hash]
 			file = album.get_cover()
 			if file is None:
+				# TODO Dummy
 				continue
 			pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(file, self._config.grid_item_size, self._config.grid_item_size)
 			if pixbuf is None:
@@ -610,8 +622,10 @@ class CoverPanel(Gtk.HPaned):
 		self._callback(self.SIGNAL_UPDATE_END)
 
 
-	def set_album(self, url):
+	def set_album(self, album):
+		self._cover_image.set_tooltip_text(GObject.markup_escape_text("\n".join([album.get_title(), album.get_artist()])))
 		# Check path
+		url = album.get_cover()
 		if url is not None and url != "":
 			# Load image and draw it
 			self._cover_pixbuf = GdkPixbuf.Pixbuf.new_from_file(url)
