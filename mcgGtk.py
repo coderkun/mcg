@@ -700,6 +700,7 @@ class CoverPanel(Gtk.HPaned):
 
 
 	def cover_grid_click_cb(self, widget, path):
+		path = self._cover_grid_filter.convert_path_to_child_path(path)
 		iter = self._cover_grid_model.get_iter(path)
 		self._callback(self.SIGNAL_PLAY, self._cover_grid_model.get_value(iter, 3))
 
