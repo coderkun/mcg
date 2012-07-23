@@ -208,7 +208,6 @@ class MCGClient:
 				album.add_track(track)
 			except KeyError:
 				pass
-		# TODO Alben sortieren
 		self._callback(self.SIGNAL_UPDATE, self._albums)
 
 
@@ -221,9 +220,11 @@ class MCGClient:
 		state = status['state']
 		song = self._client.currentsong()
 		album = None
+		pos = None
 		if song:
-			album = MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file']))
-		self._callback(self.SIGNAL_STATUS, state, album)
+			album = self._albums[MCGAlbum(song['artist'], song['album'], song['date'], os.path.dirname(song['file'])).get_hash()]
+			pos = int(song['pos'])
+		self._callback(self.SIGNAL_STATUS, state, album, pos)
 
 
 	def _play(self, album):
