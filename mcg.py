@@ -236,7 +236,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			album = None
 			pos = None
 			if song:
-				hash = MCGAlbum.hash(song['artist'], song['album'])
+				hash = MCGAlbum.hash(song['album'], song['date'])
 				if hash in self._albums:
 					album = self._albums[hash]
 				pos = int(song['pos'])
@@ -279,6 +279,9 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				track_ids.append(track_id)
 				self._call('moveid', track_id, len(track_ids)-1)
 			self._call('playid', track_ids[0])
+		# TODO CommandError
+		# except mpd.CommandError as e:
+		#	_callback(SIGNAL_ERROR)
 		except mpd.ConnectionError as e:
 			self._set_connction_status(False, e)
 
@@ -297,19 +300,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			playlist = []
 			for song in self._call('playlistinfo'):
 				try:
-					hash = MCGAlbum.hash(song['artist'], song['album'])
+					hash = MCGAlbum.hash(song['album'], song['date'])
 					if len(playlist) == 0 or playlist[len(playlist)-1].get_hash() != hash:
 						date = ""
 						if 'date' in song:
 							date = song['date']
-						path = ""
-						if 'file' in song:
-							path = os.path.dirname(song['file'])
-						album = MCGAlbum(song['artist'], song['album'], date, path, self._host, self._image_dir)
+						album = MCGAlbum(song['album'], date, self._host, self._image_dir)
 						playlist.append(album)
 					else:
 						album = playlist[len(playlist)-1]
-					track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
+					track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
 					album.add_track(track)
 				except KeyError:
 					pass
@@ -326,19 +326,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		try:
 			for song in self._call('listallinfo'):
 				try:
-					hash = MCGAlbum.hash(song['artist'], song['album'])
+					hash = MCGAlbum.hash(song['album'], song['date'])
 					if hash in self._albums.keys():
 						album = self._albums[hash]
 					else:
 						date = ""
 						if 'date' in song:
 							date = song['date']
-						path = ""
-						if 'file' in song:
-							path = os.path.dirname(song['file'])
-						album = MCGAlbum(song['artist'], song['album'], date, path, self._host, self._image_dir)
+						album = MCGAlbum(song['album'], date, self._host, self._image_dir)
 						self._albums[album.get_hash()] = album
-					track = MCGTrack(song['title'], song['track'], song['time'], song['file'])
+					track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
 					album.add_track(track)
 				except KeyError:
 					pass
@@ -395,17 +392,19 @@ class MCGAlbum:
 	SORT_BY_ARTIST = 'artist'
 	SORT_BY_TITLE = 'title'
 	SORT_BY_YEAR = 'year'
-	_file_names = ['folder', 'cover']
-	_file_exts = ['jpg', 'jpeg', 'png']
+	_FILE_NAMES = ['folder', 'cover']
+	_FILE_EXTS = ['jpg', 'png', 'jpeg']
 
 
-	def __init__(self, artist, title, date, path, host, image_dir):
-		self._artist = artist
-		if type(self._artist) is list:
-			self._artist = self._artist[0]
+	def __init__(self, title, date, host, image_dir):
+		self._artists = []
+		self._pathes = []
+		if type(title) is list:
+			title = title[0]
 		self._title = title
+		if type(date) is list:
+			date = date[0]
 		self._date = date
-		self._path = path
 		self._host = host
 		self._image_dir = image_dir
 		self._tracks = []
@@ -414,8 +413,8 @@ class MCGAlbum:
 		self._set_hash()
 
 
-	def get_artist(self):
-		return self._artist
+	def get_artists(self):
+		return self._artists
 
 
 	def get_title(self):
@@ -433,6 +432,12 @@ class MCGAlbum:
 	def add_track(self, track):
 		if track not in self._tracks:
 			self._tracks.append(track)
+			for artist in track.get_artists():
+				if artist not in self._artists:
+					self._artists.append(artist)
+			path = os.path.dirname(track.get_file())
+			if path not in self._pathes:
+				self._pathes.append(path)
 
 
 	def get_tracks(self):
@@ -445,10 +450,12 @@ class MCGAlbum:
 		return self._cover
 
 
-	def hash(artist, title):
-		if type(artist) is list:
-			artist = artist[0]
-		return md5(artist.encode('utf-8')+title.encode('utf-8')).hexdigest()
+	def hash(title, date):
+		if type(title) is list:
+			title = title[0]
+		if type(date) is list:
+			date = date[0]
+		return md5(title.encode('utf-8')+date.encode('utf-8')).hexdigest()
 
 
 	def get_hash(self):
@@ -456,7 +463,7 @@ class MCGAlbum:
 
 
 	def filter(self, filter_string):
-		values = [self._artist, self._title, self._date]
+		values = self._artists + [self._title, self._date]
 		values.extend(map(lambda track: track.get_title(), self._tracks))
 		for value in values:
 			if filter_string.lower() in value.lower():
@@ -467,12 +474,11 @@ class MCGAlbum:
 	def compare(album1, album2, criterion=None):
 		if criterion == None:
 			criterion = MCGAlbum.SORT_BY_TITLE
-
 		if criterion == MCGAlbum.SORT_BY_ARTIST:
-			value_function = "get_artist"
-		if criterion == MCGAlbum.SORT_BY_TITLE:
+			value_function = "get_artists"
+		elif criterion == MCGAlbum.SORT_BY_TITLE:
 			value_function = "get_title"
-		if criterion == MCGAlbum.SORT_BY_YEAR:
+		elif criterion == MCGAlbum.SORT_BY_YEAR:
 			value_function = "get_date"
 
 		if getattr(album1, value_function)() < getattr(album2, value_function)():
@@ -484,14 +490,14 @@ class MCGAlbum:
 
 
 	def _set_hash(self):
-		self._hash = MCGAlbum.hash(self._artist, self._title)
+		self._hash = MCGAlbum.hash(self._title, self._date)
 
 
 	def _find_cover(self):
-		names = list(self._file_names)
+		names = list(MCGAlbum._FILE_NAMES)
 		names.append(self._title)
-		names.append(' - '.join([self._artist, self._title]))
-		
+		names.append(' - '.join([self._artists[0], self._title]))
+
 		if self._host == "localhost" or self._host == "127.0.0.1":
 			self._cover = self._find_cover_local(names)
 		else:
@@ -500,38 +506,51 @@ class MCGAlbum:
 
 
 	def _find_cover_web(self, names):
-		for name in names:
-			for ext in self._file_exts:
-				url = '/'.join([
-					'http:/',
-					self._host,
-					urllib.request.quote(self._path),
-					urllib.request.quote('.'.join([name, ext]))
-				])
-				request = urllib.request.Request(url)
-				try:
-					response = urllib.request.urlopen(request)
-					return url
-				except urllib.error.URLError as e:
-					pass
+		for path in self._pathes:
+			for name in names:
+				for ext in self._FILE_EXTS:
+					url = '/'.join([
+						'http:/',
+						self._host,
+						urllib.request.quote(path),
+						urllib.request.quote('.'.join([name, ext]))
+					])
+					request = urllib.request.Request(url)
+					try:
+						response = urllib.request.urlopen(request)
+						return url
+					except urllib.error.URLError as e:
+						pass
 
 
 	def _find_cover_local(self, names):
-		for name in names:
-			for ext in self._file_exts:
-				filename = os.path.join(self._image_dir, self._path, '.'.join([name, ext]))
-				if os.path.isfile(filename):
-					return filename
+		for path in self._pathes:
+			for name in names:
+				for ext in self._FILE_EXTS:
+					filename = os.path.join(self._image_dir, path, '.'.join([name, ext]))
+					if os.path.isfile(filename):
+						return filename
 
 
 
 
 class MCGTrack:
-	def __init__(self, title, track, time, file):
+	def __init__(self, artists, title, track, time, file):
+		if type(artists) is not list:
+			artists = [artists]
+		self._artists = artists
+		if type(title) is list:
+			title = title[0]
 		self._title = title
+		if type(track) is list:
+			track = track[0]
 		self._track = track
 		self._time = time
 		self._file = file
+
+
+	def get_artists(self):
+		return self._artists
 
 
 	def get_title(self):
