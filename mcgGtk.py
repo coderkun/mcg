@@ -960,7 +960,14 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		cache = mcg.MCGCache(host, size)
 		for album in playlist:
 			for track in album.get_tracks():
-				self._playlist_list_model.append([album.get_artist(), album.get_title(), track.get_track(), track.get_title(), album.get_date(), album.get_hash()])
+				self._playlist_list_model.append([
+					', '.join(track.get_artists()),
+					album.get_title(),
+					track.get_track(),
+					track.get_title(),
+					album.get_date(),
+					album.get_hash()
+				])
 			pixbuf = None
 			if album.get_cover() is not None:
 				try:
@@ -970,7 +977,16 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 			if pixbuf is None:
 				pixbuf = self._playlist_grid.render_icon_pixbuf(Gtk.STOCK_MISSING_IMAGE, Gtk.IconSize.DIALOG)
 			if pixbuf is not None:
-				self._playlist_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_date(), album.get_artist()])), album.get_hash()])
+				self._playlist_grid_model.append([
+					pixbuf,
+					album.get_title(),
+					GObject.markup_escape_text("\n".join([
+						album.get_title(),
+						album.get_date(),
+						', '.join(album.get_artists())
+					])),
+					album.get_hash()
+				])
 
 		Gdk.threads_enter()
 		self._playlist_grid.set_model(self._playlist_grid_filter)
@@ -1001,7 +1017,14 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 			album = albums[hash]
 			pixbuf = None
 			for track in album.get_tracks():
-				self._library_list_model.append([album.get_artist(), album.get_title(), track.get_track(), track.get_title(), album.get_date(), hash])
+				self._library_list_model.append([
+					', '.join(track.get_artists()),
+					album.get_title(),
+					track.get_track(),
+					track.get_title(),
+					album.get_date(),
+					hash
+				])
 			try:
 				pixbuf = self._load_thumbnail(cache, album, size)
 			except Exception as e:
@@ -1010,7 +1033,16 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 				pixbuf = self._library_grid.render_icon_pixbuf(Gtk.STOCK_MISSING_IMAGE, Gtk.IconSize.DIALOG)
 			if pixbuf is not None:
 				self._grid_pixbufs[album.get_hash()] = pixbuf
-				self._library_grid_model.append([pixbuf, album.get_title(), GObject.markup_escape_text("\n".join([album.get_title(), album.get_date(), album.get_artist()])), hash])
+				self._library_grid_model.append([
+					pixbuf,
+					album.get_title(),
+					GObject.markup_escape_text("\n".join([
+						album.get_title(),
+						album.get_date(),
+						', '.join(album.get_artists())
+					])),
+					hash
+				])
 
 			i += 1
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
