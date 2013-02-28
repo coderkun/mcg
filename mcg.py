@@ -612,6 +612,12 @@ class MCGProfileConfig(MCGConfig):
 		self._profiles.append(profile)
 
 
+	def delete_profile(self, profile):
+		if profile in self._profiles:
+			self._profiles.remove(profile)
+			self._force_default_profile()
+
+
 	def get_profiles(self):
 		return self._profiles
 
@@ -630,6 +636,7 @@ class MCGProfileConfig(MCGConfig):
 					if self.has_option(section, attribute):
 						profile.set(attribute, self.get(section, attribute))
 				self._profiles.append(profile)
+		self._force_default_profile()
 
 
 	def save(self):
@@ -645,6 +652,11 @@ class MCGProfileConfig(MCGConfig):
 			for attribute in profile.get_attributes():
 				self.set(section, attribute, str(profile.get(attribute)))
 		super().save()
+
+
+	def _force_default_profile(self):
+		if len(self._profiles) == 0:
+			self._profiles.append(MCGProfile())
 
 
 
@@ -679,6 +691,10 @@ class MCGProfile(MCGConfigurable):
 		self.set('password', "")
 		self.set('image_dir', "")
 		self.set('tags', "")
+
+
+	def __str__(self):
+		return self.get("host")
 
 
 	def get_tags(self):
