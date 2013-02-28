@@ -468,13 +468,29 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		self._table = Gtk.Table(6, 2, False)
 		vbox.pack_start(self._table, True, False, 0)
 		# Profile
+		profile_box = Gtk.HBox()
+		self._table.attach(profile_box, 0, 2, 0, 1)
+		# Profile Selection
 		self._profile_combo = Gtk.ComboBox.new_with_model(self._profiles)
 		self._profile_combo.set_entry_text_column(0)
 		self._profile_combo.connect("changed", self.on_profile_combo_changed)
 		renderer = Gtk.CellRendererText()
 		self._profile_combo.pack_start(renderer, True)
 		self._profile_combo.add_attribute(renderer, "text", 0)
-		self._table.attach(self._profile_combo, 0, 2, 0, 1)
+		profile_box.pack_start(self._profile_combo, True, True, 0)
+		# Profile Management
+		profile_button_box = Gtk.HBox()
+		profile_box.pack_end(profile_button_box, False, True, 0)
+		# New Profile
+		self._profile_new_button = Gtk.Button()
+		self._profile_new_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ADD, Gtk.IconSize.BUTTON))
+		self._profile_new_button.connect('clicked', self.on_profile_new_clicked)
+		profile_button_box.add(self._profile_new_button)
+		# Delete Profile
+		self._profile_delete_button = Gtk.Button()
+		self._profile_delete_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_DELETE, Gtk.IconSize.BUTTON))
+		self._profile_delete_button.connect('clicked', self.on_profile_delete_clicked)
+		profile_button_box.add(self._profile_delete_button)
 		# Host
 		host_label = Gtk.Label("Host:")
 		host_label.set_alignment(0, 0.5)
@@ -515,23 +531,34 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 
 		# Actions
 		self._load_config()
-		GObject.idle_add(self._profile_combo.set_active, config.last_profile)
+		GObject.idle_add(self._select_last_profile, config.last_profile)
 
 
 	def on_profile_combo_changed(self, combo):
-		index = combo.get_active()
-		if index < 0:
-			return
-		profiles = self._config.get_profiles()
-		if index >= len(profiles):
-			return
-		self._profile = profiles[index]
-		self.set_host(self._profile.get('host'))
-		self.set_port(int(self._profile.get('port')))
-		self.set_password(self._profile.get('password'))
-		self.set_image_dir(self._profile.get('image_dir'))
-		self._autoconnect_button.set_active(ConnectionPanel.TAG_AUTOCONNECT in self._profile.get_tags())
-		self._callback(ConnectionPanel.SIGNAL_PROFILE_CHANGED, index, self._profile)
+		(index, profile) = self._get_selected_profile()
+		if profile is not None:
+			self._profile = profile
+			self.set_host(self._profile.get('host'))
+			self.set_port(int(self._profile.get('port')))
+			self.set_password(self._profile.get('password'))
+			self.set_image_dir(self._profile.get('image_dir'))
+			self._autoconnect_button.set_active(ConnectionPanel.TAG_AUTOCONNECT in self._profile.get_tags())
+			self._callback(ConnectionPanel.SIGNAL_PROFILE_CHANGED, index, self._profile)
+
+
+	def on_profile_new_clicked(self, widget):
+		profile = mcg.MCGProfile()
+		self._config.add_profile(profile)
+		self._reload_config()
+		self._profile_combo.set_active(len(self._profiles)-1)
+
+
+	def on_profile_delete_clicked(self, widget):
+		(index, profile) = self._get_selected_profile()
+		if profile is not None:
+			self._config.delete_profile(profile)
+			self._reload_config()
+			self._profile_combo.set_active(0)
 
 
 	def on_host_entry_outfocused(self, widget, event):
@@ -606,11 +633,32 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 	def _load_config(self):
 		self._config.load()
 		for profile in self._config.get_profiles():
-			self._profiles.append([profile.get('host')])
+			self._profiles.append([profile.__str__()])
+
+
+	def _reload_config(self):
+		self._profiles.clear()
+		for profile in self._config.get_profiles():
+			self._profiles.append([profile.__str__()])
 
 
 	def set_sensitive(self, sensitive):
 		self._table.set_sensitive(sensitive)
+
+
+	def _get_selected_profile(self):
+		index = self._profile_combo.get_active()
+		if index >= 0:
+			profiles = self._config.get_profiles()
+			if index < len(profiles):
+				return (index, profiles[index])
+		return (-1, None)
+
+
+	def _select_last_profile(self, index):
+		if len(self._profiles) <= index:
+			index = 0
+		self._profile_combo.set_active(index)
 
 
 
