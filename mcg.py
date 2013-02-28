@@ -6,13 +6,16 @@
 
 
 
-import mpd
-import os
-import threading
-import queue
-from hashlib import md5
-import urllib.request
 import configparser
+import glob
+import os
+import queue
+import threading
+import urllib.request
+from hashlib import md5
+
+import mpd
+
 
 
 
@@ -530,6 +533,16 @@ class MCGAlbum:
 					filename = os.path.join(self._image_dir, path, '.'.join([name, ext]))
 					if os.path.isfile(filename):
 						return filename
+		return self._find_cover_local_fallback()
+
+
+	def _find_cover_local_fallback(self):
+		for path in self._pathes:
+			for ext in self._FILE_EXTS:
+				filename = os.path.join(self._image_dir, path, "*."+ext)
+				files = glob.glob(filename)
+				if len(files) > 0:
+					return files[0]
 
 
 
