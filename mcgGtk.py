@@ -6,11 +6,15 @@
 
 
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
-import mcg
+import os
+import time
 import urllib
 from threading import Thread
-import os
+
+import mcg
+from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
+
+
 
 
 class MCGGtk(Gtk.Window):
@@ -24,11 +28,14 @@ class MCGGtk(Gtk.Window):
 		self._fullscreened = False
 
 		# Widgets
-		#self._main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
 		self._main_box = Gtk.VBox()
 		self.add(self._main_box)
+		self._bar_box = Gtk.VBox()
 		self._toolbar = Toolbar(self._config.list_mode, self._config.item_size)
-		self._main_box.pack_start(self._toolbar, False, False, 0)
+		self._bar_box.pack_start(self._toolbar, True, True, 0)
+		self._infobar = InfoBar()
+		self._infobar.show()
+		self._main_box.pack_start(self._bar_box, False, False, 0)
 		self._connection_panel = ConnectionPanel(self._config)
 		self._main_box.pack_end(self._connection_panel, True, True, 0)
 		self._cover_panel = CoverPanel(self._config)
@@ -54,6 +61,7 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_SORT_TYPE, self.on_toolbar_sort_type)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE_CHANGE, self.on_toolbar_grid_size_change)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_GRID_SIZE_CHANGED, self.on_toolbar_grid_size_changed)
+		self._infobar.connect_signal(InfoBar.SIGNAL_CLOSE, self.on_infobar_close)
 		self._connection_panel.connect_signal(ConnectionPanel.SIGNAL_PROFILE_CHANGED, self.on_connection_profile_changed)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_ALBUMS_SET, self.on_albums_set)
 		self._cover_panel.connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
@@ -121,8 +129,13 @@ class MCGGtk(Gtk.Window):
 
 
 	def on_toolbar_grid_size_changed(self, size):
-		#self._cover_panel.set_grid_size(size)
 		self._cover_panel.redraw()
+
+
+	# Infobar callbacks
+
+	def on_infobar_close(self):
+		self._hide_message()
 
 
 	# Connection Panel callbacks
@@ -157,8 +170,7 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._mcg.get_status)
 		else:
 			if error:
-				dialog = ErrorDialog(self, error)
-				dialog.show_dialog()
+				self._show_error(str(error))
 			GObject.idle_add(self._connect_disconnected)
 
 
@@ -167,9 +179,12 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._toolbar.set_pause)
 		elif state == 'pause' or state == 'stop':
 			GObject.idle_add(self._toolbar.set_play)
-
 		if album:
 			GObject.idle_add(self._cover_panel.set_album, album)
+		if error is None:
+			self._hide_message()
+		else:
+			self._show_error(error)
 
 
 	def on_mcg_load_playlist(self, playlist, error):
@@ -181,8 +196,7 @@ class MCGGtk(Gtk.Window):
 
 
 	def on_mcg_error(self, error):
-		# TODO on_mcg_error()
-		pass
+		self._show_error(str(error))
 
 
 	# Private methods
@@ -255,35 +269,16 @@ class MCGGtk(Gtk.Window):
 				self._cover_panel.set_fullscreen_mode(False);
 
 
+	def _show_error(self, message):
+		self._infobar.show_error(message)
+		if len(self._bar_box.get_children()) > 1:
+			self._bar_box.remove(self._infobar)
+		self._bar_box.pack_end(self._infobar, False, True, 0)
 
 
-class ErrorDialog(Gtk.MessageDialog):
-
-
-	def __init__(self, parent, error):
-		Gtk.MessageDialog.__init__(
-			self,
-			parent,
-			0,
-			Gtk.MessageType.ERROR,
-			Gtk.ButtonsType.OK,
-			type(error).__name__
-		)
-		self.format_secondary_text(error)
-		self.set_modal(True)
-		self.connect('response', self._handle_response)
-
-
-	def show_dialog(self):
-		GObject.idle_add(self._show_dialog)
-
-
-	def _show_dialog(self):
-		self.show_all()
-
-
-	def _handle_response(self, *args):
-		self.destroy()
+	def _hide_message(self):
+		if len(self._bar_box.get_children()) > 1:
+			self._bar_box.remove(self._infobar)
 
 
 
@@ -452,6 +447,44 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		if data_function is not None:
 			data = {data_function()}
 		self._callback(signal, *data)
+
+
+
+
+class InfoBar(mcg.MCGBase, Gtk.InfoBar):
+	SIGNAL_CLOSE = 'close'
+	RESPONSE_CLOSE = 1
+
+
+	def __init__(self):
+		mcg.MCGBase.__init__(self)
+		Gtk.InfoBar.__init__(self)
+	
+		# Widgets
+		self.add_button(Gtk.STOCK_CLOSE, InfoBar.RESPONSE_CLOSE)
+		self._message_label = Gtk.Label()
+		self._message_label.show()
+		self.get_content_area().add(self._message_label)
+
+		# Signals
+		self.connect('close', self.on_response, InfoBar.RESPONSE_CLOSE)
+		self.connect('response', self.on_response)
+
+
+	def on_response(self, widget, response):
+		if response == InfoBar.RESPONSE_CLOSE:
+			self._callback(InfoBar.SIGNAL_CLOSE)
+
+
+	def show_error(self, message):
+		self.set_message_type(Gtk.MessageType.ERROR)
+		self._message_label.set_text(message)
+		#Thread(target=self._wait_and_close).start()
+
+
+	def _wait_and_close(self):
+		time.sleep(5)
+		self._callback(InfoBar.SIGNAL_CLOSE)
 
 
 
@@ -639,13 +672,13 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 	def _load_config(self):
 		self._config.load()
 		for profile in self._config.get_profiles():
-			self._profiles.append([profile.__str__()])
+			self._profiles.append([str(profile)])
 
 
 	def _reload_config(self):
 		self._profiles.clear()
 		for profile in self._config.get_profiles():
-			self._profiles.append([profile.__str__()])
+			self._profiles.append([str(profile)])
 
 
 	def set_sensitive(self, sensitive):
