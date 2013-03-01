@@ -73,6 +73,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		MCGBase.__init__(self)
 		mpd.MPDClient.__init__(self)
 		self._connected = False
+		self._state = None
 		self._client_lock = threading.Lock()
 		self._client_stop = threading.Event()
 		self._actions = queue.Queue()
@@ -244,6 +245,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 					album = self._albums[hash]
 				pos = int(song['pos'])
 
+			self._state = state
 			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, None)
 		except mpd.ConnectionError as e:
 			self._set_connction_status(False, e)
@@ -267,21 +269,15 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def _play_album(self, album):
-		"""Action: Performs the real play command.
-		"""
-		if not album in self._albums:
-			# TODO print
-			print("album not found")
+		if album not in self._albums:
 			return
-
 		try:
-			self._call('clear')
 			track_ids = []
 			for track in self._albums[album].get_tracks():
 				track_id = self._call('addid', track.get_file())
 				track_ids.append(track_id)
-				self._call('moveid', track_id, len(track_ids)-1)
-			self._call('playid', track_ids[0])
+			if self._state != 'play':
+				self._call('playid', track_ids[0])
 		# TODO CommandError
 		# except mpd.CommandError as e:
 		#	_callback(SIGNAL_ERROR)
