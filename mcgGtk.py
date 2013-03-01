@@ -62,6 +62,7 @@ class MCGGtk(Gtk.Window):
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.on_mcg_status)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
 		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_ERROR, self.on_mcg_error)
 
 
 	def on_resize(self, widget, event):
@@ -177,6 +178,11 @@ class MCGGtk(Gtk.Window):
 
 	def on_mcg_load_albums(self, albums, error):
 		self._cover_panel.set_albums(self._connection_panel.get_host(), albums)
+
+
+	def on_mcg_error(self, error):
+		# TODO on_mcg_error()
+		pass
 
 
 	# Private methods
