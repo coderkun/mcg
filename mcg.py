@@ -65,6 +65,8 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	SIGNAL_LOAD_ALBUMS = 'load-albums'
 	# Signal: load playlist
 	SIGNAL_LOAD_PLAYLIST = 'load-playlist'
+	# Signal: error
+	SIGNAL_ERROR = 'error'
 
 
 	def __init__(self):
@@ -210,20 +212,22 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			self._call('connect', host, port)
 			if password:
 				self._call('password', password)
-			self._set_connction_status(True, None)
+			self._set_connection_status(True, None)
+		except mpd.CommandError as e:
+			self._callback(MCGClient.SIGNAL_ERROR, e)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 		except OSError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	def _disconnect(self):
 		try:
 			self._call('noidle')
 			self._call('disconnect')
-			self._set_connction_status(False, None)
+			self._set_connection_status(False, None)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	# Status commands
@@ -232,9 +236,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		"""Action: Performs the real status determination
 		"""
 		try:
+			# current status
 			self._call('noidle')
 			status = self._call('status')
 			state = status['state']
+			error = None
+			if 'error' in status:
+				error = status['error']
+			# current song
 			self._call('noidle')
 			song = self._call('currentsong')
 			album = None
@@ -246,9 +255,9 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				pos = int(song['pos'])
 
 			self._state = state
-			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, None)
+			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, error)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	# Playback option commants
@@ -259,13 +268,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _playpause(self):
 		"""Action: Performs the real play/pause command.
 		"""
-		status = self._call('status')
-		state = status['state']
+		try:
+			status = self._call('status')
+			state = status['state']
 		
-		if state == 'play':
-			self._call('pause')
-		else:
-			self._call('play')
+			if state == 'play':
+				self._call('pause')
+			else:
+				self._call('play')
+		except mpd.ConnectionError as e:
+			self._set_connection_status(False, e) 
 
 
 	def _play_album(self, album):
@@ -278,18 +290,17 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				track_ids.append(track_id)
 			if self._state != 'play':
 				self._call('playid', track_ids[0])
-		# TODO CommandError
-		# except mpd.CommandError as e:
-		#	_callback(SIGNAL_ERROR)
+		except mpd.CommandError as e:
+			self._callback(MCGClient.SIGNAL_ERROR, e)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	def _stop(self):
 		try:
 			self._call('stop')
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	# Playlist commands
@@ -314,7 +325,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 					pass
 			self._callback(MCGClient.SIGNAL_LOAD_PLAYLIST, playlist, None)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	# Database commands
@@ -340,16 +351,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 					pass
 			self._callback(MCGClient.SIGNAL_LOAD_ALBUMS, self._albums, None)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 	def _update(self):
 		try:
 			self._call('update')
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
-	def _set_connction_status(self, status, error):
+	def _set_connection_status(self, status, error):
 		self._connected = status
 		self._callback(MCGClient.SIGNAL_CONNECT, status, error)
 		if not status:
@@ -380,9 +391,9 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				self.load_playlist()
 				self.get_status()
 		except ConnectionResetError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 		except mpd.ConnectionError as e:
-			self._set_connction_status(False, e)
+			self._set_connection_status(False, e)
 
 
 
