@@ -178,9 +178,13 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			self._worker.start()
 		else:
 			try:
-				self.noidle()
+				self._call('noidle')
+			except BrokenPipeError:
+				pass
+			except ConnectionResetError as e:
+				self._set_connection_status(False, e)
 			except mpd.ConnectionError as e:
-				self._callback(MCGClient.SIGNAL_CONNECT, False, e)
+				self._set_connection_status(False, e)
 
 
 	def _work(self, action):
@@ -214,7 +218,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				self._call('password', password)
 			self._set_connection_status(True, None)
 		except mpd.CommandError as e:
-			self._callback(MCGClient.SIGNAL_ERROR, e)
+			self._set_connection_status(False, e)
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 		except OSError as e:
@@ -226,6 +230,10 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			self._call('noidle')
 			self._call('disconnect')
 			self._set_connection_status(False, None)
+		except BrokenPipeError:
+			pass
+		except ConnectionResetError as e:
+			self._set_connection_status(False, e)
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 
@@ -256,6 +264,10 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 			self._state = state
 			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, error)
+		except BrokenPipeError:
+			pass
+		except ConnectionResetError as e:
+			self._set_connection_status(False, e)
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 
@@ -390,6 +402,8 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				self.load_albums()
 				self.load_playlist()
 				self.get_status()
+		except BrokenPipeError:
+			pass
 		except ConnectionResetError as e:
 			self._set_connection_status(False, e)
 		except mpd.ConnectionError as e:
