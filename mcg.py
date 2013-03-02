@@ -127,6 +127,9 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 	# Playback option commands
 
+	def set_volume(self, volume):
+		self._add_action(self._set_volume, volume)
+
 
 	# Playback control commands
 
@@ -256,6 +259,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			self._call('noidle')
 			status = self._call('status')
 			state = status['state']
+			volume = int(status['volume'])
 			error = None
 			if 'error' in status:
 				error = status['error']
@@ -271,7 +275,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				pos = int(song['pos'])
 
 			self._state = state
-			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, error)
+			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, volume, error)
 		except BrokenPipeError:
 			pass
 		except ConnectionResetError as e:
@@ -281,6 +285,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	# Playback option commants
+
+	def _set_volume(self, volume):
+		try:
+			self._call('setvol', volume)
+		except mpd.CommandError as e:
+			self._callback(MCGClient.SIGNAL_ERROR, e)
+		except mpd.ConnectionError as e:
+			self._set_connection_status(False, e) 
 
 
 	# Playback control commands
@@ -398,8 +410,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			if 'player' in modules:
 				self.get_status()
 			if 'mixer' in modules:
-				# TODO mixer
-				print("not implemented: idle mixer")
+				self.get_status()
 			if 'playlist' in modules:
 				self.load_playlist()
 			if 'database' in modules:
