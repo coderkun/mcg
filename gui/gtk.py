@@ -59,6 +59,7 @@ class MCGGtk(Gtk.Window):
 		self.connect('delete-event', self.on_destroy)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.on_toolbar_connect)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_UPDATE, self.on_toolbar_update)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_SET_VOLUME, self.on_toolbar_set_volume)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.on_toolbar_playpause)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_LIST_MODE, self.on_toolbar_list_mode)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_FILTER, self.on_toolbar_filter)
@@ -106,6 +107,10 @@ class MCGGtk(Gtk.Window):
 
 	def on_toolbar_update(self):
 		self._mcg.update()
+
+
+	def on_toolbar_set_volume(self, volume):
+		self._mcg.set_volume(volume)
 
 
 	def on_toolbar_playpause(self):
@@ -179,13 +184,18 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._connect_disconnected)
 
 
-	def on_mcg_status(self, state, album, pos, error):
+	def on_mcg_status(self, state, album, pos, volume, error):
+		# State
 		if state == 'play':
 			GObject.idle_add(self._toolbar.set_pause)
 		elif state == 'pause' or state == 'stop':
 			GObject.idle_add(self._toolbar.set_play)
+		# Album
 		if album:
 			GObject.idle_add(self._cover_panel.set_album, album)
+		# Volume
+		GObject.idle_add(self._toolbar.set_volume, volume)
+		# Error
 		if error is None:
 			self._hide_message()
 		else:
@@ -291,6 +301,7 @@ class MCGGtk(Gtk.Window):
 class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	SIGNAL_CONNECT = 'connect'
 	SIGNAL_UPDATE = 'update'
+	SIGNAL_SET_VOLUME = 'set-volume'
 	SIGNAL_PLAYPAUSE = 'playpause'
 	SIGNAL_LIST_MODE = 'mode'
 	SIGNAL_FILTER = 'filter'
@@ -303,6 +314,8 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	def __init__(self, list_mode, item_size):
 		mcg.MCGBase.__init__(self)
 		Gtk.Toolbar.__init__(self)
+		self._changing_volume = False
+		self._setting_volume = False
 
 		# Widgets
 		self._connection_button = Gtk.ToolButton(Gtk.STOCK_DISCONNECT)
@@ -311,6 +324,11 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._update_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
 		self._update_button.set_sensitive(False)
 		self.add(self._update_button)
+		self._volume_button = Gtk.VolumeButton()#None, 0, 100, 1)
+		self._volume_button.set_sensitive(False)
+		tool_item = Gtk.ToolItem()
+		tool_item.add(self._volume_button)
+		self.add(tool_item)
 		self._playpause_button = Gtk.ToolButton(Gtk.STOCK_MEDIA_PLAY)
 		self._playpause_button.set_sensitive(False)
 		self.add(self._playpause_button)
@@ -321,12 +339,12 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		separator.set_draw(False)
 		separator.set_expand(True)
 		self.add(separator)
-		self._filter_item = Gtk.ToolItem()
+		tool_item = Gtk.ToolItem()
 		self._filter_entry = Gtk.SearchEntry()
 		self._filter_entry.set_sensitive(False)
-		self._filter_item.add(self._filter_entry)
-		self.add(self._filter_item)
-		self._grid_size_item = Gtk.ToolItem()
+		tool_item.add(self._filter_entry)
+		self.add(tool_item)
+		tool_item = Gtk.ToolItem()
 		self._grid_size_scale = Gtk.HScale()
 		self._grid_size_scale.set_range(100,600)
 		self._grid_size_scale.set_round_digits(0)
@@ -334,8 +352,8 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._grid_size_scale.set_size_request(100, -1)
 		self._grid_size_scale.set_draw_value(False)
 		self._grid_size_scale.set_sensitive(False)
-		self._grid_size_item.add(self._grid_size_scale)
-		self.add(self._grid_size_item)
+		tool_item.add(self._grid_size_scale)
+		self.add(tool_item)
 		# Library grid menu
 		self._library_grid_menu = Gtk.Menu()
 		self._library_grid_menu.show()
@@ -377,11 +395,23 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		# Signals
 		self._connection_button.connect('clicked', self.callback_with_function, self.SIGNAL_CONNECT)
 		self._update_button.connect('clicked', self.callback_with_function, self.SIGNAL_UPDATE)
+		self._volume_button.connect('value-changed', self.on_volume_changed)
+		self._volume_button.connect('button-press-event', self.on_volume_set_active, True)
+		self._volume_button.connect('button-release-event', self.on_volume_set_active, False)
 		self._playpause_button.connect('clicked', self.callback_with_function, self.SIGNAL_PLAYPAUSE)
 		self._list_mode_button.connect('clicked', self.callback_with_function, self.SIGNAL_LIST_MODE)
 		self._filter_entry.connect('changed', self.callback_with_function, self.SIGNAL_FILTER, self._filter_entry.get_text)
 		self._grid_size_scale.connect('change-value', self.on_grid_size_change)
 		self._grid_size_scale.connect('button-release-event', self.on_grid_size_changed)
+
+
+	def on_volume_changed(self, widget, value):
+		if not self._setting_volume:
+			self._callback(self.SIGNAL_SET_VOLUME, int(value*100))
+
+
+	def on_volume_set_active(self, widget, event, active):
+		self._changing_volume = active
 
 
 	def on_grid_size_change(self, widget, scroll, value):
@@ -414,6 +444,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	def connected(self):
 		self._connection_button.set_stock_id(Gtk.STOCK_CONNECT)
 		self._update_button.set_sensitive(True)
+		self._volume_button.set_sensitive(True)
 		self._playpause_button.set_sensitive(True)
 		self._list_mode_button.set_sensitive(True)
 		self._filter_entry.set_sensitive(True)
@@ -424,11 +455,19 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	def disconnected(self):
 		self._connection_button.set_stock_id(Gtk.STOCK_DISCONNECT)
 		self._update_button.set_sensitive(False)
+		self._volume_button.set_sensitive(False)
 		self._playpause_button.set_sensitive(False)
 		self._list_mode_button.set_sensitive(False)
 		self._filter_entry.set_sensitive(False)
 		self._grid_size_scale.set_sensitive(False)
 		self._menu_button.set_sensitive(False)
+
+
+	def set_volume(self, volume):
+		if not self._changing_volume:
+			self._setting_volume = True
+			self._volume_button.set_value(volume / 100)
+			self._setting_volume = False
 
 
 	def set_play(self):
