@@ -219,10 +219,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		try:
 			self._call('connect', host, port)
 			if password:
-				self._call('password', password)
-			self._set_connection_status(True, None)
+				try:
+					self._call('password', password)
+				except mpd.CommandError as e:
+					self._disconnect()
+					raise e
+			self._set_connection_status(True)
 		except mpd.CommandError as e:
-			self._set_connection_status(False, e)
+			self._callback(MCGClient.SIGNAL_ERROR, e)
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 		except OSError as e:
@@ -233,7 +237,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		try:
 			self._call('noidle')
 			self._call('disconnect')
-			self._set_connection_status(False, None)
+			self._set_connection_status(False)
 		except BrokenPipeError:
 			pass
 		except ConnectionResetError as e:
@@ -376,7 +380,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 
-	def _set_connection_status(self, status, error):
+	def _set_connection_status(self, status, error=None):
 		self._connected = status
 		self._callback(MCGClient.SIGNAL_CONNECT, status, error)
 		if not status:
