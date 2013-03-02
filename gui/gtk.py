@@ -192,6 +192,7 @@ class MCGGtk(Gtk.Window):
 			GObject.idle_add(self._toolbar.set_play)
 		# Album
 		if album:
+			GObject.idle_add(self._toolbar.set_album, album, pos);
 			GObject.idle_add(self._cover_panel.set_album, album)
 		# Volume
 		GObject.idle_add(self._toolbar.set_volume, volume)
@@ -318,8 +319,10 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._setting_volume = False
 
 		# Widgets
+		# Connection
 		self._connection_button = Gtk.ToolButton(Gtk.STOCK_DISCONNECT)
 		self.add(self._connection_button)
+		# Playback
 		self.add(Gtk.SeparatorToolItem())
 		self._update_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
 		self._update_button.set_sensitive(False)
@@ -335,6 +338,21 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._list_mode_button = Gtk.ToggleToolButton(Gtk.STOCK_PAGE_SETUP)
 		self._list_mode_button.set_sensitive(False)
 		self.add(self._list_mode_button)
+		# Info
+		self.add(Gtk.SeparatorToolItem())
+		tool_item = Gtk.ToolItem()
+		info_box = Gtk.VBox()
+		self._info_title_label = Gtk.Label()
+		self._info_title_label.set_justify(Gtk.Justification.LEFT)
+		self._info_title_label.set_alignment(0, 0)
+		info_box.pack_start(self._info_title_label, False, False, 0)
+		self._info_artist_label = Gtk.Label()
+		self._info_artist_label.set_justify(Gtk.Justification.LEFT)
+		self._info_artist_label.set_alignment(0, 0)
+		info_box.pack_end(self._info_artist_label, True, False, 0)
+		tool_item.add(info_box)
+		self.add(tool_item)
+		# Library Settings
 		separator = Gtk.SeparatorToolItem()
 		separator.set_draw(False)
 		separator.set_expand(True)
@@ -484,6 +502,11 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 
 	def get_list_mode(self):
 		return self._list_mode_button.get_active()
+
+
+	def set_album(self, album, pos):
+		self._info_title_label.set_text("{} ({})".format(album.get_title(), album.get_date()))
+		self._info_artist_label.set_text(', '.join(album.get_artists()))
 
 
 	def callback_with_function(self, widget, signal, data_function=None):
