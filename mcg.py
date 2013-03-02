@@ -272,7 +272,12 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				hash = MCGAlbum.hash(song['album'], song['date'])
 				if hash in self._albums:
 					album = self._albums[hash]
-				pos = int(song['pos'])
+				pos = song['track']
+				if type(pos) is list:
+					pos = pos[0]
+				if '/' in pos:
+					pos = pos[0: pos.index('/')]
+				pos = int(pos) - 1
 
 			self._state = state
 			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, volume, error)
