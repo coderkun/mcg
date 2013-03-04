@@ -155,6 +155,11 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		self._add_action(self._load_playlist)
 
 
+	def clear_playlist(self):
+		"""Clear the current playlist"""
+		self._add_action(self._clear_playlist)
+
+
 	# Database commands
 
 	def load_albums(self):
@@ -361,6 +366,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				except KeyError:
 					pass
 			self._callback(MCGClient.SIGNAL_LOAD_PLAYLIST, playlist, None)
+		except mpd.ConnectionError as e:
+			self._set_connection_status(False, e)
+
+
+	def _clear_playlist(self):
+		"""Action: Performs the real clearing of the current
+		playlist.
+		"""
+		try:
+			self._call('clear')
 		except mpd.ConnectionError as e:
 			self._set_connection_status(False, e)
 
