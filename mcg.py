@@ -29,18 +29,20 @@ class MCGBase():
 
 
 	def connect_signal(self, signal, callback):
-		"""Connects a callback function to a signal (event).
+		"""Connect a callback function to a signal (event).
 		"""
 		self._callbacks[signal] = callback
 
 
 	def disconnect_signal(self, signal):
+		"""Disconnect a callback function from a signal (event).
+		"""
 		if self._has_callback(signal):
 			del self._callbacks[signal]
 
 
 	def _has_callback(self, signal):
-		"""Checks if there is a registered callback function for a
+		"""Check if there is a registered callback function for a
 		signal.
 		"""
 		return signal in self._callbacks
@@ -74,8 +76,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def __init__(self):
-		"""Sets class variables and instantiates the MPDClient.
-		"""
+		"""Set class variables and instantiates the MPDClient."""
 		MCGBase.__init__(self)
 		mpd.MPDClient.__init__(self)
 		self._connected = False
@@ -92,7 +93,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Connection commands
 
 	def connect(self, host="localhost", port="6600", password=None, image_dir=""):
-		"""Connects to MPD with the given host, port and password or
+		"""Connect to MPD with the given host, port and password or
 		with standard values.
 		"""
 		self._host = host
@@ -101,14 +102,13 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def is_connected(self):
-		"""Returns the connection status.
+		"""Return the connection status.
 		"""
 		return self._connected
 
 
 	def disconnect(self):
-		"""Disconnects from the connected MPD.
-		"""
+		"""Disconnect from the connected MPD."""
 		self._client_stop.set()
 		self._add_action(self._disconnect)
 
@@ -120,8 +120,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Status commands
 
 	def get_status(self):
-		"""Determines the current status.
-		"""
+		"""Determine the current status."""
 		self._add_action(self._get_status)
 
 
@@ -134,13 +133,12 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Playback control commands
 
 	def playpause(self):
-		"""Plays or pauses the current state.
-		"""
+		"""Play or pauses the current state."""
 		self._add_action(self._playpause)
 
 
 	def play_album(self, album):
-		"""Plays the given album.
+		"""Play the given album.
 		"""
 		self._add_action(self._play_album, album)
 
@@ -173,7 +171,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Private methods
 
 	def _add_action(self, method, *args):
-		"""Adds an action to the action list.
+		"""Add an action to the action list.
 		"""
 		action = [method, args]
 		self._actions.put(action)
@@ -181,9 +179,8 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def _start_worker(self):
-		"""Starts the worker thread which waits for action to be
-		performed.
-		"""
+		"""Start the worker thread which waits for action to be
+		performed."""
 		if self._worker is None or not self._worker.is_alive():
 			self._worker = threading.Thread(target=self._run, name='mcg-worker', args=())
 			self._worker.setDaemon(True)
@@ -255,8 +252,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Status commands
 
 	def _get_status(self):
-		"""Action: Performs the real status determination
-		"""
+		"""Action: Perform the real status determination."""
 		# current status
 		self._call('noidle')
 		status = self._call('status')
@@ -293,8 +289,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	# Playback control commands
 
 	def _playpause(self):
-		"""Action: Performs the real play/pause command.
-		"""
+		"""Action: Perform the real play/pause command."""
 		status = self._call('status')
 		state = status['state']
 		if state == 'play':
@@ -341,17 +336,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def _clear_playlist(self):
-		"""Action: Performs the real clearing of the current
-		playlist.
-		"""
+		"""Action: Perform the real clearing of the current playlist."""
 		self._call('clear')
 
 
 	# Database commands
 
 	def _load_albums(self):
-		"""Action: Performs the real update.
-		"""
+		"""Action: Perform the real update."""
 		for song in self._call('listallinfo'):
 			try:
 				hash = MCGAlbum.hash(song['album'], song['date'])
@@ -381,8 +373,7 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def _idle(self):
-		"""Reacts to idle events from MPD.
-		"""
+		"""React to idle events from MPD."""
 		modules = self._call('idle')
 		if not modules:
 			return
