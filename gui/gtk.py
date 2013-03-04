@@ -62,6 +62,7 @@ class MCGGtk(Gtk.Window):
 		self._toolbar.connect_signal(Toolbar.SIGNAL_SET_VOLUME, self.on_toolbar_set_volume)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.on_toolbar_playpause)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_LIST_MODE, self.on_toolbar_list_mode)
+		self._toolbar.connect_signal(Toolbar.SIGNAL_CLEAR_PLAYLIST, self.on_toolbar_clear_playlist)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_FILTER, self.on_toolbar_filter)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_SORT, self.on_toolbar_sort)
 		self._toolbar.connect_signal(Toolbar.SIGNAL_SORT_TYPE, self.on_toolbar_sort_type)
@@ -120,6 +121,10 @@ class MCGGtk(Gtk.Window):
 	def on_toolbar_list_mode(self):
 		self._config.list_mode = self._toolbar.get_list_mode()
 		self._cover_panel.set_list_mode(self._toolbar.get_list_mode())
+
+
+	def on_toolbar_clear_playlist(self):
+		self._mcg.clear_playlist()
 
 
 	def on_toolbar_filter(self, filter_string):
@@ -305,6 +310,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	SIGNAL_SET_VOLUME = 'set-volume'
 	SIGNAL_PLAYPAUSE = 'playpause'
 	SIGNAL_LIST_MODE = 'mode'
+	SIGNAL_CLEAR_PLAYLIST = 'clear-playlist'
 	SIGNAL_FILTER = 'filter'
 	SIGNAL_SORT = 'sort'
 	SIGNAL_SORT_TYPE = 'sort-type'
@@ -338,6 +344,9 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._list_mode_button = Gtk.ToggleToolButton(Gtk.STOCK_PAGE_SETUP)
 		self._list_mode_button.set_sensitive(False)
 		self.add(self._list_mode_button)
+		self._clear_playlist_button = Gtk.ToolButton(Gtk.STOCK_CLEAR)
+		self._clear_playlist_button.set_sensitive(False)
+		self.add(self._clear_playlist_button)
 		# Info
 		self.add(Gtk.SeparatorToolItem())
 		tool_item = Gtk.ToolItem()
@@ -418,6 +427,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._volume_button.connect('button-release-event', self.on_volume_set_active, False)
 		self._playpause_button.connect('clicked', self.callback_with_function, self.SIGNAL_PLAYPAUSE)
 		self._list_mode_button.connect('clicked', self.callback_with_function, self.SIGNAL_LIST_MODE)
+		self._clear_playlist_button.connect('clicked', self.callback_with_function, self.SIGNAL_CLEAR_PLAYLIST)
 		self._filter_entry.connect('changed', self.callback_with_function, self.SIGNAL_FILTER, self._filter_entry.get_text)
 		self._grid_size_scale.connect('change-value', self.on_grid_size_change)
 		self._grid_size_scale.connect('button-release-event', self.on_grid_size_changed)
@@ -465,6 +475,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._volume_button.set_sensitive(True)
 		self._playpause_button.set_sensitive(True)
 		self._list_mode_button.set_sensitive(True)
+		self._clear_playlist_button.set_sensitive(True)
 		self._filter_entry.set_sensitive(True)
 		self._grid_size_scale.set_sensitive(True)
 		self._menu_button.set_sensitive(True)
@@ -476,6 +487,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._volume_button.set_sensitive(False)
 		self._playpause_button.set_sensitive(False)
 		self._list_mode_button.set_sensitive(False)
+		self._clear_playlist_button.set_sensitive(False)
 		self._filter_entry.set_sensitive(False)
 		self._grid_size_scale.set_sensitive(False)
 		self._menu_button.set_sensitive(False)
