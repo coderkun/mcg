@@ -206,7 +206,16 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 
 	def _call(self, command, *args):
-		return getattr(super(), command)(*args)
+		try:
+			return getattr(super(), command)(*args)
+		except mpd.CommandError as e:
+			self._callback(MCGClient.SIGNAL_ERROR, e)
+		except mpd.ConnectionError as e:
+			self._set_connection_status(False, e)
+		except ConnectionResetError as e:
+			self._set_connection_status(False, e)
+		except BrokenPipeError:
+			pass
 
 
 	def _run(self):
@@ -233,25 +242,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 					self._disconnect()
 					raise e
 			self._set_connection_status(True)
-		except mpd.CommandError as e:
-			self._callback(MCGClient.SIGNAL_ERROR, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
 		except OSError as e:
 			self._set_connection_status(False, e)
 
 
 	def _disconnect(self):
-		try:
-			self._call('noidle')
-			self._call('disconnect')
-			self._set_connection_status(False)
-		except BrokenPipeError:
-			pass
-		except ConnectionResetError as e:
-			self._set_connection_status(False, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		self._call('noidle')
+		self._call('disconnect')
+		self._set_connection_status(False)
 
 
 	# Status commands
@@ -259,50 +257,37 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _get_status(self):
 		"""Action: Performs the real status determination
 		"""
-		try:
-			# current status
-			self._call('noidle')
-			status = self._call('status')
-			state = status['state']
-			volume = int(status['volume'])
-			error = None
-			if 'error' in status:
-				error = status['error']
-			# current song
-			self._call('noidle')
-			song = self._call('currentsong')
-			album = None
-			pos = None
-			if song:
-				hash = MCGAlbum.hash(song['album'], song['date'])
-				if hash in self._albums:
-					album = self._albums[hash]
-				pos = song['track']
-				if type(pos) is list:
-					pos = pos[0]
-				if '/' in pos:
-					pos = pos[0: pos.index('/')]
-				pos = int(pos) - 1
-
-			self._state = state
-			self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, volume, error)
-		except BrokenPipeError:
-			pass
-		except ConnectionResetError as e:
-			self._set_connection_status(False, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		# current status
+		self._call('noidle')
+		status = self._call('status')
+		state = status['state']
+		volume = int(status['volume'])
+		error = None
+		if 'error' in status:
+			error = status['error']
+		# current song
+		self._call('noidle')
+		song = self._call('currentsong')
+		album = None
+		pos = None
+		if song:
+			hash = MCGAlbum.hash(song['album'], song['date'])
+			if hash in self._albums:
+				album = self._albums[hash]
+			pos = song['track']
+			if type(pos) is list:
+				pos = pos[0]
+			if '/' in pos:
+				pos = pos[0: pos.index('/')]
+			pos = int(pos) - 1
+		self._state = state
+		self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, volume, error)
 
 
 	# Playback option commants
 
 	def _set_volume(self, volume):
-		try:
-			self._call('setvol', volume)
-		except mpd.CommandError as e:
-			self._callback(MCGClient.SIGNAL_ERROR, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e) 
+		self._call('setvol', volume)
 
 
 	# Playback control commands
@@ -310,74 +295,56 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _playpause(self):
 		"""Action: Performs the real play/pause command.
 		"""
-		try:
-			status = self._call('status')
-			state = status['state']
-		
-			if state == 'play':
-				self._call('pause')
-			else:
-				self._call('play')
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e) 
+		status = self._call('status')
+		state = status['state']
+		if state == 'play':
+			self._call('pause')
+		else:
+			self._call('play')
 
 
 	def _play_album(self, album):
 		if album not in self._albums:
 			return
-		try:
-			track_ids = []
-			for track in self._albums[album].get_tracks():
-				track_id = self._call('addid', track.get_file())
-				track_ids.append(track_id)
-			if self._state != 'play':
-				self._call('playid', track_ids[0])
-		except mpd.CommandError as e:
-			self._callback(MCGClient.SIGNAL_ERROR, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		track_ids = []
+		for track in self._albums[album].get_tracks():
+			track_id = self._call('addid', track.get_file())
+			track_ids.append(track_id)
+		if self._state != 'play':
+			self._call('playid', track_ids[0])
 
 
 	def _stop(self):
-		try:
-			self._call('stop')
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		self._call('stop')
 
 
 	# Playlist commands
 
 	def _load_playlist(self):
-		try:
-			playlist = []
-			for song in self._call('playlistinfo'):
-				try:
-					hash = MCGAlbum.hash(song['album'], song['date'])
-					if len(playlist) == 0 or playlist[len(playlist)-1].get_hash() != hash:
-						date = ""
-						if 'date' in song:
-							date = song['date']
-						album = MCGAlbum(song['album'], date, self._host, self._image_dir)
-						playlist.append(album)
-					else:
-						album = playlist[len(playlist)-1]
-					track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
-					album.add_track(track)
-				except KeyError:
-					pass
-			self._callback(MCGClient.SIGNAL_LOAD_PLAYLIST, playlist, None)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		playlist = []
+		for song in self._call('playlistinfo'):
+			try:
+				hash = MCGAlbum.hash(song['album'], song['date'])
+				if len(playlist) == 0 or playlist[len(playlist)-1].get_hash() != hash:
+					date = ""
+					if 'date' in song:
+						date = song['date']
+					album = MCGAlbum(song['album'], date, self._host, self._image_dir)
+					playlist.append(album)
+				else:
+					album = playlist[len(playlist)-1]
+				track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
+				album.add_track(track)
+			except KeyError:
+				pass
+		self._callback(MCGClient.SIGNAL_LOAD_PLAYLIST, playlist, None)
 
 
 	def _clear_playlist(self):
 		"""Action: Performs the real clearing of the current
 		playlist.
 		"""
-		try:
-			self._call('clear')
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		self._call('clear')
 
 
 	# Database commands
@@ -385,32 +352,26 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _load_albums(self):
 		"""Action: Performs the real update.
 		"""
-		try:
-			for song in self._call('listallinfo'):
-				try:
-					hash = MCGAlbum.hash(song['album'], song['date'])
-					if hash in self._albums.keys():
-						album = self._albums[hash]
-					else:
-						date = ""
-						if 'date' in song:
-							date = song['date']
-						album = MCGAlbum(song['album'], date, self._host, self._image_dir)
-						self._albums[album.get_hash()] = album
-					track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
-					album.add_track(track)
-				except KeyError:
-					pass
-			self._callback(MCGClient.SIGNAL_LOAD_ALBUMS, self._albums, None)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		for song in self._call('listallinfo'):
+			try:
+				hash = MCGAlbum.hash(song['album'], song['date'])
+				if hash in self._albums.keys():
+					album = self._albums[hash]
+				else:
+					date = ""
+					if 'date' in song:
+						date = song['date']
+					album = MCGAlbum(song['album'], date, self._host, self._image_dir)
+					self._albums[album.get_hash()] = album
+				track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['file'])
+				album.add_track(track)
+			except KeyError:
+				pass
+		self._callback(MCGClient.SIGNAL_LOAD_ALBUMS, self._albums, None)
 
 
 	def _update(self):
-		try:
-			self._call('update')
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		self._call('update')
 
 	def _set_connection_status(self, status, error=None):
 		self._connected = status
@@ -422,31 +383,23 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _idle(self):
 		"""Reacts to idle events from MPD.
 		"""
-		try:
-			modules = self._call('idle')
-			if not modules:
-				return
-
-			if 'player' in modules:
-				self.get_status()
-			if 'mixer' in modules:
-				self.get_status()
-			if 'playlist' in modules:
-				self.load_playlist()
-			if 'database' in modules:
-				self.load_albums()
-				self.load_playlist()
-				self.get_status()
-			if 'update' in modules:
-				self.load_albums()
-				self.load_playlist()
-				self.get_status()
-		except BrokenPipeError:
-			pass
-		except ConnectionResetError as e:
-			self._set_connection_status(False, e)
-		except mpd.ConnectionError as e:
-			self._set_connection_status(False, e)
+		modules = self._call('idle')
+		if not modules:
+			return
+		if 'player' in modules:
+			self.get_status()
+		if 'mixer' in modules:
+			self.get_status()
+		if 'playlist' in modules:
+			self.load_playlist()
+		if 'database' in modules:
+			self.load_albums()
+			self.load_playlist()
+			self.get_status()
+		if 'update' in modules:
+			self.load_albums()
+			self.load_playlist()
+			self.get_status()
 
 
 
