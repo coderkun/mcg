@@ -793,14 +793,13 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._grid_pixbufs = {}
 		self._filter_string = ""
 		self._old_ranges = {}
-		self._cover_background_color = None
 
 		# Widgets
 		self._current = Gtk.VPaned()
 		# Cover
 		self._cover_image = Gtk.Image()
 		self._cover_box = Gtk.EventBox()
-		self._cover_background_color = self._cover_box.get_style_context().get_background_color(Gtk.StateFlags.NORMAL)
+		self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, self.get_style_context().get_background_color(Gtk.StateFlags.NORMAL))
 		self._cover_box.add(self._cover_image)
 		self._cover_scroll = Gtk.ScrolledWindow()
 		self._cover_scroll.add_with_viewport(self._cover_box)
@@ -822,6 +821,7 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._playlist_grid.set_item_padding(0)
 		self._playlist_grid.set_reorderable(False)
 		self._playlist_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+		self._playlist_grid.override_background_color(Gtk.StateFlags.NORMAL, self.get_style_context().get_background_color(Gtk.StateFlags.NORMAL))
 		# Playlist: ListModel
 		self._playlist_list_model = Gtk.ListStore(str, str, str, str, str, str)
 		# Playlist: ListView
@@ -858,6 +858,7 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._library_grid.set_item_padding(0)
 		self._library_grid.set_reorderable(False)
 		self._library_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+		self._library_grid.override_background_color(Gtk.StateFlags.NORMAL, self.get_style_context().get_background_color(Gtk.StateFlags.NORMAL))
 		# Library: ListModel
 		self._library_list_model = Gtk.ListStore(str, str, str, str, str, str)
 		self._library_list_filter = self._library_list_model.filter_new()
@@ -1091,7 +1092,7 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		if mode == CoverPanel.MODE_FULLSCREEN:
 			self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
 		else:
-			self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, self._cover_background_color)
+			self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, self.get_style_context().get_background_color(Gtk.StateFlags.NORMAL))
 
 		self.show_all()
 
