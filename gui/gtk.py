@@ -36,7 +36,7 @@ class MCGGtk(Gtk.Window):
 		self._main_box = Gtk.VBox()
 		self.add(self._main_box)
 		self._bar_box = Gtk.VBox()
-		self._toolbar = Toolbar(self._config.list_mode, self._config.item_size)
+		self._toolbar = Toolbar(self._config)
 		self._bar_box.pack_start(self._toolbar, True, True, 0)
 		self._infobar = InfoBar()
 		self._infobar.show()
@@ -318,9 +318,10 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 	SIGNAL_GRID_SIZE_CHANGED = 'grid-size'
 
 
-	def __init__(self, list_mode, item_size):
+	def __init__(self, config):
 		mcg.MCGBase.__init__(self)
 		Gtk.Toolbar.__init__(self)
+		self._config = config
 		self._changing_volume = False
 		self._setting_volume = False
 
@@ -375,7 +376,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._grid_size_scale = Gtk.HScale()
 		self._grid_size_scale.set_range(100,600)
 		self._grid_size_scale.set_round_digits(0)
-		self._grid_size_scale.set_value(item_size)
+		self._grid_size_scale.set_value(self._config.item_size)
 		self._grid_size_scale.set_size_request(100, -1)
 		self._grid_size_scale.set_draw_value(False)
 		self._grid_size_scale.set_sensitive(False)
@@ -385,16 +386,18 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self._library_grid_menu = Gtk.Menu()
 		self._library_grid_menu.show()
 		menu_item = Gtk.RadioMenuItem(label="sort by artist")
+		menu_item.set_active(self._config.library_sort_order == mcg.MCGAlbum.SORT_BY_ARTIST)
 		menu_item.connect('activate', self.on_library_grid_menu_sort, mcg.MCGAlbum.SORT_BY_ARTIST)
 		menu_item.show()
 		library_grid_menu_group_sort = menu_item
 		self._library_grid_menu.add(menu_item)
 		menu_item = Gtk.RadioMenuItem(label="by title", group=library_grid_menu_group_sort)
-		menu_item.set_active(True)
+		menu_item.set_active(self._config.library_sort_order == mcg.MCGAlbum.SORT_BY_TITLE)
 		menu_item.connect('activate', self.on_library_grid_menu_sort, mcg.MCGAlbum.SORT_BY_TITLE)
 		menu_item.show()
 		self._library_grid_menu.add(menu_item)
 		menu_item = Gtk.RadioMenuItem(label="by year", group=library_grid_menu_group_sort)
+		menu_item.set_active(self._config.library_sort_order == mcg.MCGAlbum.SORT_BY_YEAR)
 		menu_item.connect('activate', self.on_library_grid_menu_sort, mcg.MCGAlbum.SORT_BY_YEAR)
 		menu_item.show()
 		self._library_grid_menu.add(menu_item)
@@ -402,6 +405,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		menu_item_separator.show()
 		self._library_grid_menu.add(menu_item_separator)
 		menu_item = Gtk.CheckMenuItem("Descending")
+		menu_item.set_active(self._config.library_sort_type == Gtk.SortType.DESCENDING)
 		menu_item.connect('activate', self.on_library_grid_menu_descending)
 		menu_item.show()
 		self._library_grid_menu.add(menu_item)
@@ -417,7 +421,7 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 		self.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
 
 		# Actions
-		self.set_list_mode(list_mode)
+		self.set_list_mode(self._config.list_mode)
 
 		# Signals
 		self._connection_button.connect('clicked', self.callback_with_function, self.SIGNAL_CONNECT)
@@ -853,8 +857,8 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._library_scroll = Gtk.ScrolledWindow()
 		# Library: GridModel
 		self._library_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str, str)
-		self._library_grid_model.set_sort_func(3, self.compare_albums, mcg.MCGAlbum.SORT_BY_TITLE)
-		self._library_grid_model.set_sort_column_id(3, Gtk.SortType.ASCENDING)
+		self._library_grid_model.set_sort_func(3, self.compare_albums, self._config.library_sort_order)
+		self._library_grid_model.set_sort_column_id(3, self._config.library_sort_type)
 		self._library_grid_filter = self._library_grid_model.filter_new()
 		self._library_grid_filter.set_visible_func(self.on_filter_visible)
 		# Library: GridView
@@ -997,10 +1001,12 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 
 
 	def set_sort_order(self, sort_order):
+		self._config.library_sort_order = sort_order
 		self._library_grid_model.set_sort_func(3, self.compare_albums, sort_order)
 
 
 	def set_sort_type(self, sort_type):
+		self._config.library_sort_type = sort_type
 		self._library_grid_model.set_sort_column_id(3, sort_type)
 
 
@@ -1321,9 +1327,13 @@ class Configuration(mcg.MCGConfig):
 		self.item_size = self.getint('gui', 'item-size')
 		self.list_mode = self.getboolean('gui', 'list-mode')
 		self.library_position = self.getint('gui', 'library-position')
+		self.library_sort_order = self.get('gui', 'library-sort-order')
+		if self.getint('gui', 'library-sort-type') == 0:
+			self.library_sort_type = Gtk.SortType.ASCENDING
+		else:
+			self.library_sort_type = Gtk.SortType.DESCENDING
 		self.playlist_position = self.getint('gui', 'playlist-position')
-		# TODO sort order
-		# TODO sort type
+		self.save()
 
 
 	def save(self):
@@ -1334,6 +1344,11 @@ class Configuration(mcg.MCGConfig):
 		self.set('gui', 'item-size', str(self.item_size))
 		self.set('gui', 'list-mode', str(self.list_mode))
 		self.set('gui', 'library-position', str(self.library_position))
+		self.set('gui', 'library-sort-order', str(self.library_sort_order))
+		if self.library_sort_type == Gtk.SortType.ASCENDING:
+			self.set('gui', 'library-sort-type', str(0))
+		else:
+			self.set('gui', 'library-sort-type', str(1))
 		self.set('gui', 'playlist-position', str(self.playlist_position))
 		super().save()
 
@@ -1350,5 +1365,7 @@ class Configuration(mcg.MCGConfig):
 		self.set('gui', 'item-size', str(100))
 		self.set('gui', 'list-mode', str(False))
 		self.set('gui', 'library-position', str(450))
+		self.set('gui', 'library-sort-order', mcg.MCGAlbum.SORT_BY_YEAR)
+		self.set('gui', 'library-sort-type', str(1))
 		self.set('gui', 'playlist-position', str(450))
 
