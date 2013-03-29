@@ -13,7 +13,7 @@ __status__ = "Development"
 import os
 import time
 import urllib
-from threading import Thread
+import threading
 
 from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
 
@@ -809,6 +809,10 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._grid_pixbufs = {}
 		self._filter_string = ""
 		self._old_ranges = {}
+		self._playlist_lock = threading.Lock()
+		self._playlist_stop = threading.Event()
+		self._library_lock = threading.Lock()
+		self._library_stop = threading.Event()
 
 		# Widgets
 		self._current = Gtk.VPaned()
@@ -985,13 +989,15 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 	def set_playlist(self, host, playlist):
 		self._host = host
 		self._playlist = playlist
-		Thread(target=self._set_playlist, args=(host, playlist, self._config.item_size,)).start()
+		self._playlist_stop.set()
+		threading.Thread(target=self._set_playlist, args=(host, playlist, self._config.item_size,)).start()
 
 
 	def set_albums(self, host, albums):
 		self._host = host
 		self._albums = albums
-		Thread(target=self._set_albums, args=(host, albums, self._config.item_size,)).start()
+		self._library_stop.set()
+		threading.Thread(target=self._set_albums, args=(host, albums, self._config.item_size,)).start()
 
 
 	def filter(self, filter_string):
@@ -1063,7 +1069,7 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 
 
 	def redraw(self):
-		Thread(target=self._set_playlist_and_albums, args=(self._host, self._playlist, self._albums, self._config.item_size,)).start()
+		threading.Thread(target=self._set_playlist_and_albums, args=(self._host, self._playlist, self._albums, self._config.item_size,)).start()
 
 
 	def compare_albums(self, model, row1, row2, criterion):
@@ -1121,6 +1127,8 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 
 
 	def _set_playlist(self, host, playlist, size):
+		self._playlist_lock.acquire()
+		self._playlist_stop.clear()
 		Gdk.threads_enter()
 		self._playlist_grid.set_model(None)
 		self._playlist_list.set_model(None)
@@ -1161,6 +1169,10 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 					album.get_hash()
 				])
 
+			if self._playlist_stop.is_set():
+				self._playlist_lock.release()
+				return
+
 		Gdk.threads_enter()
 		self._playlist_grid.set_model(self._playlist_grid_filter)
 		self._playlist_list.set_model(self._playlist_list_model)
@@ -1168,9 +1180,12 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._playlist_list.thaw_child_notify()
 		self._playlist_grid.set_columns(len(playlist))
 		Gdk.threads_leave()
+		self._playlist_lock.release()
 
 
 	def _set_albums(self, host, albums, size):
+		self._library_lock.acquire()
+		self._library_stop.clear()
 		Gdk.threads_enter()
 		self._library_grid.set_model(None)
 		self._library_list.set_model(None)
@@ -1219,6 +1234,9 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 
 			i += 1
 			GObject.idle_add(self._progress_bar.set_fraction, i/n)
+			if self._library_stop.is_set():
+				self._library_lock.release()
+				return
 
 		Gdk.threads_enter()
 		self._library_grid.set_model(self._library_grid_filter)
@@ -1227,6 +1245,7 @@ class CoverPanel(mcg.MCGBase, Gtk.HPaned):
 		self._library_list.thaw_child_notify()
 		self._set_mode(self._mode)
 		Gdk.threads_leave()
+		self._library_lock.release()
 		self._callback(self.SIGNAL_ALBUMS_SET)
 
 
