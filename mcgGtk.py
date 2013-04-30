@@ -6,7 +6,7 @@
 __author__ = "coderkun"
 __email__ = "<olli@coderkun.de>"
 __license__ = "GPL"
-__version__ = "0.2"
+__version__ = "0.3"
 __status__ = "Development"
 
 
