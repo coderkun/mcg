@@ -254,15 +254,19 @@ class MCGClient(MCGBase, mpd.MPDClient):
 	def _get_status(self):
 		"""Action: Perform the real status determination."""
 		# current status
-		self._call('noidle')
+		#self._call('noidle')
 		status = self._call('status')
 		state = status['state']
+		time = 0
+		if 'time' in status:
+			time = int(status['time'].split(':')[0])
 		volume = int(status['volume'])
 		error = None
 		if 'error' in status:
 			error = status['error']
+
 		# current song
-		self._call('noidle')
+		#self._call('noidle')
 		song = self._call('currentsong')
 		album = None
 		pos = None
@@ -279,8 +283,9 @@ class MCGClient(MCGBase, mpd.MPDClient):
 				pos = int(pos) - 1
 			except KeyError:
 				pass
+
 		self._state = state
-		self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, volume, error)
+		self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, time, volume, error)
 
 
 	# Playback option commants
@@ -347,8 +352,12 @@ class MCGClient(MCGBase, mpd.MPDClient):
 
 	def _load_albums(self):
 		"""Action: Perform the real update."""
+		self._albums = {}
 		for song in self._call('listallinfo'):
 			try:
+				if 'album' not in song:
+					song['album'] = 'Various'
+					song['date'] = 'none'
 				hash = MCGAlbum.hash(song['album'], song['date'])
 				if hash in self._albums.keys():
 					album = self._albums[hash]
@@ -418,6 +427,7 @@ class MCGAlbum:
 		self._host = host
 		self._image_dir = image_dir
 		self._tracks = []
+		self._length = 0
 		self._cover = None
 		self._cover_searched = False
 		self._set_hash()
@@ -442,6 +452,7 @@ class MCGAlbum:
 	def add_track(self, track):
 		if track not in self._tracks:
 			self._tracks.append(track)
+			self._length = self._length + track.get_time()
 			for artist in track.get_artists():
 				if artist not in self._artists:
 					self._artists.append(artist)
@@ -452,6 +463,10 @@ class MCGAlbum:
 
 	def get_tracks(self):
 		return self._tracks
+
+
+	def get_length(self):
+		return self._length
 
 
 	def get_cover(self):
@@ -565,7 +580,7 @@ class MCGTrack:
 		if type(track) is list:
 			track = track[0]
 		self._track = track
-		self._time = time
+		self._time = int(time)
 		self._file = file
 
 
