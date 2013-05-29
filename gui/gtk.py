@@ -797,7 +797,7 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 
 	def set_album(self, album):
 		self._album_title_label.set_markup("<b><big>{}</big></b>".format(album.get_title()))
-		self._album_date_label.set_markup("<big>{}</big>".format(album.get_date()))
+		self._album_date_label.set_markup("<big>{}</big>".format(', '.join(album.get_dates())))
 		self._album_artist_label.set_markup("<big>{}</big>".format(', '.join(album.get_artists())))
 		self._set_cover(album)
 		self._set_tracks(album)
@@ -807,7 +807,7 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 		if self._timer is not None:
 			GObject.source_remove(self._timer)
 		for index in range(0, pos):
-			time = time + self._current_album.get_tracks()[index].get_time()
+			time = time + self._current_album.get_tracks()[index].get_length()
 		self._songs_scale.set_value(time+1)
 		self._timer = GObject.timeout_add(1000, self._playing)
 
@@ -854,7 +854,7 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 		length = 0
 		for track in album.get_tracks():
 			self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, track.get_title())
-			length = length + track.get_time()
+			length = length + track.get_length()
 		self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
 
 
@@ -958,7 +958,6 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 
 	def set_playlist(self, host, playlist):
 		self._host = host
-		self._playlist = playlist
 		self._playlist_stop.set()
 		threading.Thread(target=self._set_playlist, args=(host, playlist, self._config.item_size,)).start()
 
@@ -966,6 +965,7 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 	def _set_playlist(self, host, playlist, size):
 		self._playlist_lock.acquire()
 		self._playlist_stop.clear()
+		self._playlist = playlist
 		Gdk.threads_enter()
 		self._playlist_grid.set_model(None)
 		self._playlist_grid.freeze_child_notify()
@@ -987,7 +987,7 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 					pixbuf,
 					GObject.markup_escape_text("\n".join([
 						album.get_title(),
-						album.get_date(),
+						', '.join(album.get_dates()),
 						', '.join(album.get_artists())
 					])),
 					album.get_hash()
@@ -1021,7 +1021,7 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		Gtk.VBox.__init__(self)
 		self._config = config
 		self._host = None
-		self._albums = []
+		self._albums = {}
 		self._filter_string = ""
 		self._grid_pixbufs = {}
 		self._old_ranges = {}
@@ -1186,7 +1186,6 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 
 	def set_albums(self, host, albums):
 		self._host = host
-		self._albums = albums
 		self._library_stop.set()
 		threading.Thread(target=self._set_albums, args=(host, albums, self._config.item_size,)).start()
 
@@ -1203,6 +1202,7 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 	def _set_albums(self, host, albums, size):
 		self._library_lock.acquire()
 		self._library_stop.clear()
+		self._albums = albums
 		self.remove(self._library_toolbar)
 		self._progress_bar.set_fraction(0.0)
 		self.pack_start(self._progress_bar, False, True, 5)
@@ -1232,7 +1232,7 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 					pixbuf,
 					GObject.markup_escape_text("\n".join([
 						album.get_title(),
-						album.get_date(),
+						', '.join(album.get_dates()),
 						', '.join(album.get_artists())
 					])),
 					hash
