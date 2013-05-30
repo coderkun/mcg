@@ -298,19 +298,14 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			album = self._albums[hash]
 
 			# Position
-			if track.get_track() is not None:
-				pos = track.get_track() -1
-			else:
-				for album in self._playlist:
-					pos = -1
-					for ptrack in album.get_tracks():
-						pos = pos + 1
-						if ptrack == track:
-							break
-					if pos < len(album.get_tracks())-1:
-						break
-				if pos is None:
-					pos = 0
+			pos = 0
+			if 'pos' in song:
+				pos = int(song['pos'])
+			for palbum in self._playlist:
+				if palbum == album and len(palbum.get_tracks()) >= pos:
+					album = palbum
+					break
+				pos = pos - len(palbum.get_tracks())
 
 		self._state = state
 		self._callback(MCGClient.SIGNAL_STATUS, state, album, pos, time, volume, error)
@@ -484,6 +479,10 @@ class MCGAlbum:
 		self._set_hash()
 
 
+	def __eq__(self, other):
+		return self._hash == other.get_hash()
+
+
 	def get_artists(self):
 		return self._artists
 
@@ -507,17 +506,16 @@ class MCGAlbum:
 
 
 	def add_track(self, track):
-		if track not in self._tracks:
-			self._tracks.append(track)
-			self._length = self._length + track.get_length()
-			for artist in track.get_artists():
-				if artist not in self._artists:
-					self._artists.append(artist)
-			if track.get_date() is not None and track.get_date() not in self._dates:
-				self._dates.append(track.get_date())
-			path = os.path.dirname(track.get_file())
-			if path not in self._pathes:
-				self._pathes.append(path)
+		self._tracks.append(track)
+		self._length = self._length + track.get_length()
+		for artist in track.get_artists():
+			if artist not in self._artists:
+				self._artists.append(artist)
+		if track.get_date() is not None and track.get_date() not in self._dates:
+			self._dates.append(track.get_date())
+		path = os.path.dirname(track.get_file())
+		if path not in self._pathes:
+			self._pathes.append(path)
 
 
 	def get_tracks(self):
