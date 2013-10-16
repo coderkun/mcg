@@ -6,24 +6,33 @@
 __author__ = "coderkun"
 __email__ = "<olli@coderkun.de>"
 __license__ = "GPL"
-__version__ = "0.3"
+__version__ = "0.4"
 __status__ = "Development"
 
 
 
 
+import os
+import sys
+
 from gi.repository import Gtk, Gdk, GObject
 
-import gui.gtk
+from gui import gtk
+
+
+
+
+# Set environment
+srcdir = os.path.abspath(os.path.join(os.path.dirname(gtk.__file__), '..'))
+if not os.environ.get('GSETTINGS_SCHEMA_DIR'):
+	os.environ['GSETTINGS_SCHEMA_DIR'] = os.path.join(srcdir, 'data')
+
+
 
 
 if __name__ == "__main__":
-	GObject.threads_init()
-	Gdk.threads_init()
-	mcgg = gui.gtk.MCGGtk()
-	mcgg.show_all()
-	try:
-		Gtk.main()
-	except (KeyboardInterrupt, SystemExit):
-		pass
+	# Start application
+	app = gtk.Application()
+	exit_status = app.run(sys.argv)
+	sys.exit(exit_status)
 
