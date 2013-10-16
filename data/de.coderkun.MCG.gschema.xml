@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+	<schema path="/de/coderkun/mcg/" id="de.coderkun.mcg" gettext-domain="mcg">
+		<key type="ai" name="window-size">
+			<default>[800, 600]</default>
+			<summary>Window size</summary>
+			<description>Window size (width and height).</description>
+		</key>
+		<key type="b" name="window-maximized">
+			<default>false</default>
+			<summary>Window maximized</summary>
+			<description>Window maximized state.</description>
+		</key>
+		<key type="i" name="profile">
+			<default>0</default>
+			<summary>Last selected profile</summary>
+			<description>The index of the last selected profile used to connect to the MPD server.</description>
+		</key>
+		<key type="i" name="panel">
+			<range min="1" max="3"/>
+			<default>1</default>
+			<summary>Last selected panel</summary>
+			<description>The index of the last selected panel.</description>
+		</key>
+		<key type="i" name="item-size">
+			<range min="100" max="1000" />
+			<default>150</default>
+			<summary>Size of library items</summary>
+			<description>The size of items displayed in the library.</description>
+		</key>
+		<key type="s" name="sort-order">
+			<default>'year'</default>
+			<choices>
+				<choice value='artist' />
+				<choice value='title' />
+				<choice value='year' />
+			</choices>
+			<summary>Sort criterium for library items</summary>
+			<description>The sort criterium of items displayed in the library.</description>
+		</key>
+		<key type="b" name="sort-type">
+			<default>true</default>
+			<summary>Sort type for library items</summary>
+			<description>The sort type of items displayed in the library.</description>
+		</key>
+	</schema>
+</schemalist>

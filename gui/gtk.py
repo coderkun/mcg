@@ -6,315 +6,53 @@
 __author__ = "coderkun"
 __email__ = "<olli@coderkun.de>"
 __license__ = "GPL"
-__version__ = "0.3"
+__version__ = "0.4"
 __status__ = "Development"
 
 
 import math
 import os
-import time
 import threading
 import urllib
 
-from gi.repository import Gtk, Gdk, GdkPixbuf, GObject
+from gi.repository import Gio, Gtk, Gdk, GObject, GdkPixbuf, GLib
 
 import mcg
 
 
 
 
-class MCGGtk(Gtk.Window):
+class Application(Gtk.Application):
 	TITLE = "MPDCoverGrid (Gtk)"
-	VIEW_COVER = 'cover'
-	VIEW_PLAYLIST = 'playlist'
-	VIEW_LIBRARY = 'library'
-	STYLE_CLASS_BG_TEXTURE = 'bg-texture'
-	STYLE_CLASS_NO_BG = 'no-bg'
+	SETTINGS_BASE_KEY = 'de.coderkun.mcg'
+	SETTING_WINDOW_SIZE = 'window-size'
+	SETTING_WINDOW_MAXIMIZED = 'window-maximized'
+	SETTING_PROFILE  = 'profile'
+	SETTING_PANEL = 'panel'
+	SETTING_ITEM_SIZE = 'item-size'
+	SETTING_SORT_ORDER = 'sort-order'
+	SETTING_SORT_TYPE = 'sort-type'
 
 
 	def __init__(self):
-		Gtk.Window.__init__(self, title=MCGGtk.TITLE)
-		self._mcg = mcg.MCGClient()
-		self._config = Configuration()
-		self._maximized = False
-		self._fullscreened = False
-		self._albums = {}
-		
-		# Widgets
-		self._main_box = Gtk.VBox()
-		self.add(self._main_box)
-		self._bar_box = Gtk.VBox()
-		self._main_box.pack_start(self._bar_box, False, False, 0)
-		self._toolbar = Toolbar(self._config)
-		self._bar_box.pack_start(self._toolbar, True, True, 0)
-		self._infobar = InfoBar()
-		self._infobar.show()
-		self._view_box = Gtk.EventBox()
-		self._main_box.pack_end(self._view_box, True, True, 0)
-		self._connection_panel = ConnectionPanel(self._config)
-		self._view_box.add(self._connection_panel)
-		
-		# Views
-		self._cover_panel = CoverPanel()
-		self._playlist_panel = PlaylistPanel(self._config)
-		self._library_panel = LibraryPanel(self._config)
+		Gtk.Application.__init__(self, application_id="de.coderkun.mcg", flags=Gio.ApplicationFlags.FLAGS_NONE)
+		self._window = None
+		self._settings = Gio.Settings.new(Application.SETTINGS_BASE_KEY)
 
-		# Properties
-		self.set_hide_titlebar_when_maximized(True)
-		self._view_box.get_style_context().add_class(MCGGtk.STYLE_CLASS_BG_TEXTURE)
-		provider = Gtk.CssProvider()
-		provider.load_from_data(b"""
-			GtkWidget.bg-texture {
-				box-shadow:inset 4px 4px 10px rgba(0,0,0,0.3);
-				background-image:url('gui/noise-texture.png');
-			}
-			GtkWidget.no-bg {
-				background:none;
-			}
-			GtkIconView.cell:selected,
-			GtkIconView.cell:selected:focus {
-				background-color:@theme_selected_bg_color;
-			}
-			GtkToolbar.primary-toolbar {
-				background:none;
-				border:none;
-				box-shadow:none;
-			}
-		""")
-		self.get_style_context().add_provider_for_screen(Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-		# Actions
-		self.resize(self._config.window_width, self._config.window_height)
-		if self._config.window_maximized:
-			self.maximize()
+	def do_startup(self):
+		Gtk.Application.do_startup(self)
 
-		# Signals
-		self.connect('size-allocate', self.on_resize)
-		self.connect('window-state-event', self.on_state)
-		self.connect('delete-event', self.on_destroy)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_CONNECT, self.on_toolbar_connect)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_PLAYPAUSE, self.on_toolbar_playpause)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_VIEW, self.on_toolbar_view)
-		self._toolbar.connect_signal(Toolbar.SIGNAL_SET_VOLUME, self.on_toolbar_set_volume)
-		self._infobar.connect_signal(InfoBar.SIGNAL_CLOSE, self.on_infobar_close)
-		self._connection_panel.connect_signal(ConnectionPanel.SIGNAL_PROFILE_CHANGED, self.on_connection_profile_changed)
-		self._cover_panel.connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
-		self._playlist_panel.connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
-		self._library_panel.connect_signal(LibraryPanel.SIGNAL_PLAY, self.on_library_panel_play)
-		self._library_panel.connect_signal(LibraryPanel.SIGNAL_UPDATE, self.on_library_panel_update)
-		# View panels
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.on_mcg_connect)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.on_mcg_status)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
-		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_ERROR, self.on_mcg_error)
 
+	def do_activate(self):
+		if not self._window:
+			self._window = Window(self, Application.TITLE, self._settings)
+		self._window.present()
 
-	def on_resize(self, widget, event):
-		self._save_size()
 
-
-	def on_state(self, widget, state):
-		self._fullscreen((state.new_window_state & Gdk.WindowState.FULLSCREEN > 0))
-		self._save_state(state)
-
-
-	def on_destroy(self, widget, state):
-		self._mcg.disconnect_signal(mcg.MCGClient.SIGNAL_CONNECT)
-		self._mcg.disconnect_signal(mcg.MCGClient.SIGNAL_STATUS)
-		if self._mcg.is_connected():
-			self._mcg.disconnect()
-			self._mcg.join()
-		self._config.save()
-		self._connection_panel.save_profiles()
-		GObject.idle_add(Gtk.main_quit)
-
-
-	# Toolbar callbacks
-
-	def on_toolbar_connect(self):
-		self._connect()
-
-
-	def on_toolbar_playpause(self):
-		self._mcg.playpause()
-
-
-	def on_toolbar_view(self, view):
-		self._config.view = view
-		self._view_box.remove(self._view_box.get_children()[0])
-		if view == MCGGtk.VIEW_COVER:
-			self._view_box.add(self._cover_panel)
-		elif view == MCGGtk.VIEW_PLAYLIST:
-			self._view_box.add(self._playlist_panel)
-		elif view == MCGGtk.VIEW_LIBRARY:
-			self._view_box.add(self._library_panel)
-		self._view_box.show_all()
-
-
-	def on_toolbar_set_volume(self, volume):
-		self._mcg.set_volume(volume)
-
-
-	# Infobar callbacks
-
-	def on_infobar_close(self):
-		self._hide_message()
-
-
-	# Connection Panel callbacks
-
-	def on_connection_profile_changed(self, index, profile):
-		self._config.last_profile = index
-		if ConnectionPanel.TAG_AUTOCONNECT in profile.get_tags():
-			self._connect()
-
-
-	# Cover Panel callbacks
-
-	def on_cover_panel_toggle_fullscreen(self):
-		self._toggle_fullscreen()
-
-
-	# Playlist Panel callbacks
-
-	def on_playlist_panel_clear_playlist(self):
-		self._mcg.clear_playlist()
-
-
-	# Library Panel callbacks
-
-	def on_library_panel_update(self):
-		self._mcg.update()
-
-
-	def on_library_panel_play(self, album):
-		self._mcg.play_album(album)
-
-
-	# MCG callbacks
-
-	def on_mcg_connect(self, connected, error):
-		if connected:
-			GObject.idle_add(self._connect_connected)
-			self._mcg.load_playlist()
-			self._mcg.load_albums()
-			self._mcg.get_status()
-		else:
-			if error:
-				self._show_error(str(error))
-			GObject.idle_add(self._connect_disconnected)
-
-
-	def on_mcg_status(self, state, album, pos, time, volume, error):
-		# Album
-		if album:
-			GObject.idle_add(self._cover_panel.set_album, album)
-		# State
-		if state == 'play':
-			GObject.idle_add(self._toolbar.set_play)
-			GObject.idle_add(self._cover_panel.set_play, pos, time)
-		elif state == 'pause' or state == 'stop':
-			GObject.idle_add(self._toolbar.set_pause)
-			GObject.idle_add(self._cover_panel.set_pause)
-		# Volume
-		GObject.idle_add(self._toolbar.set_volume, volume)
-		# Error
-		if error is None:
-			self._hide_message()
-		else:
-			self._show_error(error)
-
-
-	def on_mcg_load_playlist(self, playlist, error):
-		self._playlist_panel.set_playlist(self._connection_panel.get_host(), playlist)
-
-
-	def on_mcg_load_albums(self, albums, error):
-		self._albums = {}
-		self._library_panel.set_albums(self._connection_panel.get_host(), albums)
-
-
-	def on_mcg_error(self, error):
-		self._show_error(str(error))
-
-
-	# Private methods
-
-	def _connect(self):
-		self._connection_panel.set_sensitive(False)
-		self._toolbar.set_sensitive(False)
-		if self._mcg.is_connected():
-			self._mcg.disconnect()
-		else:
-			host = self._connection_panel.get_host()
-			port = self._connection_panel.get_port()
-			password = self._connection_panel.get_password()
-			image_dir = self._connection_panel.get_image_dir()
-			self._mcg.connect(host, port, password, image_dir)
-
-
-	def _connect_connected(self):
-		self._toolbar.connected()
-		self._toolbar.set_sensitive(True)
-		self._view_box.remove(self._view_box.get_children()[0])
-		if self._config.view == MCGGtk.VIEW_COVER:
-			self._view_box.add(self._cover_panel)
-		elif self._config.view == MCGGtk.VIEW_PLAYLIST:
-			self._view_box.add(self._playlist_panel)
-		elif self._config.view == MCGGtk.VIEW_LIBRARY:
-			self._view_box.add(self._library_panel)
-		self._view_box.show_all()
-
-
-	def _connect_disconnected(self):
-		self._toolbar.disconnected()
-		self._toolbar.set_sensitive(True)
-		self._connection_panel.set_sensitive(True)
-		self._view_box.remove(self._view_box.get_children()[0])
-		self._view_box.add(self._connection_panel)
-		self._view_box.show_all()
-
-
-	def _save_size(self):
-		if not self._maximized:
-			self._config.window_width = self.get_allocation().width
-			self._config.window_height = self.get_allocation().height
-
-
-	def _save_state(self, state):
-		self._config.window_maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
-		self._maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
-
-
-	def _toggle_fullscreen(self):
-		if not self._fullscreened:
-			self.fullscreen()
-		else:
-			self.unfullscreen()
-
-
-	def _fullscreen(self, fullscreened_new):
-		if fullscreened_new != self._fullscreened:
-			self._fullscreened = fullscreened_new
-			if self._fullscreened:
-				self._toolbar.hide()
-				self._cover_panel.set_fullscreen(True)
-			else:
-				self._toolbar.show()
-				self._cover_panel.set_fullscreen(False)
-
-
-	def _show_error(self, message):
-		self._infobar.show_error(message)
-		if len(self._bar_box.get_children()) > 1:
-			self._bar_box.remove(self._infobar)
-		self._bar_box.pack_end(self._infobar, False, True, 0)
-
-
-	def _hide_message(self):
-		if len(self._bar_box.get_children()) > 1:
-			self._bar_box.remove(self._infobar)
+	def action_quit_cb(self, action, parameter):
+		self._window.destroy()
+		self.quit()
 
 
 	def load_thumbnail(cache, album, size):
@@ -353,88 +91,381 @@ class MCGGtk(Gtk.Window):
 
 
 
+class Window(Gtk.ApplicationWindow):
+	STYLE_CLASS_BG_TEXTURE = 'bg-texture'
+	STYLE_CLASS_NO_BG = 'no-bg'
+	STYLE_CLASS_NO_BORDER = 'no-border'
+	_PANEL_INDEX_CONNECTION = 0
+	_PANEL_INDEX_COVER = 1
+	_PANEL_INDEX_PLAYLIST = 2
+	_PANEL_INDEX_LIBRARY = 3
 
-class Toolbar(mcg.MCGBase, Gtk.Toolbar):
+
+	def __init__(self, app, title, settings):
+		Gtk.Window.__init__(self, title=title, application=app)
+		self._settings = settings
+		self._panels = []
+		self._mcg = mcg.MCGClient()	
+		self._size = self._settings.get_value(Application.SETTING_WINDOW_SIZE)
+		self._maximized = self._settings.get_boolean(Application.SETTING_WINDOW_MAXIMIZED)
+		self._fullscreened = False
+
+		# Panels
+		self._panels.append(ConnectionPanel())
+		self._panels.append(CoverPanel())
+		self._panels.append(PlaylistPanel())
+		self._panels.append(LibraryPanel())
+
+		# Widgets
+		self._main_box = Gtk.VBox()
+		self._main_box.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self.add(self._main_box)
+		# InfoBar
+		self._infobar = InfoBar()
+		self._main_box.pack_start(self._infobar, False, True, 0)
+		# Stack
+		self._stack = Gtk.Stack()
+		for panel in self._panels:
+			self._stack.add_titled(panel, panel.get_name(), panel.get_title())
+		self._stack.set_homogeneous(True)
+		self._main_box.pack_end(self._stack, True, True, 0)
+		# Header
+		self._header_bar = HeaderBar(self._stack)
+		self.set_titlebar(self._header_bar)
+
+		# Properties
+		self._header_bar.set_sensitive(False, False)
+		styleProvider = Gtk.CssProvider()
+		styleProvider.load_from_data(b"""
+			GtkWidget.bg-texture {
+				box-shadow:inset 4px 4px 10px rgba(0,0,0,0.3);
+				background-image:url('data/noise-texture.png');
+			}
+			GtkWidget.no-bg {
+				background:none;
+			}
+			GtkWidget.no-border {
+				border:none;
+			}
+			GtkIconView.cell:selected,
+			GtkIconView.cell:selected:focus {
+				background-color:@theme_selected_bg_color;
+			}
+		""")
+		self.get_style_context().add_provider_for_screen(Gdk.Screen.get_default(), styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+		self.get_style_context().add_class(Window.STYLE_CLASS_BG_TEXTURE)
+		self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Application.SETTING_SORT_ORDER))
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(self._settings.get_boolean(Application.SETTING_SORT_TYPE))
+
+		# Signals
+		self.connect('size-allocate', self.on_resize)
+		self.connect('window-state-event', self.on_state)
+		self.connect('destroy', self.on_destroy)
+		self._header_bar.connect_signal(HeaderBar.SIGNAL_STACK_SWITCHED, self.on_header_bar_stack_switched)
+		self._header_bar.connect_signal(HeaderBar.SIGNAL_CONNECT, self.on_header_bar_connect)
+		self._header_bar.connect_signal(HeaderBar.SIGNAL_PLAYPAUSE, self.on_header_bar_playpause)
+		self._header_bar.connect_signal(HeaderBar.SIGNAL_SET_VOLUME, self.on_header_bar_set_volume)
+		self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_PROFILE_CHANGED, self.on_connection_panel_profile_changed)
+		self._panels[Window._PANEL_INDEX_PLAYLIST].connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
+		self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
+		self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_SET_SONG, self.on_cover_panel_set_song)
+		self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_UPDATE, self.on_library_panel_update)
+		self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_PLAY, self.on_library_panel_play)
+		self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_ITEM_SIZE_CHANGED, self.on_library_panel_item_size_changed)
+		self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, self.on_library_panel_sort_order_changed)
+		self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, self.on_library_panel_sort_type_changed)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_CONNECT, self.on_mcg_connect)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_STATUS, self.on_mcg_status)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
+		self._mcg.connect_signal(mcg.MCGClient.SIGNAL_ERROR, self.on_mcg_error)
+		self._settings.connect('changed::'+Application.SETTING_PANEL, self.on_settings_panel_changed)
+		self._settings.connect('changed::'+Application.SETTING_ITEM_SIZE, self.on_settings_item_size_changed)
+		self._settings.connect('changed::'+Application.SETTING_SORT_ORDER, self.on_settings_sort_order_changed)
+		self._settings.connect('changed::'+Application.SETTING_SORT_TYPE, self.on_settings_sort_type_changed)
+
+		# Actions
+		self.resize(int(self._size[0]), int(self._size[1]))
+		if self._maximized:
+			self.maximize()
+		self.show_all()
+		self._infobar.hide()
+		self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION])
+		self._panels[Window._PANEL_INDEX_CONNECTION].select_profile(self._settings.get_int(Application.SETTING_PROFILE))
+
+
+	def on_resize(self, widget, event):
+		if not self._maximized:
+			self._size = (self.get_allocation().width, self.get_allocation().height)
+
+
+	def on_state(self, widget, state):
+		self._maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
+		self._fullscreen((state.new_window_state & Gdk.WindowState.FULLSCREEN > 0))
+		self._settings.set_boolean(Application.SETTING_WINDOW_MAXIMIZED, self._maximized)
+
+
+	def on_destroy(self, window):
+		self._settings.set_value(Application.SETTING_WINDOW_SIZE, GLib.Variant('ai', self._size))
+
+
+	# HeaderBar callbacks
+
+	def on_header_bar_stack_switched(self, widget):
+		self._save_visible_panel()
+
+
+	def on_header_bar_connect(self):
+		self._connect()
+
+
+	def on_header_bar_playpause(self):
+		self._mcg.playpause()
+
+
+	def on_header_bar_set_volume(self, volume):
+		self._mcg.set_volume(volume)
+
+
+	# Panel callbacks
+
+	def on_connection_panel_profile_changed(self, index, profile):
+		self._settings.set_int(Application.SETTING_PROFILE, index)
+		if ConnectionPanel.TAG_AUTOCONNECT in profile.get_tags():
+			self._connect()
+
+
+	def on_playlist_panel_clear_playlist(self):
+		self._mcg.clear_playlist()
+
+
+	def on_cover_panel_toggle_fullscreen(self):
+		if not self._fullscreened:
+			self.fullscreen()
+		else:
+			self.unfullscreen()
+
+
+	def on_cover_panel_set_song(self, pos, time):
+		self._mcg.seek(pos, time)
+
+
+	def on_library_panel_update(self):
+		self._mcg.update()
+
+
+	def on_library_panel_play(self, album):
+		self._mcg.play_album(album)
+
+
+	def on_library_panel_item_size_changed(self, size):
+		self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(size)
+		self._settings.set_int(Application.SETTING_ITEM_SIZE, self._panels[Window._PANEL_INDEX_LIBRARY].get_item_size())
+
+
+	def on_library_panel_sort_order_changed(self, sort_order):
+		self._settings.set_string(Application.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
+
+
+	def on_library_panel_sort_type_changed(self, sort_type):
+		self._settings.set_boolean(Application.SETTING_SORT_TYPE, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_type())
+
+
+	# MCG callbacks
+
+	def on_mcg_connect(self, connected, error):
+		if connected:
+			GObject.idle_add(self._connect_connected)
+			self._mcg.load_playlist()
+			self._mcg.load_albums()
+			self._mcg.get_status()
+		else:
+			if error:
+				GObject.idle_add(self._show_error, str(error))
+			GObject.idle_add(self._connect_disconnected)
+
+
+	def on_mcg_status(self, state, album, pos, time, volume, error):
+		# Album
+		if album:
+			GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_album, album)
+		# State
+		if state == 'play':
+			GObject.idle_add(self._header_bar.set_play)
+			GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_play, pos, time)
+		elif state == 'pause' or state == 'stop':
+			GObject.idle_add(self._header_bar.set_pause)
+			GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_pause)
+		# Volume
+		GObject.idle_add(self._header_bar.set_volume, volume)
+		# Error
+		if error is None:
+			self._infobar.hide()
+		else:
+			self._show_error(error)
+
+
+	def on_mcg_load_playlist(self, playlist, error):
+		self._panels[self._PANEL_INDEX_PLAYLIST].set_playlist(self._panels[self._PANEL_INDEX_CONNECTION].get_host(), playlist)
+
+
+	def on_mcg_load_albums(self, albums, error):
+		self._panels[self._PANEL_INDEX_LIBRARY].set_albums(self._panels[self._PANEL_INDEX_CONNECTION].get_host(), albums)
+
+
+	def on_mcg_error(self, error):
+		GObject.idle_add(self._show_error, str(error))
+
+
+	# Settings callbacks
+
+	def on_settings_panel_changed(self, settings, key):
+		panel_index = settings.get_int(key)
+		self._stack.set_visible_child(self._panels[panel_index])
+
+
+	def on_settings_item_size_changed(self, settings, key):
+		size = settings.get_int(key)
+		self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(size)
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(size)
+
+
+	def on_settings_sort_order_changed(self, settings, key):
+		sort_order = settings.get_string(key)
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(sort_order)
+
+
+	def on_settings_sort_type_changed(self, settings, key):
+		sort_type = settings.get_boolean(key)
+		self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(sort_type)
+
+
+	# Private methods
+
+	def _connect(self):
+		connection_panel = self._panels[Window._PANEL_INDEX_CONNECTION]
+		connection_panel.set_sensitive(False)
+		self._header_bar.set_sensitive(False, True)
+		if self._mcg.is_connected():
+			self._mcg.disconnect()
+		else:
+			host = connection_panel.get_host()
+			port = connection_panel.get_port()
+			password = connection_panel.get_password()
+			image_dir = connection_panel.get_image_dir()
+			self._mcg.connect(host, port, password, image_dir)
+
+
+	def _connect_connected(self):
+		self._header_bar.connected()
+		self._header_bar.set_sensitive(True, False)
+		self._stack.set_visible_child(self._panels[self._settings.get_int(Application.SETTING_PANEL)])
+
+
+	def _connect_disconnected(self):
+		self._panels[Window._PANEL_INDEX_PLAYLIST].stop_threads();
+		self._panels[Window._PANEL_INDEX_LIBRARY].stop_threads();
+		self._header_bar.disconnected()
+		self._header_bar.set_sensitive(False, False)
+		self._save_visible_panel()
+		self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION])
+		self._panels[Window._PANEL_INDEX_CONNECTION].set_sensitive(True)
+
+
+	def _fullscreen(self, fullscreened_new):
+		if fullscreened_new != self._fullscreened:
+			self._fullscreened = fullscreened_new
+			if self._fullscreened:
+				self._header_bar.hide()
+				self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(True)
+			else:
+				self._header_bar.show()
+				self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(False)
+
+
+	def _save_visible_panel(self):
+		panel_index_selected = self._panels.index(self._stack.get_visible_child())
+		if(panel_index_selected > 0):
+			self._settings.set_int(Application.SETTING_PANEL, panel_index_selected)
+
+
+	def _show_error(self, message):
+		self._infobar.show_error(message)
+		self._infobar.show()
+
+
+
+
+class HeaderBar(mcg.MCGBase, Gtk.HeaderBar):
+	SIGNAL_STACK_SWITCHED = 'stack-switched'
 	SIGNAL_CONNECT = 'connect'
-	SIGNAL_VIEW = 'view'
 	SIGNAL_PLAYPAUSE = 'playpause'
 	SIGNAL_SET_VOLUME = 'set-volume'
 
 
-	def __init__(self, config):
+	def __init__(self, stack):
 		mcg.MCGBase.__init__(self)
-		Gtk.Toolbar.__init__(self)
-		self._config = config
+		Gtk.HeaderBar.__init__(self)
+		self._stack = stack
+		self._buttons = {}
+		self._button_handlers = {}
 		self._changing_volume = False
 		self._setting_volume = False
 
 		# Widgets
-		# Connection
-		self._connection_button = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_CONNECT)
-		self.add(self._connection_button)
-		# Separator
-		self.add(Gtk.SeparatorToolItem())
-		# Playback
-		self._playpause_button = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_MEDIA_PAUSE)
-		self._playpause_button.set_sensitive(False)
-		self.add(self._playpause_button)
-		# Separator
-		separator = Gtk.SeparatorToolItem()
-		separator.set_draw(False)
-		separator.set_expand(True)
-		self.add(separator)
-		# View Buttons
+		# StackSwitcher
+		self._stack_switcher = StackSwitcher()
+		self._stack_switcher.set_stack(self._stack)
+		self.set_custom_title(self._stack_switcher)
+		# Buttons left
+		self._left_toolbar = Gtk.Toolbar()
+		self._left_toolbar.set_show_arrow(False)
+		self._left_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self.pack_start(self._left_toolbar)
+		# Buttons left: Connection
+		self._buttons[HeaderBar.SIGNAL_CONNECT] = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_DISCONNECT)
+		self._left_toolbar.add(self._buttons[HeaderBar.SIGNAL_CONNECT])
+		# Buttons left: Separator
+		self._left_toolbar.add(Gtk.SeparatorToolItem())
+		# Buttons left: Playback
+		self._buttons[HeaderBar.SIGNAL_PLAYPAUSE] = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_MEDIA_PAUSE)
+		self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_sensitive(False)
+		self._left_toolbar.add(self._buttons[HeaderBar.SIGNAL_PLAYPAUSE])
+		# Buttons right
+		self._right_toolbar = Gtk.Toolbar()
+		self._right_toolbar.set_show_arrow(False)
+		self._right_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self.pack_end(self._right_toolbar)
+		# Buttons right: Volume
 		item = Gtk.ToolItem()
-		item.get_style_context().add_class(Gtk.STYLE_CLASS_RAISED);
-		self._view_box = Gtk.ButtonBox()
-		self._view_box.set_layout(Gtk.ButtonBoxStyle.CENTER)
-		self._view_box.get_style_context().add_class(Gtk.STYLE_CLASS_RAISED);
-		self._view_box.get_style_context().add_class(Gtk.STYLE_CLASS_LINKED);
-		self._view_box.set_sensitive(False)
-		self._view_cover_button = Gtk.RadioButton(label="Cover")
-		self._view_cover_button.set_mode(False)
-		self._view_cover_button.set_active(self._config.view == MCGGtk.VIEW_COVER)
-		self._view_box.add(self._view_cover_button)
-		self._view_playlist_button = Gtk.RadioButton.new_with_label_from_widget(self._view_cover_button, "Playlist")
-		self._view_playlist_button.set_mode(False)
-		self._view_playlist_button.set_active(self._config.view == MCGGtk.VIEW_PLAYLIST)
-		self._view_box.add(self._view_playlist_button)
-		self._view_library_button = Gtk.RadioButton.new_with_label_from_widget(self._view_playlist_button, "Library")
-		self._view_library_button.set_mode(False)
-		self._view_library_button.set_active(self._config.view == MCGGtk.VIEW_LIBRARY)
-		self._view_box.add(self._view_library_button)
-		item.add(self._view_box)
-		item.show_all()
-		self.add(item)
-		# Separator
-		separator = Gtk.SeparatorToolItem()
-		separator.set_draw(False)
-		separator.set_expand(True)
-		self.add(separator)
-		# Volume
-		item = Gtk.ToolItem()
-		self._volume_button = Gtk.VolumeButton()
-		self._volume_button.set_sensitive(False)
-		item.add(self._volume_button)
-		self.add(item)
+		self._buttons[HeaderBar.SIGNAL_SET_VOLUME] = Gtk.VolumeButton()
+		self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_sensitive(False)
+		item.add(self._buttons[HeaderBar.SIGNAL_SET_VOLUME])
+		self._right_toolbar.add(item)
 
 		# Properties
-		self.get_style_context().add_class(Gtk.STYLE_CLASS_PRIMARY_TOOLBAR)
+		self.set_show_close_button(True)
 
 		# Signals
-		self._connection_button_handler = self._connection_button.connect('toggled', self._callback_from_widget, self.SIGNAL_CONNECT)
-		self._playpause_button_handler = self._playpause_button.connect('toggled', self._callback_from_widget, self.SIGNAL_PLAYPAUSE)
-		self._view_cover_button.connect('toggled', self.on_set_view, MCGGtk.VIEW_COVER)
-		self._view_playlist_button.connect('toggled', self.on_set_view, MCGGtk.VIEW_PLAYLIST)
-		self._view_library_button.connect('toggled', self.on_set_view, MCGGtk.VIEW_LIBRARY)
-		self._volume_button.connect('value-changed', self.on_volume_changed)
-		self._volume_button.connect('button-press-event', self.on_volume_set_active, True)
-		self._volume_button.connect('button-release-event', self.on_volume_set_active, False)
+		self._stack_switcher.connect_signal(StackSwitcher.SIGNAL_STACK_SWITCHED, self.on_stack_switched)
+		self._button_handlers[HeaderBar.SIGNAL_CONNECT] = self._buttons[HeaderBar.SIGNAL_CONNECT].connect('toggled', self._callback_from_widget, self.SIGNAL_CONNECT)
+		self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE] = self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].connect('toggled', self._callback_from_widget, self.SIGNAL_PLAYPAUSE)
+		self._buttons[HeaderBar.SIGNAL_SET_VOLUME].connect('value-changed', self.on_volume_changed)
+		self._buttons[HeaderBar.SIGNAL_SET_VOLUME].connect('button-press-event', self.on_volume_set_active, True)
+		self._buttons[HeaderBar.SIGNAL_SET_VOLUME].connect('button-release-event', self.on_volume_set_active, False)
 
 
-	def on_set_view(self, button, view):
-		if button.get_active():
-			self._callback(self.SIGNAL_VIEW, view)
+	def set_sensitive(self, sensitive, connecting):
+		for button_signal in self._buttons:
+			self._buttons[button_signal].set_sensitive(sensitive)
+		self._stack_switcher.set_sensitive(sensitive)
+		self._buttons[HeaderBar.SIGNAL_CONNECT].set_sensitive(not connecting)
+
+
+	def on_stack_switched(self, widget):
+		self._callback(HeaderBar.SIGNAL_STACK_SWITCHED, widget)
 
 
 	def on_volume_changed(self, widget, value):
@@ -447,37 +478,33 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 
 
 	def connected(self):
-		self._connection_button.set_stock_id(Gtk.STOCK_CONNECT)
-		with self._connection_button.handler_block(self._connection_button_handler):
-			self._connection_button.set_active(True)
-		self._playpause_button.set_sensitive(True)
-		self._view_box.set_sensitive(True)
-		self._volume_button.set_sensitive(True)
+		self._buttons[HeaderBar.SIGNAL_CONNECT].set_stock_id(Gtk.STOCK_CONNECT)
+		with self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block(self._button_handlers[HeaderBar.SIGNAL_CONNECT]):
+			self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(True)
 
 
 	def disconnected(self):
-		self._connection_button.set_stock_id(Gtk.STOCK_DISCONNECT)
-		self._connection_button.set_active(False)
-		self._playpause_button.set_sensitive(False)
-		self._view_box.set_sensitive(False)
-		self._volume_button.set_sensitive(False)
+		self._buttons[HeaderBar.SIGNAL_CONNECT].set_stock_id(Gtk.STOCK_DISCONNECT)
+		with self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block(self._button_handlers[HeaderBar.SIGNAL_CONNECT]):
+			self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(False)
 
 
 	def set_play(self):
-		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PLAY)
-		with self._playpause_button.handler_block(self._playpause_button_handler):
-			self._playpause_button.set_active(True)
+		self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_stock_id(Gtk.STOCK_MEDIA_PLAY)
+		with self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block(self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]):
+			self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(True)
 
 
 	def set_pause(self):
-		self._playpause_button.set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
-		self._playpause_button.set_active(False)
+		self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
+		with self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block(self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]):
+			self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(False)
 
 
 	def set_volume(self, volume):
 		if not self._changing_volume:
 			self._setting_volume = True
-			self._volume_button.set_value(volume / 100)
+			self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_value(volume / 100)
 			self._setting_volume = False
 
 
@@ -487,53 +514,62 @@ class Toolbar(mcg.MCGBase, Gtk.Toolbar):
 
 
 
-class InfoBar(mcg.MCGBase, Gtk.InfoBar):
-	SIGNAL_CLOSE = 'close'
-	RESPONSE_CLOSE = 1
+class InfoBar(Gtk.InfoBar):
+	_RESPONSE_CLOSE = 1
 
 
 	def __init__(self):
-		mcg.MCGBase.__init__(self)
 		Gtk.InfoBar.__init__(self)
 	
 		# Widgets
-		self.add_button(Gtk.STOCK_CLOSE, InfoBar.RESPONSE_CLOSE)
+		self.add_button(Gtk.STOCK_CLOSE, InfoBar._RESPONSE_CLOSE)
 		self._message_label = Gtk.Label()
 		self._message_label.show()
 		self.get_content_area().add(self._message_label)
 
 		# Signals
-		self.connect('close', self.on_response, InfoBar.RESPONSE_CLOSE)
+		self.connect('close', self.on_response, InfoBar._RESPONSE_CLOSE)
 		self.connect('response', self.on_response)
 
 
 	def on_response(self, widget, response):
-		if response == InfoBar.RESPONSE_CLOSE:
-			self._callback(InfoBar.SIGNAL_CLOSE)
+		if response == InfoBar._RESPONSE_CLOSE:
+			self.hide()
 
 
 	def show_error(self, message):
 		self.set_message_type(Gtk.MessageType.ERROR)
 		self._message_label.set_text(message)
-		#Thread(target=self._wait_and_close).start()
-
-
-	def _wait_and_close(self):
-		time.sleep(5)
-		self._callback(InfoBar.SIGNAL_CLOSE)
 
 
 
 
-class ConnectionPanel(mcg.MCGBase, Gtk.Box):
-	SIGNAL_PROFILE_CHANGED = 'change-profile'
+class Panel(mcg.MCGBase):
+
+
+	def __init__(self):
+		mcg.MCGBase.__init__(self)
+
+
+	def get_name(self):
+		raise NotImplementedError()
+
+
+	def get_title(self):
+		raise NotImplementedError()
+
+
+
+
+class ConnectionPanel(Panel, Gtk.HBox):
+	SIGNAL_PROFILE_CHANGED = 'profile-changed'
 	TAG_AUTOCONNECT = 'autoconnect'
 
 
-	def __init__(self, config):
-		mcg.MCGBase.__init__(self)
+	def __init__(self):
+		Panel.__init__(self)
 		Gtk.HBox.__init__(self)
-		self._config = mcg.MCGProfileConfig()
+		self._profile_config = mcg.MCGProfileConfig()
 		self._profiles = Gtk.ListStore(str)
 		self._profile = None
 
@@ -548,7 +584,6 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		# Profile Selection
 		self._profile_combo = Gtk.ComboBox.new_with_model(self._profiles)
 		self._profile_combo.set_entry_text_column(0)
-		self._profile_combo.connect("changed", self.on_profile_combo_changed)
 		renderer = Gtk.CellRendererText()
 		self._profile_combo.pack_start(renderer, True)
 		self._profile_combo.add_attribute(renderer, "text", 0)
@@ -559,12 +594,10 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		# New Profile
 		self._profile_new_button = Gtk.Button()
 		self._profile_new_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ADD, Gtk.IconSize.BUTTON))
-		self._profile_new_button.connect('clicked', self.on_profile_new_clicked)
 		profile_button_box.add(self._profile_new_button)
 		# Delete Profile
 		self._profile_delete_button = Gtk.Button()
 		self._profile_delete_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_DELETE, Gtk.IconSize.BUTTON))
-		self._profile_delete_button.connect('clicked', self.on_profile_delete_clicked)
 		profile_button_box.add(self._profile_delete_button)
 		# Host
 		host_label = Gtk.Label("Host:")
@@ -598,6 +631,12 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		self._table.attach(self._autoconnect_button, 1, 2, 5, 6)
 
 		# Signals
+		self._profiles.connect('row-changed', self.on_profiles_changed)
+		self._profiles.connect('row-inserted', self.on_profiles_changed)
+		self._profiles.connect('row-deleted', self.on_profiles_changed)
+		self._profile_combo.connect("changed", self.on_profile_combo_changed)
+		self._profile_new_button.connect('clicked', self.on_profile_new_clicked)
+		self._profile_delete_button.connect('clicked', self.on_profile_delete_clicked)
 		self._host_entry.connect('focus-out-event', self.on_host_entry_outfocused)
 		self._port_spinner.connect('value-changed', self.on_port_spinner_value_changed)
 		self._password_entry.connect('focus-out-event', self.on_password_entry_outfocused)
@@ -605,8 +644,19 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		self._autoconnect_button.connect('toggled', self.on_autoconnect_button_toggled)
 
 		# Actions
-		self._load_config()
-		GObject.idle_add(self._select_last_profile, config.last_profile)
+		self._load_profiles()
+
+
+	def get_name(self):
+		return 'connection'
+
+
+	def get_title(self):
+		return "Server"
+
+
+	def on_profiles_changed(self, *data):
+		self._profile_config.save()
 
 
 	def on_profile_combo_changed(self, combo):
@@ -618,21 +668,21 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 			self.set_password(self._profile.get('password'))
 			self.set_image_dir(self._profile.get('image_dir'))
 			self._autoconnect_button.set_active(ConnectionPanel.TAG_AUTOCONNECT in self._profile.get_tags())
-			self._callback(ConnectionPanel.SIGNAL_PROFILE_CHANGED, index, self._profile)
+			self._callback(ConnectionPanel.SIGNAL_PROFILE_CHANGED, index, profile)
 
 
 	def on_profile_new_clicked(self, widget):
 		profile = mcg.MCGProfile()
-		self._config.add_profile(profile)
-		self._reload_config()
+		self._profile_config.add_profile(profile)
+		self._reload_profiles()
 		self._profile_combo.set_active(len(self._profiles)-1)
 
 
 	def on_profile_delete_clicked(self, widget):
 		(index, profile) = self._get_selected_profile()
 		if profile is not None:
-			self._config.delete_profile(profile)
-			self._reload_config()
+			self._profile_config.delete_profile(profile)
+			self._reload_profiles()
 			self._profile_combo.set_active(0)
 
 
@@ -662,10 +712,6 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 			if ConnectionPanel.TAG_AUTOCONNECT in tags:
 				tags.remove(ConnectionPanel.TAG_AUTOCONNECT)
 		self._profile.set_tags(tags)
-
-
-	def save_profiles(self):
-		self._config.save()
 
 
 	def set_host(self, host):
@@ -705,49 +751,47 @@ class ConnectionPanel(mcg.MCGBase, Gtk.Box):
 		return self._image_dir_entry.get_text()
 
 
-	def _load_config(self):
-		self._config.load()
-		for profile in self._config.get_profiles():
-			self._profiles.append([str(profile)])
-
-
-	def _reload_config(self):
-		self._profiles.clear()
-		for profile in self._config.get_profiles():
-			self._profiles.append([str(profile)])
-
-
-	def set_sensitive(self, sensitive):
-		self._table.set_sensitive(sensitive)
-
-
-	def _get_selected_profile(self):
-		index = self._profile_combo.get_active()
-		if index >= 0:
-			profiles = self._config.get_profiles()
-			if index < len(profiles):
-				return (index, profiles[index])
-		return (-1, None)
-
-
-	def _select_last_profile(self, index):
+	def select_profile(self, index):
 		if len(self._profiles) <= index:
 			index = 0
 		self._profile_combo.set_active(index)
 
 
+	def _load_profiles(self):
+		self._profile_config.load()
+		for profile in self._profile_config.get_profiles():
+			self._profiles.append([str(profile)])
 
 
-class CoverPanel(mcg.MCGBase, Gtk.VBox):
+	def _reload_profiles(self):
+		self._profiles.clear()
+		for profile in self._profile_config.get_profiles():
+			self._profiles.append([str(profile)])
+
+
+	def _get_selected_profile(self):
+		index = self._profile_combo.get_active()
+		if index >= 0:
+			profiles = self._profile_config.get_profiles()
+			if index < len(profiles):
+				return (index, profiles[index])
+		return (-1, None)
+
+
+
+
+class CoverPanel(Panel, Gtk.VBox):
 	SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
+	SIGNAL_SET_SONG = 'set-song'
 
 
 	def __init__(self):
-		mcg.MCGBase.__init__(self)
+		Panel.__init__(self)
 		Gtk.VBox.__init__(self)
 		self._current_album = None
 		self._cover_pixbuf = None
 		self._timer = None
+		self._properties = {}
 
 		# Widgets
 		self._current_box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
@@ -784,15 +828,44 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 		# Signals
 		self._cover_box.connect('button-press-event',  self.on_cover_box_pressed)
 		self._cover_scroll.connect('size-allocate', self.on_cover_size_allocate)
+		self._songs_scale.connect('button-press-event', self.on_songs_start_change)
+		self._songs_scale.connect('button-release-event', self.on_songs_change)
 
+
+	def get_name(self):
+		return 'cover'
+
+
+	def get_title(self):
+		return "Cover"
 
 
 	def on_cover_box_pressed(self, widget, event):
 		if event.type == Gdk.EventType._2BUTTON_PRESS:
 			self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
 
+
 	def on_cover_size_allocate(self, widget, allocation):
 		self._resize_image()
+
+
+	def on_songs_start_change(self, widget, event):
+		if self._timer:
+			GObject.source_remove(self._timer)
+
+
+	def on_songs_change(self, widget, event):
+		value = int(self._songs_scale.get_value())
+		time = self._current_album.get_length()
+		tracks = self._current_album.get_tracks()
+		pos = len(tracks)
+		for index in range(pos-1, -1, -1):
+			time = time - tracks[index].get_length()
+			pos = pos - 1
+			if time < value:
+				break
+		time = max(value - time - 1, 0)
+		self._callback(self.SIGNAL_SET_SONG, pos, time)
 
 
 	def set_album(self, album):
@@ -806,8 +879,10 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 	def set_play(self, pos, time):
 		if self._timer is not None:
 			GObject.source_remove(self._timer)
+		tracks = self._current_album.get_tracks()
 		for index in range(0, pos):
-			time = time + self._current_album.get_tracks()[index].get_length()
+			time = time + tracks[index].get_length()
+
 		self._songs_scale.set_value(time+1)
 		self._timer = GObject.timeout_add(1000, self._playing)
 
@@ -831,6 +906,7 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 			self.child_set_property(self._current_box, 'padding', 10)
 			self._current_box.child_set_property(self._cover_scroll, 'padding', 10)
 			self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
+			GObject.idle_add(self._resize_image)
 
 
 	def _set_cover(self, album):
@@ -853,7 +929,10 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 		self._songs_scale.set_range(0, album.get_length())
 		length = 0
 		for track in album.get_tracks():
-			self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, track.get_title())
+			cur_length = length
+			if length > 0 and length < album.get_length():
+				cur_length = cur_length + 1
+			self._songs_scale.add_mark(cur_length, Gtk.PositionType.RIGHT, track.get_title())
 			length = length + track.get_length()
 		self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
 
@@ -861,6 +940,7 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 	def _playing(self):
 		value = self._songs_scale.get_value() + 1
 		self._songs_scale.set_value(value)
+
 		return True
 
 
@@ -900,32 +980,35 @@ class CoverPanel(mcg.MCGBase, Gtk.VBox):
 		ratio = min(ratioW, ratioH)
 		ratio = min(ratio, 1)
 		# Neue Breite und Höhe berechnen
-		width = int(round(pixbuf.get_width()*ratio))
-		height = int(round(pixbuf.get_height()*ratio))
+		width = int(math.floor(pixbuf.get_width()*ratio))
+		height = int(math.floor(pixbuf.get_height()*ratio))
+		if width <= 0 or height <= 0:
+			return
 		# Pixelpuffer auf Oberfläche zeichnen
+		self._cover_image.set_allocation(self._cover_scroll.get_allocation())
 		self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+		self._cover_image.show()
 
 
 
 
-class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
+class PlaylistPanel(Panel, Gtk.VBox):
 	SIGNAL_CLEAR_PLAYLIST = 'clear-playlist'
 
 
-	def __init__(self, config):
-		mcg.MCGBase.__init__(self)
+	def __init__(self):
+		Panel.__init__(self)
 		Gtk.VBox.__init__(self)
-		self._config = config
 		self._host = None
-		self._playlist = []
+		self._item_size = 150
+		self._playlist = None
 		self._playlist_lock = threading.Lock()
 		self._playlist_stop = threading.Event()
 
-		# Widgets
 		# Toolbar
 		self._playlist_toolbar = Gtk.Toolbar()
-		self.pack_start(self._playlist_toolbar, False, True, 5)
-		# Clear button
+		self.pack_start(self._playlist_toolbar, False, True, 0)
+		# Toolbar: Clear Button
 		self._clear_playlist_button = Gtk.ToolButton(Gtk.STOCK_CLEAR)
 		self._playlist_toolbar.add(self._clear_playlist_button)
 		# Playlist Grid: Model
@@ -942,42 +1025,62 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 		self._playlist_grid.set_item_padding(10)
 		self._playlist_grid.set_reorderable(False)
 		self._playlist_grid.set_item_width(-1)
-		#self._playlist_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+		self._playlist_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
 		self._playlist_scroll = Gtk.ScrolledWindow()
 		self._playlist_scroll.add(self._playlist_grid)
 		self.pack_end(self._playlist_scroll, True, True, 0)
 		self.show_all();
 
 		# Properties
-		self._playlist_toolbar.get_style_context().add_class(MCGGtk.STYLE_CLASS_NO_BG)
-		self._playlist_grid.get_style_context().add_class(MCGGtk.STYLE_CLASS_NO_BG)
+		self._playlist_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self._playlist_grid.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
 
 		# Signals
-		self._clear_playlist_button.connect('clicked' ,self._callback_from_widget, self.SIGNAL_CLEAR_PLAYLIST)
+		self._clear_playlist_button.connect('clicked' ,self._callback_from_widget, PlaylistPanel.SIGNAL_CLEAR_PLAYLIST)
+
+
+	def get_name(self):
+		return "playlist"
+
+
+	def get_title(self):
+		return "Playlist"
+
+
+	def set_item_size(self, item_size):
+		if self._item_size != item_size:
+			self._item_size = item_size
+			self._redraw()
+
+
+	def get_item_size(self):
+		return self._item_size
 
 
 	def set_playlist(self, host, playlist):
 		self._host = host
 		self._playlist_stop.set()
-		threading.Thread(target=self._set_playlist, args=(host, playlist, self._config.item_size,)).start()
+		threading.Thread(target=self._set_playlist, args=(host, playlist, self._item_size,)).start()
+
+
+	def stop_threads(self):
+		self._playlist_stop.set()
 
 
 	def _set_playlist(self, host, playlist, size):
 		self._playlist_lock.acquire()
 		self._playlist_stop.clear()
 		self._playlist = playlist
-		Gdk.threads_enter()
 		self._playlist_grid.set_model(None)
 		self._playlist_grid.freeze_child_notify()
 		self._playlist_grid_model.clear()
-		Gdk.threads_leave()
 
 		cache = mcg.MCGCache(host, size)
 		for album in playlist:
 			pixbuf = None
 			if album.get_cover() is not None:
 				try:
-					pixbuf = MCGGtk.load_thumbnail(cache, album, size)
+					pixbuf = Application.load_thumbnail(cache, album, size)
 				except Exception as e:
 					print(e)
 			if pixbuf is None:
@@ -997,12 +1100,15 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 				self._playlist_lock.release()
 				return
 
-		Gdk.threads_enter()
 		self._playlist_grid.set_model(self._playlist_grid_model)
 		self._playlist_grid.thaw_child_notify()
 		self._playlist_grid.set_columns(len(playlist))
-		Gdk.threads_leave()
 		self._playlist_lock.release()
+
+
+	def _redraw(self):
+		if self._playlist is not None:
+			self.set_playlist(self._host, self._playlist)
 
 
 	def _callback_from_widget(self, widget, signal, *data):
@@ -1011,57 +1117,59 @@ class PlaylistPanel(mcg.MCGBase, Gtk.VBox):
 
 
 
-class LibraryPanel(mcg.MCGBase, Gtk.VBox):
+class LibraryPanel(Panel, Gtk.VBox):
 	SIGNAL_UPDATE = 'update'
 	SIGNAL_PLAY = 'play'
+	SIGNAL_ITEM_SIZE_CHANGED = 'item-size-changed'
+	SIGNAL_SORT_ORDER_CHANGED = 'sort-order-changed'
+	SIGNAL_SORT_TYPE_CHANGED = 'sort-type-changed'
 
 
-	def __init__(self, config):
-		mcg.MCGBase.__init__(self)
+	def __init__(self):
+		Panel.__init__(self)
 		Gtk.VBox.__init__(self)
-		self._config = config
-		self._host = None
-		self._albums = {}
+		self._buttons = {}
+		self._albums = None
+		self._host = "localhost"
 		self._filter_string = ""
+		self._item_size = 150
+		self._sort_order = mcg.MCGAlbum.SORT_BY_YEAR
+		self._sort_type = Gtk.SortType.DESCENDING
 		self._grid_pixbufs = {}
 		self._old_ranges = {}
 		self._library_lock = threading.Lock()
 		self._library_stop = threading.Event()
 
 		# Widgets
+		# Progress Bar
+		self._progress_bar = Gtk.ProgressBar()
 		# Toolbar
-		self._library_toolbar = Gtk.Toolbar()
-		self.pack_start(self._library_toolbar, False, True, 5)
-		# Update Button
-		self._update_library_button = Gtk.ToolButton(Gtk.STOCK_REFRESH)
-		self._library_toolbar.add(self._update_library_button)
-		# Separator
-		separator = Gtk.SeparatorToolItem()
-		separator.set_draw(False)
-		separator.set_expand(True)
-		self._library_toolbar.add(separator)
-		# Filter Entry
+		self._library_toolbar = Gtk.HeaderBar()
+		self.pack_start(self._library_toolbar, False, True, 0)
+		# Toolbar: buttons left
+		# Toolbar: buttons left: Update Button
+		self._buttons[LibraryPanel.SIGNAL_UPDATE] = Gtk.ToolButton(Gtk.STOCK_REFRESH)
+		self._library_toolbar.pack_start(self._buttons[LibraryPanel.SIGNAL_UPDATE])
+		# Toolbar: Filter Entry
 		self._filter_entry = Gtk.SearchEntry()
 		self._filter_entry.set_placeholder_text("Bibliothek durchsuchen")
-		item = Gtk.ToolItem()
-		item.add(self._filter_entry)
-		self._library_toolbar.add(item)
-		# Separator
-		separator = Gtk.SeparatorToolItem()
-		separator.set_draw(False)
-		separator.set_expand(True)
-		self._library_toolbar.add(separator)
-		# Grid Scale
+		self._library_toolbar.set_custom_title(self._filter_entry)
+		# Toolbar: buttons right
+		self._right_toolbar = Gtk.Toolbar()
+		self._right_toolbar.set_show_arrow(False)
+		self._right_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self._library_toolbar.pack_end(self._right_toolbar)
+		# Toolbar: buttons right: Grid Scale
 		self._grid_scale = Gtk.HScale()
-		self._grid_scale.set_range(100,600)
+		self._grid_scale.set_range(100, 1000)
 		self._grid_scale.set_round_digits(0)
-		self._grid_scale.set_value(self._config.item_size)
+		self._grid_scale.set_value(self._item_size)
 		self._grid_scale.set_size_request(100, -1)
 		self._grid_scale.set_draw_value(False)
 		item = Gtk.ToolItem()
 		item.add(self._grid_scale)
-		self._library_toolbar.add(item)
-		# Library Sort Menu
+		self._right_toolbar.add(item)
+		# Toolbar: buttons right: Library Sort Menu
 		library_sort_store = Gtk.ListStore(str, str)
 		library_sort_store.append([mcg.MCGAlbum.SORT_BY_ARTIST, "sort by artist"])
 		library_sort_store.append([mcg.MCGAlbum.SORT_BY_TITLE, "sort by title"])
@@ -1071,30 +1179,19 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		self._library_sort_combo.pack_start(renderer_text, True)
 		self._library_sort_combo.add_attribute(renderer_text, "text", 1)
 		self._library_sort_combo.set_id_column(0)
-		self._library_sort_combo.set_active_id(self._config.library_sort_order)
+		self._library_sort_combo.set_active_id(self._sort_order)
 		item = Gtk.ToolItem()
 		item.add(self._library_sort_combo)
-		self._library_toolbar.add(item)
-		# Library Sort Type
-		self._library_sort_type_button = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)	
-		if self._config.library_sort_type == Gtk.SortType.DESCENDING:
-			self._library_sort_type_button.set_active(True)
-			self._library_sort_type_button.set_stock_id(Gtk.STOCK_SORT_DESCENDING)
-		self._library_toolbar.add(self._library_sort_type_button)
-		# Progress Bar
-		self._progress_bar = Gtk.ProgressBar()
-		# Library Grid: TextRenderer
-#		text_renderer = Gtk.CellRendererText()
-#		text_renderer.props.alignment = Pango.Alignment.CENTER
-#		text_renderer.props.wrap_mode = Pango.WrapMode.WORD
-#		text_renderer.props.xalign = 0.5
-#		text_renderer.props.yalign = 0
-#		text_renderer.props.width = 150
-#		text_renderer.props.wrap_width = 150
+		self._right_toolbar.add(item)
+		# Toolbar: buttons right: Library Sort Type
+		self._library_sort_type_button = Gtk.ToggleToolButton.new_from_stock(Gtk.STOCK_SORT_ASCENDING)
+		self._library_sort_type_button.set_active(True)
+		self._library_sort_type_button.set_stock_id(Gtk.STOCK_SORT_DESCENDING)
+		self._right_toolbar.add(self._library_sort_type_button)
 		# Library Grid: Model
 		self._library_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
-		self._library_grid_model.set_sort_func(2, self.compare_albums, self._config.library_sort_order)
-		self._library_grid_model.set_sort_column_id(2, self._config.library_sort_type)
+		self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
+		self._library_grid_model.set_sort_column_id(2, self._sort_type)
 		self._library_grid_filter = self._library_grid_model.filter_new()
 		self._library_grid_filter.set_visible_func(self.on_filter_visible)
 		# Library Grid
@@ -1108,32 +1205,36 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		self._library_grid.set_spacing(0)
 		self._library_grid.set_row_spacing(0)
 		self._library_grid.set_column_spacing(0)
-		self._library_grid.set_item_padding(10)
+		self._library_grid.set_item_padding(5)
 		self._library_grid.set_reorderable(False)
 		self._library_grid.set_item_width(-1)
 		self._library_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
 		self._library_scroll = Gtk.ScrolledWindow()
 		self._library_scroll.add(self._library_grid)
 		self.pack_end(self._library_scroll, True, True, 0)
-		#self.show_all();
 
 		# Properties
-		self._library_grid.get_style_context().add_class(MCGGtk.STYLE_CLASS_NO_BG)
-		self._library_toolbar.get_style_context().add_class(MCGGtk.STYLE_CLASS_NO_BG)
+		self._library_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self._library_toolbar.get_style_context().add_class(Window.STYLE_CLASS_NO_BORDER)
+		self._library_grid.get_style_context().add_class(Window.STYLE_CLASS_NO_BG)
+		self._library_grid.get_style_context().add_class(Window.STYLE_CLASS_NO_BORDER)
 
 		# Signals
-		self._update_library_button.connect('clicked', self._callback_from_widget, self.SIGNAL_UPDATE)
-		self._filter_entry.connect('changed', self.on_filter_entry_changed)
+		self._buttons[LibraryPanel.SIGNAL_UPDATE].connect('clicked', self._callback_from_widget, self.SIGNAL_UPDATE)
 		self._grid_scale.connect('change-value', self.on_grid_scale_change)
 		self._grid_scale.connect('button-release-event', self.on_grid_scale_changed)
 		self._library_sort_combo.connect("changed", self.on_library_sort_combo_changed)
 		self._library_sort_type_button.connect('clicked', self.on_library_sort_type_button_activated)
+		self._filter_entry.connect('changed', self.on_filter_entry_changed)
 		self._library_grid.connect('item-activated', self.on_library_grid_clicked)
 
 
-	def on_filter_entry_changed(self, widget):
-		self._filter_string = self._filter_entry.get_text()
-		GObject.idle_add(self._library_grid_filter.refilter)
+	def get_name(self):
+		return "library"
+
+
+	def get_title(self):
+		return "Library"
 
 
 	def on_filter_visible(self, model, iter, data):
@@ -1144,12 +1245,17 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		return album.filter(self._filter_string)
 
 
+	def on_filter_entry_changed(self, widget):
+		self._filter_string = self._filter_entry.get_text()
+		GObject.idle_add(self._library_grid_filter.refilter)
+
+
 	def on_grid_scale_change(self, widget, scroll, value):
 		size = round(value)
 		range =  self._grid_scale.get_adjustment()
 		if size < range.get_lower() or size > range.get_upper():
 			return
-		self._config.item_width = size
+		self._item_size = size
 		GObject.idle_add(self._set_widget_grid_size, self._library_grid, size, True)
 
 
@@ -1158,13 +1264,15 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		range =  self._grid_scale.get_adjustment()
 		if size < range.get_lower() or size > range.get_upper():
 			return
+		self._callback(LibraryPanel.SIGNAL_ITEM_SIZE_CHANGED, size)
 		self._redraw()
 
 
 	def on_library_sort_combo_changed(self, combo):
 		sort_order = combo.get_active_id()
-		self._config.library_sort_order = sort_order
+		self._sort_order = sort_order
 		self._library_grid_model.set_sort_func(2, self.compare_albums, sort_order)
+		self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort_order)
 
 
 	def on_library_sort_type_button_activated(self, button):
@@ -1174,20 +1282,56 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		else:
 			sort_type = Gtk.SortType.ASCENDING
 			button.set_stock_id(Gtk.STOCK_SORT_ASCENDING)
-		self._config.library_sort_type = sort_type
+		self._sort_type = sort_type
 		self._library_grid_model.set_sort_column_id(2, sort_type)
+		self._callback(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, sort_type)
 
 
 	def on_library_grid_clicked(self, widget, path):
 		path = self._library_grid_filter.convert_path_to_child_path(path)
 		iter = self._library_grid_model.get_iter(path)
-		self._callback(self.SIGNAL_PLAY, self._library_grid_model.get_value(iter, 2))
+		self._callback(LibraryPanel.SIGNAL_PLAY, self._library_grid_model.get_value(iter, 2))
+
+
+	def set_item_size(self, item_size):
+		if self._item_size != item_size:
+			self._item_size = item_size
+			self._grid_scale.set_value(item_size)
+			self._redraw()
+
+
+	def get_item_size(self):
+		return self._item_size
+
+
+	def set_sort_order(self, sort_order):
+		if self._sort_order != sort_order:
+			self._sort_order = sort_order
+			self._library_sort_combo.set_active_id(sort_order)
+
+
+	def get_sort_order(self):
+		return self._sort_order
+
+
+	def set_sort_type(self, sort_type):
+		if self._sort_type != sort_type:
+			if sort_type:
+				self._sort_type = Gtk.SortType.DESCENDING
+				self._library_sort_type_button.set_active(True)
+			else:
+				self._sort_type = Gtk.SortType.ASCENDING
+				self._library_sort_type_button.set_active(False)
+
+
+	def get_sort_type(self):
+		return (self._sort_type != Gtk.SortType.ASCENDING)
 
 
 	def set_albums(self, host, albums):
 		self._host = host
 		self._library_stop.set()
-		threading.Thread(target=self._set_albums, args=(host, albums, self._config.item_size,)).start()
+		threading.Thread(target=self._set_albums, args=(host, albums, self._item_size,)).start()
 
 
 	def compare_albums(self, model, row1, row2, criterion):
@@ -1199,19 +1343,22 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		return mcg.MCGAlbum.compare(self._albums[hash1], self._albums[hash2], criterion)
 
 
+	def stop_threads(self):
+		self._library_stop.set()
+
+
 	def _set_albums(self, host, albums, size):
 		self._library_lock.acquire()
 		self._library_stop.clear()
 		self._albums = albums
-		self.remove(self._library_toolbar)
-		self._progress_bar.set_fraction(0.0)
-		self.pack_start(self._progress_bar, False, True, 5)
-		self.show_all()
-		Gdk.threads_enter()
+		if len(self.get_children()) > 1:
+			GObject.idle_add(self.remove, self.get_children()[0])
+		GObject.idle_add(self._progress_bar.set_fraction, 0.0)
+		GObject.idle_add(self.pack_start, self._progress_bar, False, True, 0)
+		GObject.idle_add(self.show_all)
 		self._library_grid.set_model(None)
 		self._library_grid.freeze_child_notify()
 		self._library_grid_model.clear()
-		Gdk.threads_leave()
 
 		i = 0
 		n = len(albums)
@@ -1221,7 +1368,7 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 			album = albums[hash]
 			pixbuf = None
 			try:
-				pixbuf = MCGGtk.load_thumbnail(cache, album, size)
+				pixbuf = Application.load_thumbnail(cache, album, size)
 			except Exception as e:
 				print(e)
 			if pixbuf is None:
@@ -1244,17 +1391,24 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 				self._library_lock.release()
 				return
 
-		Gdk.threads_enter()
 		self._library_grid.set_model(self._library_grid_filter)
 		self._library_grid.thaw_child_notify()
-		Gdk.threads_leave()
+		self._library_grid.set_item_width(-1)
 		self._library_lock.release()
-		self.remove(self._progress_bar)
-		self.pack_start(self._library_toolbar, False, True, 5)
-		self.show_all()
+		if len(self.get_children()) > 1:
+			GObject.idle_add(self.remove, self.get_children()[0])
+		GObject.idle_add(self.pack_start, self._library_toolbar, False, True, 0)
+		GObject.idle_add(self.show_all)
 
 
 	def _set_widget_grid_size(self, grid_widget, size, vertical):
+		self._library_stop.set()
+		threading.Thread(target=self._set_widget_grid_size_thread, args=(grid_widget, size, vertical,)).start()
+
+
+	def _set_widget_grid_size_thread(self, grid_widget, size, vertical):
+		self._library_lock.acquire()
+		self._library_stop.clear()
 		grid_filter = grid_widget.get_model()
 		grid_model = grid_filter.get_model()
 
@@ -1272,6 +1426,7 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 		c = w * h
 		vis_range = grid_widget.get_visible_range()
 		if vis_range is None:
+			self._library_lock.release()
 			return
 		(vis_start,), (vis_end,) = vis_range
 		vis_end = min(vis_start + c, len(grid_filter))
@@ -1291,13 +1446,19 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 				pixbuf = GdkPixbuf.Pixbuf.new(GdkPixbuf.Colorspace.RGB, False, 8, 1, 1)
 			grid_model.set_value(iter, 0, pixbuf)
 
+			if self._library_stop.is_set():
+				self._library_lock.release()
+				return
+
 		self._old_ranges[grid_widget_id] = vis_range
 		grid_widget.set_item_width(size)
-		#self._config.item_size = size
+
+		self._library_lock.release()
 
 
 	def _redraw(self):
-		threading.Thread(target=self._set_albums, args=(self._host, self._albums, self._config.item_size,)).start()
+		if self._albums is not None:
+			self.set_albums(self._host, self._albums)
 
 
 	def _callback_from_widget(self, widget, signal, *data):
@@ -1305,58 +1466,31 @@ class LibraryPanel(mcg.MCGBase, Gtk.VBox):
 
 
 
-class Configuration(mcg.MCGConfig):
-	CONFIG_FILE = 'mcggtk.conf'
+
+class StackSwitcher(mcg.MCGBase, Gtk.StackSwitcher):
+	SIGNAL_STACK_SWITCHED = 'stack-switched'
 
 
 	def __init__(self):
-		mcg.MCGConfig.__init__(self, Configuration.CONFIG_FILE)
-		self._setup()
-		self.load()
+		mcg.MCGBase.__init__(self)
+		Gtk.StackSwitcher.__init__(self)
+		self._temp_button = None
 
 
-	def load(self):
-		super().load()
-		self.last_profile = self.getint('default', 'last-profile')
-		self.window_width = self.getint('gui', 'window-width')
-		self.window_height = self.getint('gui', 'window-height')
-		self.window_maximized = self.getboolean('gui', 'window-maximized')
-		self.item_size = self.getint('gui', 'item-size')
-		self.view = self.get('gui', 'view')
-		self.library_sort_order = self.get('gui', 'library-sort-order')
-		if self.getint('gui', 'library-sort-type') == 0:
-			self.library_sort_type = Gtk.SortType.ASCENDING
+	def set_stack(self, stack):
+		super().set_stack(stack)
+		for child in self.get_children():
+			if type(child) is Gtk.RadioButton:
+				child.connect('clicked', self.on_clicked)
+
+
+	def on_clicked(self, widget):
+		if not self._temp_button:
+			self._temp_button = widget
 		else:
-			self.library_sort_type = Gtk.SortType.DESCENDING
-		self.save()
+			self._temp_button = None
+			self._callback(StackSwitcher.SIGNAL_STACK_SWITCHED, self)
 
 
-	def save(self):
-		self.set('default', 'last-profile', str(self.last_profile))
-		self.set('gui', 'window-width', str(self.window_width))
-		self.set('gui', 'window-height', str(self.window_height))
-		self.set('gui', 'window-maximized', str(self.window_maximized))
-		self.set('gui', 'item-size', str(self.item_size))
-		self.set('gui', 'view', str(self.view))
-		self.set('gui', 'library-sort-order', str(self.library_sort_order))
-		if self.library_sort_type == Gtk.SortType.ASCENDING:
-			self.set('gui', 'library-sort-type', str(0))
-		else:
-			self.set('gui', 'library-sort-type', str(1))
-		super().save()
 
-
-	def _setup(self):
-		if not self.has_section('default'):
-			self.add_section('default')
-		self.set('default', 'last-profile', str(0))
-		if not self.has_section('gui'):
-			self.add_section('gui')
-		self.set('gui', 'window-width', str(800))
-		self.set('gui', 'window-height', str(600))
-		self.set('gui', 'window-maximized', str(False))
-		self.set('gui', 'item-size', str(100))
-		self.set('gui', 'view', MCGGtk.VIEW_COVER)
-		self.set('gui', 'library-sort-order', mcg.MCGAlbum.SORT_BY_YEAR)
-		self.set('gui', 'library-sort-type', str(1))
 

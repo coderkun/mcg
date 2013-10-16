@@ -144,6 +144,12 @@ class MCGClient(MCGBase, mpd.MPDClient):
 		self._add_action(self._play_album, album)
 
 
+	def seek(self, pos, time):
+		"""Seeks to a song at a position
+		"""
+		self._add_action(self._seek, pos, time)
+
+
 	def stop(self):
 		self._add_action(self._stop)
 
@@ -338,6 +344,10 @@ class MCGClient(MCGBase, mpd.MPDClient):
 			track_ids.append(track_id)
 		if self._state != 'play':
 			self._call('playid', track_ids[0])
+
+
+	def _seek(self, pos, time):
+		self._call('seek', pos, time)
 
 
 	def _stop(self):
@@ -766,6 +776,8 @@ class MCGProfileConfig(MCGConfig):
 				self.add_section(section)
 			for attribute in profile.get_attributes():
 				self.set(section, attribute, str(profile.get(attribute)))
+		for section in self.sections()[len(self._profiles)+1:]:
+			self.remove_section(section)
 		super().save()
 
 
@@ -825,13 +837,15 @@ class MCGProfile(MCGConfigurable):
 class MCGCache():
 	DIRNAME = '~/.cache/mcg/'
 	SIZE_FILENAME = 'size'
+	_lock = threading.Lock()
 
 
 	def __init__(self, host, size):
+		self._host = host
+		self._size = size
 		self._dirname = os.path.expanduser(os.path.join(MCGCache.DIRNAME, host))
 		if not os.path.exists(self._dirname):
 			os.makedirs(self._dirname)
-		self._size = size
 		self._read_size()
 
 
@@ -841,23 +855,28 @@ class MCGCache():
 
 	def _read_size(self):
 		size = 100
+		MCGCache._lock.acquire()
+		# Read old size
 		filename = os.path.join(self._dirname, MCGCache.SIZE_FILENAME)
 		if os.path.exists(filename):
 			with open(filename, 'r') as f:
 				size = int(f.readline())
+		# Clear cache if size has changed
 		if size != self._size:
 			self._clear()
-			with open(filename, 'w') as f:
-				f.write(str(self._size))
+		# Write new size
+		with open(filename, 'w') as f:
+			f.write(str(self._size))
+		MCGCache._lock.release()
 
 
 	def _clear(self):
 		for filename in os.listdir(self._dirname):
 			path = os.path.join(self._dirname, filename)
-			try:
-				if os.path.isfile(path):
+			if os.path.isfile(path):
+				try:
 					os.unlink(path)
-			except Exception as e:
-				print("clear:", e)
+				except Exception as e:
+					print("clear:", e)
 
 
