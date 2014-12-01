@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """MPDCoverGrid (GTK version) is a client for the Music Player Daemon, focused on albums instead of single tracks."""
@@ -25,14 +25,17 @@ from gui import gtk
 # Set environment
 srcdir = os.path.abspath(os.path.join(os.path.dirname(gtk.__file__), '..'))
 if not os.environ.get('GSETTINGS_SCHEMA_DIR'):
-	os.environ['GSETTINGS_SCHEMA_DIR'] = os.path.join(srcdir, 'data')
+    os.environ['GSETTINGS_SCHEMA_DIR'] = os.path.join(srcdir, 'data')
 
 
+
+
+def start():
+    app = gtk.Application()
+    exit_status = app.run(sys.argv)
+    sys.exit(exit_status)
 
 
 if __name__ == "__main__":
-	# Start application
-	app = gtk.Application()
-	exit_status = app.run(sys.argv)
-	sys.exit(exit_status)
-
+    # Start application
+    start()
