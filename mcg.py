@@ -133,7 +133,7 @@ class Client(Base):
 
     def is_connected(self):
         """Return the connection status."""
-        return self._worker is not None
+        return self._worker is not None and self._worker.is_alive()
 
 
     def disconnect(self):
@@ -264,10 +264,13 @@ class Client(Base):
     def _disconnect_socket(self):
         if self._sock_read is not None:
             self._sock_read.close()
+        self._sock_read = None
         if self._sock_write is not None:
             self._sock_write.close()
+        self._sock_write = None
         if self._sock is not None:
             self._sock.close()
+        self._sock = None
         self._logger.info("disconnected")
         self._set_connection_status(False)
 
