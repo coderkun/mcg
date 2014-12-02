@@ -513,7 +513,7 @@ class Client(Base):
 
     def _write(self, command, args=None):
         if args is not None and len(args) > 0:
-            line = '{} "{}"\n'.format(command, '" "'.join(str(x) for x in args))
+            line = '{} "{}"\n'.format(command, '" "'.join(str(x).replace('"', '\\\"') for x in args))
         else:
             line = '{}\n'.format(command)
         self._logger.debug("write: %r", line)
