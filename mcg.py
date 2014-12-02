@@ -353,32 +353,32 @@ class Client(Base):
     def _load_albums(self):
         """Action: Perform the real update."""
         self._albums = {}
-        for song in self._parse_list(self._call('listallinfo'), ['file', 'directory']):
-            self._logger.debug("song: %r", song)
-            if 'file' in song:
-                # Track
-                track = None
-                if 'artist' in song and 'title' in song and 'file' in song:
-                    if 'track' not in song:
-                        song['track'] = None
-                    if 'time' not in song:
-                        song['time'] = 0
-                    if 'date' not in song:
-                        song['date'] = None
-                    track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['date'], song['file'])
-                self._logger.debug("track: %r", track)
-                # Album
-                if 'album' not in song:
-                    song['album'] = MCGAlbum.DEFAULT_ALBUM
-                hash = MCGAlbum.hash(song['album'])
-                if hash in self._albums.keys():
-                    album = self._albums[hash]
-                else:
-                    album = MCGAlbum(song['album'], self._host, self._image_dir)
-                    self._albums[album.get_hash()] = album
-                self._logger.debug("album: %r", album)
-                # Add track to album
-                if track:
+        # Albums
+        for mpdAlbum in self._parse_list(self._call('list album'), ['album']):
+            albumTitle = mpdAlbum['album']
+            if albumTitle == "":
+                albumTitle = MCGAlbum.DEFAULT_ALBUM
+            albumHash = MCGAlbum.hash(albumTitle)
+            if hash in self._albums.keys():
+                album = self._albums[hash]
+            else:
+                album = MCGAlbum(albumTitle, self._host, self._image_dir)
+                self._albums[albumHash] = album
+            self._logger.debug("album: %r", album)
+            # Tracks
+            for mpdTrack in self._parse_list(self._call('find album ', mpdAlbum['album']), ['file']):
+                if 'artist' in mpdTrack and 'title' in mpdTrack and 'file' in mpdTrack:
+                    trackNumber = None
+                    if 'track' in mpdTrack:
+                        trackNumber = mpdTrack['track']
+                    trackTime = 0
+                    if 'time' in mpdTrack:
+                        trackTime = mpdTrack['time']
+                    trackDate = None
+                    if 'date' in mpdTrack:
+                        trackDate = mpdTrack['date']
+                    track = MCGTrack(mpdTrack['artist'], mpdTrack['title'], trackNumber, trackTime, trackDate, mpdTrack['file'])
+                    self._logger.debug("track: %r", track)
                     album.add_track(track)
         self._callback(Client.SIGNAL_LOAD_ALBUMS, self._albums)
 
