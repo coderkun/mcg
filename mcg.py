@@ -565,8 +565,8 @@ class Client(Base):
 
 
     def _split_line(self, line):
-        parts = line.split(': ')
-        return parts[0].lower(), ': '.join(parts[1:])
+        parts = line.split(':')
+        return parts[0].lower(), ':'.join(parts[1:]).lstrip()
 
 
     def _set_connection_status(self, status):
