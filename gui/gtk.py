@@ -10,8 +10,13 @@ __version__ = "0.4"
 __status__ = "Development"
 
 
-import math
+try:
+    import keyring
+    use_keyring = True
+except:
+    use_keyring = False
 import logging
+import math
 import os
 import sys
 import threading
@@ -38,6 +43,8 @@ class Application(Gtk.Application):
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
+    KEYRING_SYSTEM = 'MPDCoverGrid (Gtk)'
+    KEYRING_USERNAME = 'mpd'
 
 
     def __init__(self):
@@ -162,6 +169,8 @@ class Window(Gtk.ApplicationWindow):
         self.get_style_context().add_class(Window.STYLE_CLASS_BG_TEXTURE)
         self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Application.SETTING_HOST))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Application.SETTING_PORT))
+        if use_keyring:
+            self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Application.SETTING_IMAGE_DIR))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
@@ -245,6 +254,8 @@ class Window(Gtk.ApplicationWindow):
     def on_connection_panel_connection_changed(self, host, port, password, image_dir):
         self._settings.set_string(Application.SETTING_HOST, host)
         self._settings.set_int(Application.SETTING_PORT, port)
+        if use_keyring:
+            keyring.set_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME, password)
         self._settings.set_string(Application.SETTING_IMAGE_DIR, image_dir)
 
 
