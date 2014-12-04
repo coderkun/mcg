@@ -18,6 +18,7 @@ import threading
 import urllib
 
 from gi.repository import Gio, Gtk, Gdk, GObject, GdkPixbuf, GLib
+from gi.repository import Avahi
 
 import mcg
 
@@ -27,9 +28,12 @@ import mcg
 class Application(Gtk.Application):
     TITLE = "MPDCoverGrid (Gtk)"
     SETTINGS_BASE_KEY = 'de.coderkun.mcg'
+    SETTING_HOST = 'host'
+    SETTING_PORT = 'port'
+    SETTING_CONNECTED = 'connected'
+    SETTING_IMAGE_DIR = 'image-dir'
     SETTING_WINDOW_SIZE = 'window-size'
     SETTING_WINDOW_MAXIMIZED = 'window-maximized'
-    SETTING_PROFILE  = 'profile'
     SETTING_PANEL = 'panel'
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
@@ -156,6 +160,9 @@ class Window(Gtk.ApplicationWindow):
         """)
         self.get_style_context().add_provider_for_screen(Gdk.Screen.get_default(), styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.get_style_context().add_class(Window.STYLE_CLASS_BG_TEXTURE)
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Application.SETTING_HOST))
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Application.SETTING_PORT))
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Application.SETTING_IMAGE_DIR))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Application.SETTING_SORT_ORDER))
@@ -169,7 +176,7 @@ class Window(Gtk.ApplicationWindow):
         self._header_bar.connect_signal(HeaderBar.SIGNAL_CONNECT, self.on_header_bar_connect)
         self._header_bar.connect_signal(HeaderBar.SIGNAL_PLAYPAUSE, self.on_header_bar_playpause)
         self._header_bar.connect_signal(HeaderBar.SIGNAL_SET_VOLUME, self.on_header_bar_set_volume)
-        self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_PROFILE_CHANGED, self.on_connection_panel_profile_changed)
+        self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.on_connection_panel_connection_changed)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_SET_SONG, self.on_cover_panel_set_song)
@@ -195,7 +202,8 @@ class Window(Gtk.ApplicationWindow):
         self.show_all()
         self._infobar.hide()
         self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION])
-        self._panels[Window._PANEL_INDEX_CONNECTION].select_profile(self._settings.get_int(Application.SETTING_PROFILE))
+        if self._settings.get_boolean(Application.SETTING_CONNECTED):
+            self._connect()
 
 
     def on_resize(self, widget, event):
@@ -234,10 +242,10 @@ class Window(Gtk.ApplicationWindow):
 
     # Panel callbacks
 
-    def on_connection_panel_profile_changed(self, index, profile):
-        self._settings.set_int(Application.SETTING_PROFILE, index)
-        if ConnectionPanel.TAG_AUTOCONNECT in profile.get_tags():
-            self._connect()
+    def on_connection_panel_connection_changed(self, host, port, password, image_dir):
+        self._settings.set_string(Application.SETTING_HOST, host)
+        self._settings.set_int(Application.SETTING_PORT, port)
+        self._settings.set_string(Application.SETTING_IMAGE_DIR, image_dir)
 
 
     def on_playlist_panel_clear_playlist(self):
@@ -353,12 +361,14 @@ class Window(Gtk.ApplicationWindow):
         self._header_bar.set_sensitive(False, True)
         if self._mcg.is_connected():
             self._mcg.disconnect()
+            self._settings.set_boolean(Application.SETTING_CONNECTED, False)
         else:
             host = connection_panel.get_host()
             port = connection_panel.get_port()
             password = connection_panel.get_password()
             image_dir = connection_panel.get_image_dir()
             self._mcg.connect(host, port, password, image_dir)
+            self._settings.set_boolean(Application.SETTING_CONNECTED, True)
 
 
     def _connect_connected(self):
@@ -564,90 +574,83 @@ class Panel(mcg.Base):
 
 
 
-class ConnectionPanel(Panel, Gtk.HBox):
-    SIGNAL_PROFILE_CHANGED = 'profile-changed'
-    TAG_AUTOCONNECT = 'autoconnect'
+class ConnectionPanel(Panel, Gtk.VBox):
+    SIGNAL_CONNECTION_CHANGED = 'connection-changed'
 
 
     def __init__(self):
         Panel.__init__(self)
-        Gtk.HBox.__init__(self)
-        self._profile_config = mcg.MCGProfileConfig()
-        self._profiles = Gtk.ListStore(str)
+        Gtk.VBox.__init__(self)
+        self._services = Gtk.ListStore(str, str, int)
         self._profile = None
 
         # Widgets
-        vbox = Gtk.VBox()
-        self.pack_start(vbox, True, False, 0)
-        self._table = Gtk.Table(6, 2, False)
-        vbox.pack_start(self._table, True, False, 0)
-        # Profile
-        profile_box = Gtk.HBox()
-        self._table.attach(profile_box, 0, 2, 0, 1)
-        # Profile Selection
-        self._profile_combo = Gtk.ComboBox.new_with_model(self._profiles)
-        self._profile_combo.set_entry_text_column(0)
+        hbox = Gtk.HBox()
+        self.pack_start(hbox, True, False, 0)
+        grid = Gtk.Grid()
+        grid.set_column_spacing(5)
+        grid.set_column_homogeneous(True)
+        hbox.pack_start(grid, True, False, 0)
+        # Zeroconf
+        zeroconf_box = Gtk.HBox()
+        grid.add(zeroconf_box)
+        # Zeroconf list
+        self._zeroconf_list = Gtk.TreeView(self._services)
+        self._zeroconf_list.get_selection().set_mode(Gtk.SelectionMode.SINGLE)
         renderer = Gtk.CellRendererText()
-        self._profile_combo.pack_start(renderer, True)
-        self._profile_combo.add_attribute(renderer, "text", 0)
-        profile_box.pack_start(self._profile_combo, True, True, 0)
-        # Profile Management
-        profile_button_box = Gtk.HBox()
-        profile_box.pack_end(profile_button_box, False, True, 0)
-        # New Profile
-        self._profile_new_button = Gtk.Button()
-        self._profile_new_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_ADD, Gtk.IconSize.BUTTON))
-        profile_button_box.add(self._profile_new_button)
-        # Delete Profile
-        self._profile_delete_button = Gtk.Button()
-        self._profile_delete_button.set_image(Gtk.Image.new_from_stock(Gtk.STOCK_DELETE, Gtk.IconSize.BUTTON))
-        profile_button_box.add(self._profile_delete_button)
+        column = Gtk.TreeViewColumn("Zeroconf", renderer, text=0)
+        self._zeroconf_list.append_column(column)
+        zeroconf_box.pack_start(self._zeroconf_list, True, True, 0)
+        # Separator
+        separator = Gtk.Separator.new(Gtk.Orientation.VERTICAL)
+        zeroconf_box.pack_end(separator, False, False, 5)
+        # Connection grid
+        connection_grid = Gtk.Grid()
+        grid.attach_next_to(connection_grid, zeroconf_box, Gtk.PositionType.RIGHT, 1, 1)
         # Host
         host_label = Gtk.Label("Host:")
         host_label.set_alignment(0, 0.5)
-        self._table.attach(host_label, 0, 1, 1, 2)
+        connection_grid.add(host_label)
         self._host_entry = Gtk.Entry()
         self._host_entry.set_text("localhost")
-        self._table.attach(self._host_entry, 1, 2, 1, 2)
+        connection_grid.attach_next_to(self._host_entry, host_label, Gtk.PositionType.BOTTOM, 1, 1)
         # Port
         port_label = Gtk.Label("Port:")
         port_label.set_alignment(0, 0.5)
-        self._table.attach(port_label, 0, 1, 2, 3)
+        connection_grid.attach_next_to(port_label, self._host_entry, Gtk.PositionType.BOTTOM, 1, 1)
         adjustment = Gtk.Adjustment(6600, 1024, 9999, 1, 10, 10)
         self._port_spinner = Gtk.SpinButton()
         self._port_spinner.set_adjustment(adjustment)
-        self._table.attach(self._port_spinner, 1, 2, 2, 3)
+        connection_grid.attach_next_to(self._port_spinner, port_label, Gtk.PositionType.BOTTOM, 1, 1)
         # Passwort
         password_label = Gtk.Label("Password:")
         password_label.set_alignment(0, 0.5)
-        self._table.attach(password_label, 0, 1, 3, 4)
+        connection_grid.attach_next_to(password_label, self._port_spinner, Gtk.PositionType.BOTTOM, 1, 1)
         self._password_entry = Gtk.Entry()
-        self._table.attach(self._password_entry, 1, 2, 3, 4)
+        self._password_entry.set_input_purpose(Gtk.InputPurpose.PASSWORD)
+        self._password_entry.set_visibility(False)
+        connection_grid.attach_next_to(self._password_entry, password_label, Gtk.PositionType.BOTTOM, 1, 1)
         # Image dir
         image_dir_label = Gtk.Label("Image Dir:")
         image_dir_label.set_alignment(0, 0.5)
-        self._table.attach(image_dir_label, 0, 1, 4, 5)
+        connection_grid.attach_next_to(image_dir_label, self._password_entry, Gtk.PositionType.BOTTOM, 1, 1)
         self._image_dir_entry = Gtk.Entry()
-        self._table.attach(self._image_dir_entry, 1, 2, 4, 5)
-        # Autoconnect
-        self._autoconnect_button = Gtk.CheckButton("Autoconnect")
-        self._table.attach(self._autoconnect_button, 1, 2, 5, 6)
+        connection_grid.attach_next_to(self._image_dir_entry, image_dir_label, Gtk.PositionType.BOTTOM, 1, 1)
+
+        # Zeroconf provider
+        self._zeroconf_provider = ZeroconfProvider()
+        self._zeroconf_provider.connect_signal(ZeroconfProvider.SIGNAL_SERVICE_NEW, self.on_new_service)
 
         # Signals
-        self._profiles.connect('row-changed', self.on_profiles_changed)
-        self._profiles.connect('row-inserted', self.on_profiles_changed)
-        self._profiles.connect('row-deleted', self.on_profiles_changed)
-        self._profile_combo.connect("changed", self.on_profile_combo_changed)
-        self._profile_new_button.connect('clicked', self.on_profile_new_clicked)
-        self._profile_delete_button.connect('clicked', self.on_profile_delete_clicked)
+        self._zeroconf_list.get_selection().connect('changed', self.on_service_selected)
+        self._zeroconf_list.connect('focus-out-event', self.on_zeroconf_list_outfocused)
         self._host_entry.connect('focus-out-event', self.on_host_entry_outfocused)
         self._port_spinner.connect('value-changed', self.on_port_spinner_value_changed)
         self._password_entry.connect('focus-out-event', self.on_password_entry_outfocused)
         self._image_dir_entry.connect('focus-out-event', self.on_image_dir_entry_outfocused)
-        self._autoconnect_button.connect('toggled', self.on_autoconnect_button_toggled)
 
         # Actions
-        self._load_profiles()
+        #self._load_profiles()
 
 
     def get_name(self):
@@ -658,63 +661,37 @@ class ConnectionPanel(Panel, Gtk.HBox):
         return "Server"
 
 
-    def on_profiles_changed(self, *data):
-        self._profile_config.save()
+    def on_new_service(self, service):
+        name, host, port = service
+        self._services.append([name, host, port])
 
 
-    def on_profile_combo_changed(self, combo):
-        (index, profile) = self._get_selected_profile()
-        if profile is not None:
-            self._profile = profile
-            self.set_host(self._profile.get('host'))
-            self.set_port(int(self._profile.get('port')))
-            self.set_password(self._profile.get('password'))
-            self.set_image_dir(self._profile.get('image_dir'))
-            self._autoconnect_button.set_active(ConnectionPanel.TAG_AUTOCONNECT in self._profile.get_tags())
-            self._callback(ConnectionPanel.SIGNAL_PROFILE_CHANGED, index, profile)
+    def on_service_selected(self, selection):
+        model, treeiter = selection.get_selected()
+        if treeiter != None:
+            service = model[treeiter]
+            self.set_host(service[1])
+            self.set_port(service[2])
 
 
-    def on_profile_new_clicked(self, widget):
-        profile = mcg.MCGProfile()
-        self._profile_config.add_profile(profile)
-        self._reload_profiles()
-        self._profile_combo.set_active(len(self._profiles)-1)
-
-
-    def on_profile_delete_clicked(self, widget):
-        (index, profile) = self._get_selected_profile()
-        if profile is not None:
-            self._profile_config.delete_profile(profile)
-            self._reload_profiles()
-            self._profile_combo.set_active(0)
+    def on_zeroconf_list_outfocused(self, widget, event):
+        self._zeroconf_list.get_selection().unselect_all()
 
 
     def on_host_entry_outfocused(self, widget, event):
-        self._profile.set('host', widget.get_text())
-        self._profiles.set(self._profile_combo.get_active_iter(), 0, widget.get_text())
+        self._call_back()
 
 
     def on_port_spinner_value_changed(self, widget):
-        self._profile.set('port', self.get_port())
+        self._call_back()
 
 
     def on_password_entry_outfocused(self, widget, event):
-        self._profile.set('password', widget.get_text())
+        self._call_back()
 
 
     def on_image_dir_entry_outfocused(self, widget, event):
-        self._profile.set('image_dir', widget.get_text())
-
-
-    def on_autoconnect_button_toggled(self, widget):
-        tags = self._profile.get_tags()
-        if widget.get_active():
-            if ConnectionPanel.TAG_AUTOCONNECT not in tags:
-                tags.append(ConnectionPanel.TAG_AUTOCONNECT)
-        else:
-            if ConnectionPanel.TAG_AUTOCONNECT in tags:
-                tags.remove(ConnectionPanel.TAG_AUTOCONNECT)
-        self._profile.set_tags(tags)
+        self._call_back()
 
 
     def set_host(self, host):
@@ -754,31 +731,8 @@ class ConnectionPanel(Panel, Gtk.HBox):
         return self._image_dir_entry.get_text()
 
 
-    def select_profile(self, index):
-        if len(self._profiles) <= index:
-            index = 0
-        self._profile_combo.set_active(index)
-
-
-    def _load_profiles(self):
-        self._profile_config.load()
-        for profile in self._profile_config.get_profiles():
-            self._profiles.append([str(profile)])
-
-
-    def _reload_profiles(self):
-        self._profiles.clear()
-        for profile in self._profile_config.get_profiles():
-            self._profiles.append([str(profile)])
-
-
-    def _get_selected_profile(self):
-        index = self._profile_combo.get_active()
-        if index >= 0:
-            profiles = self._profile_config.get_profiles()
-            if index < len(profiles):
-                return (index, profiles[index])
-        return (-1, None)
+    def _call_back(self):
+        self._callback(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.get_host(), self.get_port(), self.get_password(), self.get_image_dir())
 
 
 
@@ -1493,3 +1447,45 @@ class StackSwitcher(mcg.Base, Gtk.StackSwitcher):
         else:
             self._temp_button = None
             self._callback(StackSwitcher.SIGNAL_STACK_SWITCHED, self)
+
+
+
+
+class ZeroconfProvider(mcg.Base):
+    SIGNAL_SERVICE_NEW = 'service-new'
+    TYPE = '_mpd._tcp'
+
+
+    def __init__(self):
+        mcg.Base.__init__(self)
+        self._service_resolvers = []
+        self._services = {}
+        # Client
+        self._client = Avahi.Client(flags=0,)
+        self._client.start()
+        # Browser
+        self._service_browser = Avahi.ServiceBrowser(domain='local', flags=0, interface=-1, protocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, type=ZeroconfProvider.TYPE)
+        self._service_browser.connect('new_service', self.on_new_service)
+        self._service_browser.attach(self._client)
+
+
+    def on_new_service(self, browser, interface, protocol, name, type, domain, flags):
+        if not (flags & Avahi.LookupResultFlags.GA_LOOKUP_RESULT_LOCAL):
+            service_resolver = Avahi.ServiceResolver(interface=interface, protocol=protocol, name=name, type=type, domain=domain, aprotocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, flags=0,)
+            service_resolver.connect('found', self.on_found)
+            service_resolver.connect('failure', self.on_failure)
+            service_resolver.attach(self._client)
+            self._service_resolvers.append(service_resolver)
+
+
+    def on_found(self, resolver, interface, protocol, name, type, domain, host, date, port, *args):
+        if (host, port) not in self._services.keys():
+            service = (name,host,port)
+            self._services[(host,port)] = service
+            self._callback(ZeroconfProvider.SIGNAL_SERVICE_NEW, service)
+
+
+    def on_failure(self, resolver, date):
+        if resolver in self._service_resolvers:
+            self._service_resolvers.remove(resolver)
+

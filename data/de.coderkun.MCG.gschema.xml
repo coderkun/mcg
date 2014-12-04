@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
 	<schema path="/de/coderkun/mcg/" id="de.coderkun.mcg" gettext-domain="mcg">
+		<key type="s" name="host">
+			<default>'localhost'</default>
+			<summary>MPD host</summary>
+			<description>MPD host to connect to</description>
+		</key>
+		<key type="i" name="port">
+			<default>6600</default>
+			<summary>MPD port</summary>
+			<description>MPD port to connect to</description>
+		</key>
+		<key type="s" name="image-dir">
+			<default>''</default>
+			<summary>Image dir</summary>
+			<description>Directory which a webserver is providing images on</description>
+		</key>
+		<key type="b" name="connected">
+			<default>false</default>
+			<summary>Connection state</summary>
+			<description>State of last connection</description>
+		</key>
 		<key type="ai" name="window-size">
 			<default>[800, 600]</default>
 			<summary>Window size</summary>
@@ -10,11 +30,6 @@
 			<default>false</default>
 			<summary>Window maximized</summary>
 			<description>Window maximized state.</description>
-		</key>
-		<key type="i" name="profile">
-			<default>0</default>
-			<summary>Last selected profile</summary>
-			<description>The index of the last selected profile used to connect to the MPD server.</description>
 		</key>
 		<key type="i" name="panel">
 			<range min="1" max="3"/>

@@ -202,6 +202,11 @@ class Client(Base):
         self._add_action(self._set_volume, volume)
 
 
+    def test(self):
+        self._logger.info("test")
+        self._add_action(self._test)
+
+
     # Private methods
 
     def _connect(self, host, port, password):
@@ -832,116 +837,6 @@ class MCGConfig(configparser.ConfigParser):
         dirname = os.path.dirname(self._filename)
         if not os.path.exists(dirname):
             os.makedirs(dirname)
-
-
-
-
-class MCGProfileConfig(MCGConfig):
-    CONFIG_FILE = 'profiles.conf'
-
-
-    def __init__(self):
-        MCGConfig.__init__(self, MCGProfileConfig.CONFIG_FILE)
-        self._profiles = []
-
-
-    def add_profile(self, profile):
-        self._profiles.append(profile)
-
-
-    def delete_profile(self, profile):
-        if profile in self._profiles:
-            self._profiles.remove(profile)
-            self._force_default_profile()
-
-
-    def get_profiles(self):
-        return self._profiles
-
-
-    def load(self):
-        super().load()
-        count = 0
-        if self.has_section('profiles'):
-            if self.has_option('profiles', 'count'):
-                count = self.getint('profiles', 'count')
-        for index in range(count):
-            section = 'profile'+str(index+1)
-            if self.has_section(section):
-                profile = MCGProfile()
-                for attribute in profile.get_attributes():
-                    if self.has_option(section, attribute):
-                        profile.set(attribute, self.get(section, attribute))
-                self._profiles.append(profile)
-        self._force_default_profile()
-
-
-    def save(self):
-        if not self.has_section('profiles'):
-            self.add_section('profiles')
-        self.set('profiles', 'count', str(len(self._profiles)))
-
-        for index in range(len(self._profiles)):
-            profile = self._profiles[index]
-            section = 'profile'+str(index+1)
-            if not self.has_section(section):
-                self.add_section(section)
-            for attribute in profile.get_attributes():
-                self.set(section, attribute, str(profile.get(attribute)))
-        for section in self.sections()[len(self._profiles)+1:]:
-            self.remove_section(section)
-        super().save()
-
-
-    def _force_default_profile(self):
-        if len(self._profiles) == 0:
-            self._profiles.append(MCGProfile())
-
-
-
-
-class MCGConfigurable:
-    def __init__(self):
-        self._attributes = []
-
-
-    def get(self, attribute):
-        return getattr(self, attribute)
-
-
-    def set(self, attribute, value):
-        setattr(self, attribute, value)
-        if attribute not in self._attributes:
-            self._attributes.append(attribute)
-
-
-    def get_attributes(self):
-        return self._attributes
-
-
-
-
-class MCGProfile(MCGConfigurable):
-
-    def __init__(self):
-        MCGConfigurable.__init__(self)
-        self.set('host', "localhost")
-        self.set('port', 6600)
-        self.set('password', "")
-        self.set('image_dir', "")
-        self.set('tags', "")
-
-
-    def __str__(self):
-        return self.get("host")
-
-
-    def get_tags(self):
-        return self.get('tags').split(',')
-
-
-    def set_tags(self, tags):
-        self.set('tags', ','.join(tags))
 
 
 
