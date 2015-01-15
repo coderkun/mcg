@@ -255,7 +255,11 @@ class Window(Gtk.ApplicationWindow):
         self._settings.set_string(Application.SETTING_HOST, host)
         self._settings.set_int(Application.SETTING_PORT, port)
         if use_keyring:
-            keyring.set_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME, password)
+            if password:
+                keyring.set_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME, password)
+            else:
+                if keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME):
+                   keyring.delete_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME)
         self._settings.set_string(Application.SETTING_IMAGE_DIR, image_dir)
 
 
