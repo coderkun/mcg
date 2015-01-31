@@ -1124,7 +1124,7 @@ class LibraryPanel(Panel, Gtk.VBox):
         self._library_toolbar.pack_start(self._buttons[LibraryPanel.SIGNAL_UPDATE])
         # Toolbar: Filter Entry
         self._filter_entry = Gtk.SearchEntry()
-        self._filter_entry.set_placeholder_text("Bibliothek durchsuchen")
+        self._filter_entry.set_placeholder_text("search library")
         self._library_toolbar.set_custom_title(self._filter_entry)
         # Toolbar: buttons right
         self._right_toolbar = Gtk.Toolbar()
