@@ -105,6 +105,8 @@ class Client(Base):
     PROTOCOL_COMPLETION = 'OK'
     # Protocol: error mark
     PROTOCOL_ERROR = 'ACK '
+    # Protocol: error: permission
+    PROTOCOL_ERROR_PERMISSION = 4
     # Signal: connection status
     SIGNAL_CONNECTION = 'connection'
     # Signal: status
@@ -535,6 +537,8 @@ class Client(Base):
             self._write(command, args)
             return self._read()
         except MPDException as e:
+            if command == 'idle' and e.get_error() == Client.PROTOCOL_ERROR_PERMISSION:
+                self.disconnect()
             self._callback(Client.SIGNAL_ERROR, e)
 
 
