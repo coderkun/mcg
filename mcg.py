@@ -577,20 +577,27 @@ class Client(Base):
 
     def _parse_dict(self, response):
         dict = {}
-        for line in response:
-            key, value = self._split_line(line)
-            dict[key] = value
+        if response:
+            for line in response:
+                key, value = self._split_line(line)
+                dict[key] = value
         return dict
 
 
     def _parse_list(self, response, delimiters):
         entry = {}
-        for line in response:
-            key, value = self._split_line(line)
-            if entry and key in delimiters:
-                yield entry
-                entry = {}
-            entry[key] = value
+        if response:
+            for line in response:
+                key, value = self._split_line(line)
+                if entry and key in delimiters:
+                    yield entry
+                    entry = {}
+                #if key in entry.keys():
+                #    if entry[key] is not list:
+                #        entry[key] = [entry[key]]
+                #    entry[key].append(value)
+                #else:
+                entry[key] = value
         if entry:
             yield entry
 
