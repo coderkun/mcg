@@ -615,6 +615,7 @@ class MCGAlbum:
     SORT_BY_YEAR = 'year'
     _FILE_NAMES = ['cover', 'folder']
     _FILE_EXTS = ['jpg', 'png', 'jpeg']
+    _FILTER_DELIMITER = ' '
 
 
     def __init__(self, title, host, image_dir):
@@ -697,12 +698,29 @@ class MCGAlbum:
 
 
     def filter(self, filter_string):
-        values = self._artists + [self._title]
-        values.extend(map(lambda track: track.get_title(), self._tracks))
-        for value in values:
-            if filter_string.lower() in value.lower():
-                return True
-        return False
+        if len(filter_string) == 0:
+            return True
+        keywords = filter_string.split(MCGAlbum._FILTER_DELIMITER)
+        for keyword in keywords:
+            if len(keyword) == 0:
+                continue
+            result = False
+            keyword = keyword.lower()
+            # Search in album data
+            for value in self._artists + [self._title] + self._dates:
+                if keyword in value.lower():
+                    result = True
+                    break
+            if result:
+                continue
+            # Search in track data
+            for track in self._tracks:
+                if keyword in track.get_title().lower() or keyword in track.get_file().lower():
+                    result = True
+                    break
+            if not result:
+                return False
+        return True
 
 
     def compare(album1, album2, criterion=None):
