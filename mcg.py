@@ -613,7 +613,7 @@ class MCGAlbum:
     SORT_BY_ARTIST = 'artist'
     SORT_BY_TITLE = 'title'
     SORT_BY_YEAR = 'year'
-    _FILE_NAMES = ['folder', 'cover']
+    _FILE_NAMES = ['cover', 'folder']
     _FILE_EXTS = ['jpg', 'png', 'jpeg']
 
 
@@ -738,7 +738,6 @@ class MCGAlbum:
     def _find_cover(self):
         names = list(MCGAlbum._FILE_NAMES)
         names.append(self._title)
-        names.append(' - '.join([self._artists[0], self._title]))
 
         if self._host == "localhost" or self._host == "127.0.0.1" or self._host == "::1":
             self._cover = self._find_cover_local(names)
