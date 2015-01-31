@@ -530,10 +530,14 @@ class HeaderBar(mcg.Base, Gtk.HeaderBar):
 
 
     def set_volume(self, volume):
-        if not self._changing_volume:
-            self._setting_volume = True
-            self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_value(volume / 100)
-            self._setting_volume = False
+        if volume >= 0:
+            self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_visible(True)
+            if not self._changing_volume:
+                self._setting_volume = True
+                self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_value(volume / 100)
+                self._setting_volume = False
+        else:
+            self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_visible(False)
 
 
     def _callback_from_widget(self, widget, signal, *data):
