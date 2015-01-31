@@ -1197,7 +1197,7 @@ class LibraryPanel(Panel, Gtk.VBox):
         self._grid_scale.connect('button-release-event', self.on_grid_scale_changed)
         self._library_sort_combo.connect("changed", self.on_library_sort_combo_changed)
         self._library_sort_type_button.connect('clicked', self.on_library_sort_type_button_activated)
-        self._filter_entry.connect('changed', self.on_filter_entry_changed)
+        self._filter_entry.connect('search-changed', self.on_filter_entry_changed)
         self._library_grid.connect('item-activated', self.on_library_grid_clicked)
 
 
