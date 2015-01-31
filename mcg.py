@@ -226,11 +226,6 @@ class Client(Base):
         self._add_action(self._set_volume, volume)
 
 
-    def test(self):
-        self._logger.info("test")
-        self._add_action(self._test)
-
-
     # Private methods
 
     def _connect(self, host, port, password):
