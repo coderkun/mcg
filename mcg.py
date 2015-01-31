@@ -15,6 +15,7 @@ import glob
 import logging
 import os
 import queue
+import re
 import socket
 import sys
 import threading
@@ -25,7 +26,28 @@ from hashlib import md5
 
 
 class MPDException(Exception):
-    pass
+    def __init__(self, error):
+        super(MPDException, self).__init__(self._parse_error(error))
+
+
+    def _parse_error(self, error):
+        parts = re.match("\[(\d+)@(\d+)\]\s\{(\w+)\}\s(.*)", error)
+        self._error = int(parts.group(1))
+        self._command_number = int(parts.group(2))
+        self._command_name = parts.group(3)
+        return parts.group(4)
+
+
+    def get_error(self):
+        return self._error
+
+
+    def get_command_number(self):
+        return self._command_number
+
+
+    def get_command_name(self):
+        return self._command_name
 
 
 class ConnectionException(MPDException):
