@@ -308,8 +308,6 @@ class Window(Gtk.ApplicationWindow):
             self._mcg.load_albums()
             self._mcg.get_status()
         else:
-        #    if error:
-        #        GObject.idle_add(self._show_error, str(error))
             GObject.idle_add(self._connect_disconnected)
 
 
@@ -518,13 +516,11 @@ class HeaderBar(mcg.Base, Gtk.HeaderBar):
 
 
     def set_play(self):
-        #self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_stock_id(Gtk.STOCK_MEDIA_PLAY)
         with self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block(self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]):
             self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(True)
 
 
     def set_pause(self):
-        #self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_stock_id(Gtk.STOCK_MEDIA_PAUSE)
         with self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block(self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]):
             self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(False)
 
@@ -667,9 +663,6 @@ class ConnectionPanel(Panel, Gtk.VBox):
         self._port_spinner.connect('value-changed', self.on_port_spinner_value_changed)
         self._password_entry.connect('focus-out-event', self.on_password_entry_outfocused)
         self._image_dir_entry.connect('focus-out-event', self.on_image_dir_entry_outfocused)
-
-        # Actions
-        #self._load_profiles()
 
 
     def get_name(self):
@@ -945,7 +938,7 @@ class CoverPanel(Panel, Gtk.VBox):
         """
         pixbuf = self._cover_pixbuf
         size = self._cover_scroll.get_allocation()
-        ## Check pixelbuffer
+        # Check pixelbuffer
         if pixbuf is None:
             return
 
