@@ -12,7 +12,7 @@ __status__ = "Development"
 
 import gi
 gi.require_version('Gtk', '3.0')
-#gi.require_version('Avahi', '0.6')
+gi.require_version('Avahi', '0.6')
 try:
     import keyring
     use_keyring = True
@@ -26,7 +26,7 @@ import threading
 import urllib
 
 from gi.repository import Gio, Gtk, Gdk, GObject, GdkPixbuf, GLib
-#from gi.repository import Avahi
+from gi.repository import Avahi
 
 import mcg
 
@@ -657,8 +657,8 @@ class ConnectionPanel(Panel, Gtk.VBox):
         connection_grid.attach_next_to(self._image_dir_entry, image_dir_label, Gtk.PositionType.BOTTOM, 1, 1)
 
         # Zeroconf provider
-        #self._zeroconf_provider = ZeroconfProvider()
-        #self._zeroconf_provider.connect_signal(ZeroconfProvider.SIGNAL_SERVICE_NEW, self.on_new_service)
+        self._zeroconf_provider = ZeroconfProvider()
+        self._zeroconf_provider.connect_signal(ZeroconfProvider.SIGNAL_SERVICE_NEW, self.on_new_service)
 
         # Signals
         self._zeroconf_list.get_selection().connect('changed', self.on_service_selected)
