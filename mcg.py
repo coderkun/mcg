@@ -6,7 +6,7 @@
 __author__ = "coderkun"
 __email__ = "<olli@coderkun.de>"
 __license__ = "GPL"
-__version__ = "0.3"
+__version__ = "0.4"
 __status__ = "Development"
 
 
@@ -20,6 +20,7 @@ import socket
 import sys
 import threading
 import urllib.request
+
 from hashlib import md5
 
 
