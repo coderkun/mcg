@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=MPDCoverGrid (GTK)
+Comment=Covergrid for the Music Player Daemon (GTK)
+Type=Application
+Exec=mcgGtk
+Path=
+Categories=AudioVideo;
+StartupNotify=true
