@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks."""
 
-__author__ = "coderkun"
-__email__ = "<olli@coderkun.de>"
-__license__ = "GPL"
 __version__ = "0.4"
-__status__ = "Development"
 
 
 import configparser
