@@ -1,0 +1,27 @@
+h1. MPDCoverGrid
+
+A covergrid for the "Music Player Daemon":http://www.musicpd.org.
+
+h2. Description
+
+MPDCoverGrid (mcg) is a client for the "Music Player Daemon":http://www.musicpd.org (MPD), focusing on albums instead of single tracks. It is not intended to be a replacement for your favorite MPD client but an addition to get a better album-experience.
+
+Website: https://www.coderkun.de/codes/mcg
+
+License: "GPL":http://www.gnu.org/licenses/gpl.html v3
+
+Dependencies:
+
+* "Python":http://www.python.org 3
+* "GTK":http://www.gtk.org 3 ("python-gobject":https://live.gnome.org/PyGObject)
+* "python-keyring":http://pypi.python.org/pypi/keyring (optional)
+
+h2. Screenshots
+
+!https://www.coderkun.de/images/mcg-cover.png(Cover)!
+
+!https://www.coderkun.de/images/mcg-library.png(Library)!
+
+!https://www.coderkun.de/images/mcg-playlist.png(Playlist)!
+
+!https://www.coderkun.de/images/mcg-server.png(Server)!
