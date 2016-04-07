@@ -10,7 +10,7 @@ from setuptools import setup
 setup(
     name = "MPD Cover Grid",
     version = "0.4",
-    description = "MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks."
+    description = "MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",
     url = "http://www.coderkun.de/codes/mcg",
     author = "coderkun",
     author_email = "olli@coderkun.de",
