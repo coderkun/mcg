@@ -27,11 +27,14 @@ class MPDException(Exception):
 
 
     def _parse_error(self, error):
-        parts = re.match("\[(\d+)@(\d+)\]\s\{(\w+)\}\s(.*)", error)
-        self._error = int(parts.group(1))
-        self._command_number = int(parts.group(2))
-        self._command_name = parts.group(3)
-        return parts.group(4)
+        if error:
+            parts = re.match("\[(\d+)@(\d+)\]\s\{(\w+)\}\s(.*)", error)
+            if parts:
+                self._error = int(parts.group(1))
+                self._command_number = int(parts.group(2))
+                self._command_name = parts.group(3)
+                return parts.group(4)
+        return error
 
 
     def get_error(self):
