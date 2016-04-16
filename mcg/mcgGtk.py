@@ -828,10 +828,10 @@ class CoverPanel(Panel, Gtk.VBox):
         value = int(self._songs_scale.get_value())
         time = self._current_album.get_length()
         tracks = self._current_album.get_tracks()
-        pos = len(tracks)
-        for index in range(pos-1, -1, -1):
+        pos = 0
+        for index in range(len(tracks)-1, -1, -1):
             time = time - tracks[index].get_length()
-            pos = pos - 1
+            pos = tracks[index].get_pos()
             if time < value:
                 break
         time = max(value - time - 1, 0)

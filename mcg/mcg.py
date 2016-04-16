@@ -423,7 +423,7 @@ class Client(Base):
                     song['time'] = 0
                 if 'date' not in song:
                     song['date'] = None
-                track = MCGTrack(song['artist'], song['title'], song['track'], song['time'], song['date'], song['file'])
+                track = MCGPlaylistTrack(song['artist'], song['title'], song['track'], song['time'], song['date'], song['file'], song['pos'])
                 self._logger.debug("track: %r", track)
             # Album
             if 'album' not in song:
@@ -853,6 +853,18 @@ class MCGTrack:
 
     def get_file(self):
         return self._file
+
+
+
+
+class MCGPlaylistTrack(MCGTrack):
+    def __init__(self, artists, title, track, length, date, file, pos):
+        MCGTrack.__init__(self, artists, title, track, length, date, file)
+        self._pos = int(pos)
+
+
+    def get_pos(self):
+        return self._pos
 
 
 
