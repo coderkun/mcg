@@ -149,16 +149,18 @@ class Window(Gtk.ApplicationWindow):
         self._header_bar.set_sensitive(False, False)
         styleProvider = Gtk.CssProvider()
         styleProvider.load_from_data(b"""
-            GtkWidget.bg-texture {
+            .bg-texture {
                 box-shadow:inset 4px 4px 10px rgba(0,0,0,0.3);
                 background-image:url('data/noise-texture.png');
             }
-            GtkWidget.no-bg {
+            .no-bg {
                 background:none;
             }
-            GtkWidget.no-border {
+            .no-border {
                 border:none;
             }
+            iconview.view:selected,
+            iconview.view:selected:focus,
             GtkIconView.cell:selected,
             GtkIconView.cell:selected:focus {
                 background-color:@theme_selected_bg_color;
