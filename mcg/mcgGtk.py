@@ -822,6 +822,7 @@ class CoverPanel(Panel, Gtk.VBox):
     def on_songs_start_change(self, widget, event):
         if self._timer:
             GObject.source_remove(self._timer)
+            self._timer = None
 
 
     def on_songs_change(self, widget, event):
@@ -867,6 +868,7 @@ class CoverPanel(Panel, Gtk.VBox):
     def set_play(self, pos, time):
         if self._timer is not None:
             GObject.source_remove(self._timer)
+            self._timer = None
         tracks = self._current_album.get_tracks()
         for index in range(0, pos):
             time = time + tracks[index].get_length()
