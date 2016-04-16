@@ -816,7 +816,10 @@ class MCGTrack:
         if track is not None and '/' in track:
             track = track[0: track.index('/')]
         if track is not None:
-            track = int(track)
+            try:
+                track = int(track)
+            except ValueError:
+                track = 0
         self._track = track
         self._length = int(length)
         if type(date) is list:
