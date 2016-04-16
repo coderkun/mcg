@@ -839,9 +839,27 @@ class CoverPanel(Panel, Gtk.VBox):
 
 
     def set_album(self, album):
-        self._album_title_label.set_markup("<b><big>{}</big></b>".format(album.get_title()))
-        self._album_date_label.set_markup("<big>{}</big>".format(', '.join(album.get_dates())))
-        self._album_artist_label.set_markup("<big>{}</big>".format(', '.join(album.get_artists())))
+        self._album_title_label.set_markup(
+            "<b><big>{}</big></b>".format(
+                GObject.markup_escape_text(
+                    album.get_title()
+                )
+            )
+        )
+        self._album_date_label.set_markup(
+            "<big>{}</big>".format(
+                GObject.markup_escape_text(
+                    ', '.join(album.get_dates())
+                )
+            )
+        )
+        self._album_artist_label.set_markup(
+            "<big>{}</big>".format(
+                GObject.markup_escape_text(
+                    ', '.join(album.get_artists())
+                )
+            )
+        )
         self._set_cover(album)
         self._set_tracks(album)
 
