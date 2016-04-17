@@ -1,0 +1,23 @@
+.bg-texture {
+    box-shadow:inset 4px 4px 10px rgba(0,0,0,0.3);
+    background-image:url('noise-texture.png');
+}
+
+.no-bg {
+    background:none;
+}
+
+.no-border {
+    border:none;
+}
+
+iconview.view:selected,
+iconview.view:selected:focus,
+GtkIconView.cell:selected,
+GtkIconView.cell:selected:focus {
+    background-color:@theme_selected_bg_color;
+}
+
+iconview.view:hover {
+    -gtk-icon-effect:highlight;
+}

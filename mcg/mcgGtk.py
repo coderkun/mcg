@@ -51,13 +51,28 @@ class Application(Gtk.Application):
         self._settings = Gio.Settings.new(Application.SETTINGS_BASE_KEY)
 
         # Signals
+        self.connect('startup', self.on_startup)
         self.connect('activate', self.on_activate)
+
+
+    def on_startup(self, app):
+        self.load_css()
 
 
     def on_activate(self, app):
         if not self._window:
             self._window = Window(self, Application.TITLE, self._settings)
         self._window.present()
+
+
+    def load_css(self):
+        styleProvider = Gtk.CssProvider()
+        styleProvider.load_from_file(Gio.File.new_for_path('data/mcg.css'))
+        Gtk.StyleContext.add_provider_for_screen(
+            Gdk.Screen.get_default(),
+            styleProvider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
 
     def load_thumbnail(cache, album, size):
@@ -147,26 +162,6 @@ class Window(Gtk.ApplicationWindow):
 
         # Properties
         self._header_bar.set_sensitive(False, False)
-        styleProvider = Gtk.CssProvider()
-        styleProvider.load_from_data(b"""
-            .bg-texture {
-                box-shadow:inset 4px 4px 10px rgba(0,0,0,0.3);
-                background-image:url('data/noise-texture.png');
-            }
-            .no-bg {
-                background:none;
-            }
-            .no-border {
-                border:none;
-            }
-            iconview.view:selected,
-            iconview.view:selected:focus,
-            GtkIconView.cell:selected,
-            GtkIconView.cell:selected:focus {
-                background-color:@theme_selected_bg_color;
-            }
-        """)
-        self.get_style_context().add_provider_for_screen(Gdk.Screen.get_default(), styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
         self.get_style_context().add_class(Window.STYLE_CLASS_BG_TEXTURE)
         self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Application.SETTING_HOST))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Application.SETTING_PORT))
