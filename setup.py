@@ -32,8 +32,8 @@ setup(
     },
     data_files = [
         "data/MPDCoverGridGTK.desktop",
-        "gschemas.compiled",
-        "noise-texture.png"
+        "data/gschemas.compiled",
+        "data/noise-texture.png"
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",
