@@ -863,7 +863,13 @@ class CoverPanel(mcg.Base):
             cur_length = length
             if length > 0 and length < album.get_length():
                 cur_length = cur_length + 1
-            self._songs_scale.add_mark(cur_length, Gtk.PositionType.RIGHT, track.get_title())
+            self._songs_scale.add_mark(
+                cur_length,
+                Gtk.PositionType.RIGHT, 
+                GObject.markup_escape_text(
+                    track.get_title()
+                )
+            )
             length = length + track.get_length()
         self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
 
