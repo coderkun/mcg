@@ -22,63 +22,9 @@
     <signal name="size-allocate" handler="on_appwindow_size_allocate" swapped="no"/>
     <signal name="window-state-event" handler="on_appwindow_window_state_event" swapped="no"/>
     <child>
-      <object class="GtkBox">
+      <object class="GtkOverlay">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="orientation">vertical</property>
-        <child>
-          <object class="GtkRevealer" id="server-info-revealer">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <child>
-              <object class="GtkInfoBar" id="server-info-bar">
-                <property name="can_focus">False</property>
-                <property name="margin_start">10</property>
-                <property name="margin_end">10</property>
-                <property name="orientation">vertical</property>
-                <property name="show_close_button">True</property>
-                <signal name="close" handler="on_server-info-bar_close" swapped="no"/>
-                <signal name="response" handler="on_server-info-bar_response" swapped="no"/>
-                <child internal-child="action_area">
-                  <object class="GtkButtonBox">
-                    <property name="can_focus">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child internal-child="content_area">
-                  <object class="GtkBox">
-                    <property name="can_focus">False</property>
-                    <child>
-                      <object class="GtkLabel" id="server-info-label">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-              </object>
-            </child>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="fill">True</property>
-            <property name="position">0</property>
-          </packing>
-        </child>
         <child>
           <object class="GtkStack" id="panelstack">
             <property name="visible">True</property>
@@ -272,7 +218,6 @@
                       <object class="GtkScrolledWindow" id="cover-scroll">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="window_placement_set">False</property>
                         <property name="kinetic_scrolling">False</property>
                         <property name="overlay_scrolling">False</property>
                         <child>
@@ -639,11 +584,59 @@
             </child>
           </object>
           <packing>
-            <property name="expand">True</property>
-            <property name="fill">True</property>
-            <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="index">-1</property>
           </packing>
+        </child>
+        <child type="overlay">
+          <object class="GtkRevealer" id="server-info-revealer">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="valign">start</property>
+            <child>
+              <object class="GtkInfoBar" id="server-info-bar">
+                <property name="can_focus">False</property>
+                <property name="valign">start</property>
+                <property name="margin_start">10</property>
+                <property name="margin_end">10</property>
+                <property name="orientation">vertical</property>
+                <property name="baseline_position">top</property>
+                <property name="show_close_button">True</property>
+                <signal name="close" handler="on_server-info-bar_close" swapped="no"/>
+                <signal name="response" handler="on_server-info-bar_response" swapped="no"/>
+                <child internal-child="action_area">
+                  <object class="GtkButtonBox">
+                    <property name="can_focus">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child internal-child="content_area">
+                  <object class="GtkBox">
+                    <property name="can_focus">False</property>
+                    <child>
+                      <object class="GtkLabel" id="server-info-label">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+            </child>
+          </object>
         </child>
       </object>
     </child>
@@ -764,7 +757,7 @@
             <property name="position">1</property>
           </packing>
         </child>
-        </object>
+      </object>
     </child>
     <style>
       <class name="bg-texture"/>
