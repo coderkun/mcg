@@ -426,7 +426,7 @@ class Window():
 
 class HeaderBar(mcg.Base):
     SIGNAL_STACK_SWITCHED = 'stack-switched'
-    SIGNAL_CONNECT = 'on_headerbar-connect_toggled'
+    SIGNAL_CONNECT = 'on_headerbar-connection_active_notify'
     SIGNAL_PLAYPAUSE = 'on_headerbar-playpause_toggled'
     SIGNAL_SET_VOLUME = 'set-volume'
 
@@ -441,14 +441,15 @@ class HeaderBar(mcg.Base):
         # Widgets
         self._header_bar = builder.get_object('headerbar')
         self._stack_switcher = StackSwitcher(builder)
-        self._buttons[HeaderBar.SIGNAL_CONNECT] = builder.get_object('headerbar-connect')
+        self._buttons[HeaderBar.SIGNAL_CONNECT] = builder.get_object('headerbar-connection')
         self._buttons[HeaderBar.SIGNAL_PLAYPAUSE] = builder.get_object('headerbar-playpause')
         self._buttons[HeaderBar.SIGNAL_SET_VOLUME] = builder.get_object('headerbar-volume')
 
         # Signals
         self._stack_switcher.connect_signal(StackSwitcher.SIGNAL_STACK_SWITCHED, self.on_stack_switched)
         self._button_handlers = {
-            'on_headerbar-connect_toggled': self._callback_from_widget,
+            'on_headerbar-connection_active_notify': self._callback_from_widget,
+            'on_headerbar-connection_state_set': self.on_connection_state_set,
             'on_headerbar-playpause_toggled': self._callback_from_widget,
             'on_headerbar-volume_value_changed': self.on_volume_changed,
             'on_headerbar-volume_button_press_event': self.on_volume_press,
@@ -469,6 +470,10 @@ class HeaderBar(mcg.Base):
             self._buttons[button_signal].set_sensitive(sensitive)
         self._stack_switcher.get().set_sensitive(sensitive)
         self._buttons[HeaderBar.SIGNAL_CONNECT].set_sensitive(not connecting)
+
+
+    def on_connection_state_set(self, widget, state):
+        return True
 
 
     def on_stack_switched(self, widget):
@@ -496,8 +501,8 @@ class HeaderBar(mcg.Base):
         self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block_by_func(
             self._button_handlers[HeaderBar.SIGNAL_CONNECT]
         )
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_stock_id(Gtk.STOCK_CONNECT)
         self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(True)
+        self._buttons[HeaderBar.SIGNAL_CONNECT].set_state(True)
         self._buttons[HeaderBar.SIGNAL_CONNECT].handler_unblock_by_func(
             self._button_handlers[HeaderBar.SIGNAL_CONNECT]
         )
@@ -507,8 +512,8 @@ class HeaderBar(mcg.Base):
         self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block_by_func(
             self._button_handlers[HeaderBar.SIGNAL_CONNECT]
         )
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_stock_id(Gtk.STOCK_DISCONNECT)
         self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(False)
+        self._buttons[HeaderBar.SIGNAL_CONNECT].set_state(False)
         self._buttons[HeaderBar.SIGNAL_CONNECT].handler_unblock_by_func(
             self._button_handlers[HeaderBar.SIGNAL_CONNECT]
         )
@@ -545,7 +550,7 @@ class HeaderBar(mcg.Base):
             self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_visible(False)
 
 
-    def _callback_from_widget(self, widget):
+    def _callback_from_widget(self, widget, *args):
         if widget is self._buttons[HeaderBar.SIGNAL_CONNECT]:
             self._callback(self.SIGNAL_CONNECT)
         elif widget is self._buttons[HeaderBar.SIGNAL_PLAYPAUSE]:
