@@ -151,6 +151,8 @@ class Window():
         self._stack = builder.get_object('panelstack')
         # Header
         self._header_bar = HeaderBar(builder)
+        # Toolbar stack
+        self._toolbar_stack = builder.get_object('toolbarstack')
 
         # Properties
         self._header_bar.set_sensitive(False, False)
@@ -233,6 +235,7 @@ class Window():
     # HeaderBar callbacks
 
     def on_header_bar_stack_switched(self, widget):
+        self._set_visible_toolbar()
         self._save_visible_panel()
 
 
@@ -416,6 +419,13 @@ class Window():
         panel_index_selected = panels.index(self._stack.get_visible_child())
         if panel_index_selected > 0:
             self._settings.set_int(Application.SETTING_PANEL, panel_index_selected)
+
+
+    def _set_visible_toolbar(self):
+        panels = [panel.get() for panel in self._panels]
+        panel_index_selected = panels.index(self._stack.get_visible_child())
+        toolbar = self._panels[panel_index_selected].get_toolbar()
+        self._toolbar_stack.set_visible_child(toolbar)
 
 
     def _show_error(self, message):
@@ -605,6 +615,7 @@ class ConnectionPanel(mcg.Base):
 
         # Widgets
         self._panel = builder.get_object('server-panel')
+        self._toolbar = builder.get_object('server-toolbar')
         # Zeroconf
         self._zeroconf_list = builder.get_object('server-zeroconf-list')
         self._zeroconf_list.set_model(self._services)
@@ -627,6 +638,10 @@ class ConnectionPanel(mcg.Base):
 
     def get(self):
         return self._panel
+
+
+    def get_toolbar(self):
+        return self._toolbar
 
 
     def get_signal_handlers(self):
@@ -731,6 +746,7 @@ class CoverPanel(mcg.Base):
 
         # Widgets
         self._panel = builder.get_object('cover-panel')
+        self._toolbar = builder.get_object('cover-toolbar')
         # Cover
         self._cover_scroll = builder.get_object('cover-scroll')
         self._cover_image = builder.get_object('cover-image')
@@ -745,6 +761,10 @@ class CoverPanel(mcg.Base):
 
     def get(self):
         return self._panel
+
+
+    def get_toolbar(self):
+        return self._toolbar
 
 
     def get_signal_handlers(self):
@@ -949,8 +969,9 @@ class PlaylistPanel(mcg.Base):
 
         # Widgets
         self._panel = builder.get_object('playlist-panel')
+        self._toolbar = builder.get_object('playlist-toolbar')
         # Clear button
-        self._playlist_clear_button = builder.get_object('playlist-clear')
+        self._playlist_clear_button = builder.get_object('playlist-toolbar-clear')
         # Playlist Grid: Model
         self._playlist_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         # Playlist Grid
@@ -965,9 +986,13 @@ class PlaylistPanel(mcg.Base):
         return self._panel
 
 
+    def get_toolbar(self):
+        return self._toolbar
+
+
     def get_signal_handlers(self):
         return {
-            'on_playlist-clear_clicked': self._callback_from_widget
+            'on_playlist-toolbar-clear_clicked': self._callback_from_widget
         }
 
 
@@ -1068,6 +1093,7 @@ class LibraryPanel(mcg.Base):
 
         # Widgets
         self._panel = builder.get_object('library-panel')
+        self._toolbar = builder.get_object('library-toolbar')
         # Progress Bar
         self._progress_revealer = builder.get_object('library-progress-revealer')
         self._progress_bar = builder.get_object('library-progress')
@@ -1107,6 +1133,10 @@ class LibraryPanel(mcg.Base):
 
     def get(self):
         return self._panel
+
+
+    def get_toolbar(self):
+        return self._toolbar
 
 
     def get_signal_handlers(self):
