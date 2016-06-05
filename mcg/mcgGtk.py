@@ -1094,29 +1094,22 @@ class LibraryPanel(mcg.Base):
         # Widgets
         self._panel = builder.get_object('library-panel')
         self._toolbar = builder.get_object('library-toolbar')
+        # Filter/search bar
+        self._filter_bar = builder.get_object('library-filter-bar')
+        self._filter_entry = builder.get_object('library-filter')
         # Progress Bar
         self._progress_revealer = builder.get_object('library-progress-revealer')
         self._progress_bar = builder.get_object('library-progress')
-        # Toolbar
-        # Filter entry
-        self._filter_entry = builder.get_object('library-filter')
-        # Grid scale
-        self._grid_scale = builder.get_object('library-grid-scale')
+        # Toolbar menu
+        self._toolbar_search_bar = builder.get_object('library-toolbar-search')
+        self._toolbar_sort_buttons = {
+            mcg.MCGAlbum.SORT_BY_ARTIST: builder.get_object('library-toolbar-sort-artist'),
+            mcg.MCGAlbum.SORT_BY_TITLE: builder.get_object('library-toolbar-sort-title'),
+            mcg.MCGAlbum.SORT_BY_YEAR: builder.get_object('library-toolbar-sort-year')
+        }
+        self._toolbar_sort_order_button = builder.get_object('library-toolbar-sort-order')
+        self._grid_scale = builder.get_object('library-toolbar-scale')
         self._grid_scale.set_value(self._item_size)
-        # Sort menu
-        library_sort_store = Gtk.ListStore(str, str)
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_ARTIST, "sort by artist"])
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_TITLE, "sort by title"])
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_YEAR, "sort by year"])        
-        self._library_sort_combo = builder.get_object('library-sort')
-        self._library_sort_combo.set_model(library_sort_store)
-        renderer_text = Gtk.CellRendererText()
-        self._library_sort_combo.pack_start(renderer_text, True)
-        self._library_sort_combo.add_attribute(renderer_text, "text", 1)
-        self._library_sort_combo.set_id_column(0)
-        self._library_sort_combo.set_active_id(self._sort_order)
-        # Sort type
-        self._library_sort_type_button = builder.get_object('library-sort-order')
         # Library Grid: Model
         self._library_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
@@ -1141,31 +1134,20 @@ class LibraryPanel(mcg.Base):
 
     def get_signal_handlers(self):
         return {
-            'on_library-update_clicked': self.on_update_clicked,
-            'on_library-grid-scale_change_value': self.on_grid_scale_change,
-            'on_library-grid-scale_button_release_event': self.on_grid_scale_changed,
-            'on_library-sort_changed': self.on_library_sort_combo_changed,
-            'on_library-sort-order_clicked': self.on_library_sort_type_button_activated,
+            'on_library-toolbar-search_toggled': self.on_search_toggled,
+            'on_library-toolbar-scale_change_value': self.on_grid_scale_change,
+            'on_library-toolbar-scale_button_release_event': self.on_grid_scale_changed,
+            'on_library-toolbar-update_clicked': self.on_update_clicked,
+            'on_library-toolbar-sort-toggled': self.on_sort_toggled,
+            'on_library-toolbar-sort-order_toggled': self.on_sort_order_toggled,
+            'on_library-filter-bar_notify': self.on_filter_bar_notify,
             'on_library-filter_search_changed': self.on_filter_entry_changed,
             'on_library-iconview_item_activated': self.on_library_grid_clicked
         }
 
 
-    def on_update_clicked(self, widget):
-        self._callback(self.SIGNAL_UPDATE)
-
-
-    def on_filter_visible(self, model, iter, data):
-        hash = model.get_value(iter, 2)
-        if not hash in self._albums.keys():
-            return
-        album = self._albums[hash]
-        return album.filter(self._filter_string)
-
-
-    def on_filter_entry_changed(self, widget):
-        self._filter_string = self._filter_entry.get_text()
-        GObject.idle_add(self._library_grid_filter.refilter)
+    def on_search_toggled(self, widget):
+        self._filter_bar.set_search_mode(widget.get_active())
 
 
     def on_grid_scale_change(self, widget, scroll, value):
@@ -1186,29 +1168,48 @@ class LibraryPanel(mcg.Base):
         self._redraw()
 
 
-    def on_library_sort_combo_changed(self, combo):
-        sort_order = combo.get_active_id()
-        self._sort_order = sort_order
-        self._library_grid_model.set_sort_func(2, self.compare_albums, sort_order)
-        self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort_order)
+    def on_update_clicked(self, widget):
+        self._callback(self.SIGNAL_UPDATE)
 
 
-    def on_library_sort_type_button_activated(self, button):
+    def on_sort_toggled(self, widget):
+        if widget.get_active():
+            sort = [key for key, value in self._toolbar_sort_buttons.items() if value is widget][0]
+            self._change_sort(sort)
+
+
+    def on_sort_order_toggled(self, button):
         if button.get_active():
             sort_type = Gtk.SortType.DESCENDING
-            button.set_stock_id(Gtk.STOCK_SORT_DESCENDING)
         else:
             sort_type = Gtk.SortType.ASCENDING
-            button.set_stock_id(Gtk.STOCK_SORT_ASCENDING)
         self._sort_type = sort_type
         self._library_grid_model.set_sort_column_id(2, sort_type)
         self._callback(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, sort_type)
+
+
+    def on_filter_bar_notify(self, widget, value):
+        if self._toolbar_search_bar.get_active() is not self._filter_bar.get_search_mode():
+            self._toolbar_search_bar.set_active(self._filter_bar.get_search_mode())
+
+
+    def on_filter_entry_changed(self, widget):
+        self._filter_string = self._filter_entry.get_text()
+        GObject.idle_add(self._library_grid_filter.refilter)
 
 
     def on_library_grid_clicked(self, widget, path):
         path = self._library_grid_filter.convert_path_to_child_path(path)
         iter = self._library_grid_model.get_iter(path)
         self._callback(LibraryPanel.SIGNAL_PLAY, self._library_grid_model.get_value(iter, 2))
+
+
+    def on_filter_visible(self, model, iter, data):
+        hash = model.get_value(iter, 2)
+        if not hash in self._albums.keys():
+            return
+        album = self._albums[hash]
+        return album.filter(self._filter_string)
 
 
     def set_item_size(self, item_size):
@@ -1222,11 +1223,12 @@ class LibraryPanel(mcg.Base):
         return self._item_size
 
 
-    def set_sort_order(self, sort_order):
-        if self._sort_order != sort_order:
-            result = self._library_sort_combo.set_active_id(sort_order)
-            if self._sort_order != sort_order:
-                self._sort_order = sort_order
+    def set_sort_order(self, sort):
+        if self._sort_order != sort:
+            button = self._toolbar_sort_buttons[sort]
+            if button and not button.get_active():
+                button.set_active(True)
+                self._sort_order = sort
                 self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
 
 
@@ -1238,15 +1240,12 @@ class LibraryPanel(mcg.Base):
         if self._sort_type != sort_type:
             if sort_type:
                 sort_type_gtk = Gtk.SortType.DESCENDING
-                stock_id = Gtk.STOCK_SORT_DESCENDING
-                self._library_sort_type_button.set_active(True)
+                self._toolbar_sort_order_button.set_active(True)
             else:
                 sort_type_gtk = Gtk.SortType.ASCENDING
-                self._library_sort_type_button.set_active(False)
-                stock_id = Gtk.STOCK_SORT_ASCENDING
+                self._toolbar_sort_order_button.set_active(False)
             if self._sort_type != sort_type_gtk:
                 self._sort_type = sort_type_gtk
-                self._library_sort_type_button.set_stock_id(stock_id)
                 self._library_grid_model.set_sort_column_id(2, sort_type)
 
 
@@ -1271,6 +1270,12 @@ class LibraryPanel(mcg.Base):
 
     def stop_threads(self):
         self._library_stop.set()
+
+
+    def _change_sort(self, sort):
+        self._sort_order = sort
+        self._library_grid_model.set_sort_func(2, self.compare_albums, sort)
+        self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort)
 
 
     def _set_albums(self, host, albums, size):
