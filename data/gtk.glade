@@ -656,106 +656,83 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <object class="GtkToolbar">
+          <object class="GtkSwitch" id="headerbar-connection">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="show_arrow">False</property>
-            <child>
-              <object class="GtkToolItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkSwitch" id="headerbar-connection">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <signal name="notify::active" handler="on_headerbar-connection_active_notify" swapped="no"/>
-                    <signal name="state-set" handler="on_headerbar-connection_state_set" swapped="no"/>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToggleToolButton" id="headerbar-playpause">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="use_underline">True</property>
-                <property name="icon_name">media-playback-start</property>
-                <signal name="toggled" handler="on_headerbar-playpause_toggled" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkVolumeButton" id="headerbar-volume">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="focus_on_click">False</property>
-                    <property name="receives_default">True</property>
-                    <property name="relief">none</property>
-                    <property name="orientation">vertical</property>
-                    <property name="icons">audio-volume-muted-symbolic
-        audio-volume-high-symbolic
-        audio-volume-low-symbolic
-        audio-volume-medium-symbolic</property>
-                    <signal name="button-press-event" handler="on_headerbar-volume_button_press_event" swapped="no"/>
-                    <signal name="button-release-event" handler="on_headerbar-volume_button_release_event" swapped="no"/>
-                    <signal name="value-changed" handler="on_headerbar-volume_value_changed" swapped="no"/>
-                    <child internal-child="plus_button">
-                      <object class="GtkButton">
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">center</property>
-                        <property name="valign">center</property>
-                        <property name="relief">none</property>
-                      </object>
-                    </child>
-                    <child internal-child="minus_button">
-                      <object class="GtkButton">
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">center</property>
-                        <property name="valign">center</property>
-                        <property name="relief">none</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <style>
-              <class name="no-bg"/>
-            </style>
+            <property name="can_focus">True</property>
+            <signal name="notify::active" handler="on_headerbar-connection_active_notify" swapped="no"/>
+            <signal name="state-set" handler="on_headerbar-connection_state_set" swapped="no"/>
           </object>
           <packing>
             <property name="position">1</property>
           </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToggleButton" id="headerbar-playpause">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="on_headerbar-playpause_toggled" swapped="no"/>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">media-playback-start</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkVolumeButton" id="headerbar-volume">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="focus_on_click">False</property>
+            <property name="receives_default">True</property>
+            <property name="relief">none</property>
+            <property name="orientation">vertical</property>
+            <property name="icons">audio-volume-muted
+        audio-volume-high
+        audio-volume-low
+        audio-volume-medium</property>
+            <signal name="button-press-event" handler="on_headerbar-volume_button_press_event" swapped="no"/>
+            <signal name="button-release-event" handler="on_headerbar-volume_button_release_event" swapped="no"/>
+            <signal name="value-changed" handler="on_headerbar-volume_value_changed" swapped="no"/>
+            <child internal-child="plus_button">
+              <object class="GtkButton">
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="relief">none</property>
+              </object>
+            </child>
+            <child internal-child="minus_button">
+              <object class="GtkButton">
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="relief">none</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
         <child type="title">
           <object class="GtkStackSwitcher" id="header-panelswitcher">
@@ -769,56 +746,63 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkToolbar" id="server-toolbar">
+              <object class="GtkButtonBox" id="cover-toolbar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <style>
-                  <class name="no-bg"/>
-                </style>
-              </object>
-              <packing>
-                <property name="name">server</property>
-                <property name="title" translatable="yes">Server</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToolbar" id="cover-toolbar">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <style>
-                  <class name="no-bg"/>
-                </style>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
               </object>
               <packing>
                 <property name="name">cover</property>
                 <property name="title" translatable="yes">Cover</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButtonBox" id="server-toolbar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="name">server</property>
+                <property name="title" translatable="yes">Server</property>
                 <property name="position">1</property>
               </packing>
             </child>
             <child>
-              <object class="GtkToolbar" id="playlist-toolbar">
+              <object class="GtkButtonBox" id="playlist-toolbar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="show_arrow">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
                 <child>
-                  <object class="GtkToolButton" id="playlist-toolbar-clear">
+                  <object class="GtkButton" id="playlist-toolbar-clear">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="use_underline">True</property>
-                    <property name="icon_name">edit-clear</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
                     <signal name="clicked" handler="on_playlist-toolbar-clear_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">edit-clear</property>
+                      </object>
+                    </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
                   </packing>
                 </child>
-                <style>
-                  <class name="no-bg"/>
-                </style>
               </object>
               <packing>
                 <property name="name">playlist</property>
@@ -827,53 +811,53 @@
               </packing>
             </child>
             <child>
-              <object class="GtkToolbar" id="library-toolbar">
+              <object class="GtkButtonBox" id="library-toolbar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="halign">end</property>
-                <property name="show_arrow">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
                 <child>
-                  <object class="GtkToggleToolButton" id="library-toolbar-search">
+                  <object class="GtkToggleButton" id="library-toolbar-search">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="use_underline">True</property>
-                    <property name="icon_name">edit-find-symbolic</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
                     <signal name="toggled" handler="on_library-toolbar-search_toggled" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">False</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkToolItem">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
                     <child>
-                      <object class="GtkMenuButton">
+                      <object class="GtkImage">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="relief">none</property>
-                        <property name="popover">library-toolbar-popover</property>
-                        <child>
-                          <object class="GtkImage">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="icon_name">open-menu-symbolic</property>
-                          </object>
-                        </child>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">system-search-symbolic</property>
                       </object>
                     </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="homogeneous">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
                   </packing>
                 </child>
-                <style>
-                  <class name="no-bg"/>
-                </style>
+                <child>
+                  <object class="GtkMenuButton">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="popover">library-toolbar-popover</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">open-menu-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="name">library</property>
@@ -884,7 +868,7 @@
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="position">5</property>
           </packing>
         </child>
       </object>
