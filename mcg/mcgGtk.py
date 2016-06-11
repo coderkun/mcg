@@ -111,6 +111,7 @@ class Application(Gtk.Application):
             url = album.get_cover()
             pixbuf = Application.load_cover(url)
             if pixbuf is not None:
+                pixbuf = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.HYPER)
                 filetype = os.path.splitext(url)[1][1:]
                 if filetype == 'jpg':
                     filetype = 'jpeg'
