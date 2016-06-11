@@ -753,6 +753,7 @@ class CoverPanel(mcg.Base):
         self._properties = {}
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('cover-panel')
         self._toolbar = builder.get_object('cover-toolbar')
         # Cover
@@ -871,11 +872,19 @@ class CoverPanel(mcg.Base):
             self._info_box.hide()
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
             GObject.idle_add(self._resize_image)
+            # Hide curser
+            self._appwindow.get_window().set_cursor(
+                Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "none")
+            )
         else:
             self._songs_scale.show()
             self._info_box.show()
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
             GObject.idle_add(self._resize_image)
+            # Reset cursor
+            self._appwindow.get_window().set_cursor(
+                Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "default")
+            )
 
 
     def _set_cover(self, album):
