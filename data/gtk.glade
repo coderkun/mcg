@@ -560,13 +560,13 @@
                   <object class="GtkIconView" id="playlist-iconview">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="margin">6</property>
+                    <property name="margin">0</property>
                     <property name="item_orientation">horizontal</property>
                     <property name="columns">3</property>
                     <property name="row_spacing">0</property>
                     <property name="column_spacing">0</property>
                     <property name="tooltip_column">1</property>
-                    <property name="item_padding">5</property>
+                    <property name="item_padding">0</property>
                     <style>
                       <class name="no-bg"/>
                     </style>
@@ -643,13 +643,13 @@
                           <object class="GtkIconView" id="library-iconview">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="margin">6</property>
+                            <property name="margin">0</property>
                             <property name="selection_mode">none</property>
                             <property name="item_orientation">horizontal</property>
                             <property name="row_spacing">0</property>
                             <property name="column_spacing">0</property>
                             <property name="tooltip_column">1</property>
-                            <property name="item_padding">5</property>
+                            <property name="item_padding">0</property>
                             <property name="activate_on_single_click">True</property>
                             <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
                             <style>

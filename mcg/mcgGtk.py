@@ -1020,6 +1020,7 @@ class PlaylistPanel(mcg.Base):
         self._playlist_grid.set_model(None)
         self._playlist_grid.freeze_child_notify()
         self._playlist_grid_model.clear()
+        GObject.idle_add(self._playlist_grid.set_item_padding, size / 100)
 
         cache = mcg.MCGCache(host, size)
         for album in playlist:
@@ -1177,6 +1178,7 @@ class LibraryPanel(mcg.Base):
             return
         self._item_size = size
         GObject.idle_add(self._set_widget_grid_size, self._library_grid, size, True)
+        GObject.idle_add(self._library_grid.set_item_padding, size / 100)
 
 
     def on_grid_scale_changed(self, widget, event):
@@ -1331,6 +1333,7 @@ class LibraryPanel(mcg.Base):
         self._albums = albums
         GObject.idle_add(self._progress_revealer.set_reveal_child, True)
         GObject.idle_add(self._progress_bar.set_fraction, 0.0)
+        GObject.idle_add(self._library_grid.set_item_padding, size / 100)
         self._library_grid.set_model(None)
         self._library_grid.freeze_child_notify()
         self._library_grid_model.clear()
