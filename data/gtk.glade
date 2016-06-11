@@ -434,9 +434,10 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkEventBox">
+                              <object class="GtkEventBox" id="cover-box">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <signal name="button-press-event" handler="on_cover-box_button_press_event" swapped="no"/>
                                 <child>
                                   <object class="GtkImage" id="cover-image">
                                     <property name="visible">True</property>
@@ -462,7 +463,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkBox" id="cover-info-box">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>

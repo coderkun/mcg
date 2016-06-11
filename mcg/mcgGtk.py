@@ -46,7 +46,7 @@ class Application(Gtk.Application):
 
 
     def __init__(self):
-        Gtk.Application.__init__(self, application_id="de.coderkun.mcg", flags=Gio.ApplicationFlags.FLAGS_NONE)
+        Gtk.Application.__init__(self, application_id="de.coderkun.mcg-dev", flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
 
 
@@ -279,9 +279,9 @@ class Window():
 
     def on_cover_panel_toggle_fullscreen(self):
         if not self._fullscreened:
-            self.fullscreen()
+            self._appwindow.fullscreen()
         else:
-            self.unfullscreen()
+            self._appwindow.unfullscreen()
 
 
     def on_cover_panel_set_song(self, pos, time):
@@ -414,10 +414,10 @@ class Window():
         if fullscreened_new != self._fullscreened:
             self._fullscreened = fullscreened_new
             if self._fullscreened:
-                self._header_bar.hide()
+                self._header_bar.get().hide()
                 self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(True)
             else:
-                self._header_bar.show()
+                self._header_bar.get().show()
                 self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(False)
 
 
@@ -758,14 +758,16 @@ class CoverPanel(mcg.Base):
         self._cover_stack = builder.get_object('cover-stack')
         self._cover_spinner = builder.get_object('cover-spinner')
         self._cover_scroll = builder.get_object('cover-scroll')
+        self._cover_box = builder.get_object('cover-box')
         self._cover_image = builder.get_object('cover-image')
-        # Songs
-        self._songs_scale = builder.get_object('cover-songs')
-        self._songs_scale.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
         # Album Infos
+        self._info_box = builder.get_object('cover-info-box')
         self._album_title_label = builder.get_object('cover-album')
         self._album_date_label = builder.get_object('cover-date')
         self._album_artist_label = builder.get_object('cover-artist')
+        # Songs
+        self._songs_scale = builder.get_object('cover-songs')
+        self._songs_scale.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
 
 
     def get(self):
@@ -860,15 +862,12 @@ class CoverPanel(mcg.Base):
     def set_fullscreen(self, active):
         if active:
             self._songs_scale.hide()
-            self._info_grid.hide()
-            self.child_set_property(self._current_box, 'padding', 0)
-            self._current_box.child_set_property(self._cover_scroll, 'padding', 0)
+            self._info_box.hide()
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
+            GObject.idle_add(self._resize_image)
         else:
             self._songs_scale.show()
-            self._info_grid.show()
-            self.child_set_property(self._current_box, 'padding', 10)
-            self._current_box.child_set_property(self._cover_scroll, 'padding', 10)
+            self._info_box.show()
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
             GObject.idle_add(self._resize_image)
 
