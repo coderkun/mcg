@@ -21,3 +21,7 @@ GtkIconView.cell:selected:focus {
 iconview.view:hover {
     -gtk-icon-effect:highlight;
 }
+
+actionbar {
+    background-color:@theme_unfocused_bg_color;
+}

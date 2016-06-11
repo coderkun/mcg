@@ -77,6 +77,27 @@ class Application(Gtk.Application):
         )
 
 
+    def load_cover(url):
+        if not url:
+            return None
+        if url.startswith('/'):
+            try:
+                return GdkPixbuf.Pixbuf.new_from_file(url)
+            except Exception as e:
+                print(e)
+                return None
+        else:
+            try:
+                response = urllib.request.urlopen(url)
+                loader = GdkPixbuf.PixbufLoader()
+                loader.write(response.read())
+                loader.close()
+                return loader.get_pixbuf()
+            except Exception as e:
+                print(e)
+                return None
+
+
     def load_thumbnail(cache, album, size):
         cache_url = cache.create_filename(album)
         pixbuf = None
@@ -88,26 +109,12 @@ class Application(Gtk.Application):
                 print(e)
         else:
             url = album.get_cover()
-            if url is not None:
-                if url.startswith('/'):
-                    try:
-                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(url, size, size)
-                    except Exception as e:
-                        print(e)
-                else:
-                    try:
-                        response = urllib.request.urlopen(url)
-                        loader = GdkPixbuf.PixbufLoader()
-                        loader.write(response.read())
-                        loader.close()
-                        pixbuf = loader.get_pixbuf().scale_simple(size, size, GdkPixbuf.InterpType.HYPER)
-                    except Exception as e:
-                        print(e)
-                if pixbuf is not None:
-                    filetype = os.path.splitext(url)[1][1:]
-                    if filetype == 'jpg':
-                        filetype = 'jpeg'
-                    pixbuf.savev(cache.create_filename(album), filetype, [], [])
+            pixbuf = Application.load_cover(url)
+            if pixbuf is not None:
+                filetype = os.path.splitext(url)[1][1:]
+                if filetype == 'jpg':
+                    filetype = 'jpeg'
+                pixbuf.savev(cache.create_filename(album), filetype, [], [])
         return pixbuf
 
 
@@ -872,7 +879,7 @@ class CoverPanel(mcg.Base):
         url = album.get_cover()
         if url is not None and url is not "":
             # Load image and draw it
-            self._cover_pixbuf = self._load_cover(url)
+            self._cover_pixbuf = Application.load_cover(url)
             self._resize_image()
         else:
             # Reset image
@@ -904,25 +911,6 @@ class CoverPanel(mcg.Base):
         self._songs_scale.set_value(value)
 
         return True
-
-
-    def _load_cover(self, url):
-        if url.startswith('/'):
-            try:
-                return GdkPixbuf.Pixbuf.new_from_file(url)
-            except Exception as e:
-                print(e)
-                return None
-        else:
-            try:
-                response = urllib.request.urlopen(url)
-                loader = GdkPixbuf.PixbufLoader()
-                loader.write(response.read())
-                loader.close()
-                return loader.get_pixbuf()
-            except Exception as e:
-                print(e)
-                return None
 
 
     def _resize_image(self):
@@ -1090,10 +1078,18 @@ class LibraryPanel(mcg.Base):
         self._library_lock = threading.Lock()
         self._library_stop = threading.Event()
         self._icon_theme = Gtk.IconTheme.get_default()
+        self._standalone_pixbuf = None
+        self._selected_albums = []
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('library-panel')
         self._toolbar = builder.get_object('library-toolbar')
+        self._headerbar = builder.get_object('headerbar')
+        self._headerbar_standalone = builder.get_object('headerbar-library-standalone')
+        self._panel_normal = builder.get_object('library-panel-normal')
+        self._panel_standalone = builder.get_object('library-panel-standalone')
+
         # Filter/search bar
         self._filter_bar = builder.get_object('library-filter-bar')
         self._filter_entry = builder.get_object('library-filter')
@@ -1122,6 +1118,19 @@ class LibraryPanel(mcg.Base):
         self._library_grid.set_pixbuf_column(0)
         self._library_grid.set_text_column(-1)
         self._library_grid.set_tooltip_column(1)
+        # Standalon labels
+        self._standalone_title = builder.get_object('headerbar-library-standalone-title')
+        self._standalone_artist = builder.get_object('headerbar-library-standalone-artist')
+        # Standalone Image
+        self._standalone_stack = builder.get_object('library-standalone-stack')
+        self._standalone_spinner = builder.get_object('library-standalone-spinner')
+        self._standalone_scroll = builder.get_object('library-standalone-scroll')
+        self._standalone_image = builder.get_object('library-standalone-image')
+        # Action bar
+        action_bar = builder.get_object('library-standalone-actionbar')
+        play_button = Gtk.Button('play')
+        play_button.connect('clicked', self.on_standalone_play_clicked)
+        action_bar.pack_end(play_button)
 
 
     def get(self):
@@ -1142,7 +1151,9 @@ class LibraryPanel(mcg.Base):
             'on_library-toolbar-sort-order_toggled': self.on_sort_order_toggled,
             'on_library-filter-bar_notify': self.on_filter_bar_notify,
             'on_library-filter_search_changed': self.on_filter_entry_changed,
-            'on_library-iconview_item_activated': self.on_library_grid_clicked
+            'on_library-iconview_item_activated': self.on_library_grid_clicked,
+            'on_library-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
+            'on_headerbar-library-standalone-close_clicked': self.on_standalone_close_clicked
         }
 
 
@@ -1199,9 +1210,23 @@ class LibraryPanel(mcg.Base):
 
 
     def on_library_grid_clicked(self, widget, path):
+        # Get selected album
         path = self._library_grid_filter.convert_path_to_child_path(path)
         iter = self._library_grid_model.get_iter(path)
-        self._callback(LibraryPanel.SIGNAL_PLAY, self._library_grid_model.get_value(iter, 2))
+        hash = self._library_grid_model.get_value(iter, 2)
+        album = self._albums[hash]
+        self._selected_albums = [album]
+
+        # Set labels
+        self._standalone_title.set_text(album.get_title())
+        self._standalone_artist.set_text(", ".join(album.get_artists()))
+
+        # Show panel
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+        # Load cover
+        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
 
 
     def on_filter_visible(self, model, iter, data):
@@ -1210,6 +1235,19 @@ class LibraryPanel(mcg.Base):
             return
         album = self._albums[hash]
         return album.filter(self._filter_string)
+
+
+    def on_standalone_scroll_size_allocate(self, widget, allocation):
+        self._resize_standalone_image()
+
+
+    def on_standalone_play_clicked(self, widget):
+        self._callback(LibraryPanel.SIGNAL_PLAY, self._selected_albums[0].get_hash())
+
+
+    def on_standalone_close_clicked(self, widget):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def set_item_size(self, item_size):
@@ -1282,7 +1320,7 @@ class LibraryPanel(mcg.Base):
         self._library_lock.acquire()
         self._library_stop.clear()
         self._albums = albums
-        self._progress_revealer.set_reveal_child(True)
+        GObject.idle_add(self._progress_revealer.set_reveal_child, True)
         GObject.idle_add(self._progress_bar.set_fraction, 0.0)
         self._library_grid.set_model(None)
         self._library_grid.freeze_child_notify()
@@ -1384,6 +1422,48 @@ class LibraryPanel(mcg.Base):
     def _redraw(self):
         if self._albums is not None:
             self.set_albums(self._host, self._albums)
+
+
+    def _show_standalone_image(self, album):
+        self._standalone_stack.set_visible_child(self._standalone_spinner)
+        self._standalone_spinner.start()
+        url = album.get_cover()
+        if url is not None and url is not "":
+            # Load image and draw it
+            self._standalone_pixbuf = Application.load_cover(url)
+            self._resize_standalone_image()
+        else:
+            # Reset image
+            self._standalone_image.clear()
+        self._standalone_stack.set_visible_child(self._standalone_scroll)
+        self._standalone_spinner.stop()
+
+
+    def _resize_standalone_image(self):
+        """Diese Methode skaliert das geladene Bild aus dem Pixelpuffer
+        auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
+        """
+        pixbuf = self._standalone_pixbuf
+        size = self._standalone_scroll.get_allocation()
+        # Check pixelbuffer
+        if pixbuf is None:
+            return
+
+        # Skalierungswert für Breite und Höhe ermitteln
+        ratioW = float(size.width) / float(pixbuf.get_width())
+        ratioH = float(size.height) / float(pixbuf.get_height())
+        # Kleineren beider Skalierungswerte nehmen, nicht Hochskalieren
+        ratio = min(ratioW, ratioH)
+        ratio = min(ratio, 1)
+        # Neue Breite und Höhe berechnen
+        width = int(math.floor(pixbuf.get_width()*ratio))
+        height = int(math.floor(pixbuf.get_height()*ratio))
+        if width <= 0 or height <= 0:
+            return
+        # Pixelpuffer auf Oberfläche zeichnen
+        self._standalone_image.set_allocation(self._standalone_scroll.get_allocation())
+        self._standalone_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+        self._standalone_image.show()
 
 
 
