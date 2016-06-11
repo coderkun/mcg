@@ -415,30 +415,49 @@
                     <property name="can_focus">False</property>
                     <property name="homogeneous">True</property>
                     <child>
-                      <object class="GtkScrolledWindow" id="cover-scroll">
+                      <object class="GtkStack" id="cover-stack">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="kinetic_scrolling">False</property>
-                        <property name="overlay_scrolling">False</property>
-                        <signal name="size-allocate" handler="on_cover-scroll_size_allocate" swapped="no"/>
+                        <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkViewport">
+                          <object class="GtkSpinner" id="cover-spinner">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="name">cover-spinner</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="cover-scroll">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="kinetic_scrolling">False</property>
+                            <property name="overlay_scrolling">False</property>
+                            <signal name="size-allocate" handler="on_cover-scroll_size_allocate" swapped="no"/>
                             <child>
-                              <object class="GtkEventBox">
+                              <object class="GtkViewport">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <child>
-                                  <object class="GtkImage" id="cover-image">
+                                  <object class="GtkEventBox">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="stock">gtk-missing-image</property>
+                                    <child>
+                                      <object class="GtkImage" id="cover-image">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="stock">gtk-missing-image</property>
+                                      </object>
+                                    </child>
                                   </object>
                                 </child>
                               </object>
                             </child>
                           </object>
+                          <packing>
+                            <property name="name">cover-scroll</property>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
                       </object>
                       <packing>

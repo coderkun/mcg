@@ -755,6 +755,8 @@ class CoverPanel(mcg.Base):
         self._panel = builder.get_object('cover-panel')
         self._toolbar = builder.get_object('cover-toolbar')
         # Cover
+        self._cover_stack = builder.get_object('cover-stack')
+        self._cover_spinner = builder.get_object('cover-spinner')
         self._cover_scroll = builder.get_object('cover-scroll')
         self._cover_image = builder.get_object('cover-image')
         # Songs
@@ -813,6 +815,7 @@ class CoverPanel(mcg.Base):
 
 
     def set_album(self, album):
+        # Set labels
         self._album_title_label.set_markup(
             "<b><big>{}</big></b>".format(
                 GObject.markup_escape_text(
@@ -834,8 +837,12 @@ class CoverPanel(mcg.Base):
                 )
             )
         )
-        self._set_cover(album)
+    
+        # Set tracks
         self._set_tracks(album)
+
+        # Load cover
+        threading.Thread(target=self._set_cover, args=(album,)).start()
 
 
     def set_play(self, pos, time):
@@ -873,18 +880,21 @@ class CoverPanel(mcg.Base):
 
 
     def _set_cover(self, album):
-        if self._current_album is not None and album.get_hash() == self._current_album.get_hash():
-            return
-        self._current_album = album
-        url = album.get_cover()
-        if url is not None and url is not "":
-            # Load image and draw it
-            self._cover_pixbuf = Application.load_cover(url)
-            self._resize_image()
-        else:
-            # Reset image
-            self._cover_pixbuf = None
-            self._cover_image.clear()
+        self._cover_stack.set_visible_child(self._cover_spinner)
+        self._cover_spinner.start()
+        if self._current_album is None or album.get_hash() != self._current_album.get_hash():
+            self._current_album = album
+            url = album.get_cover()
+            if url is not None and url is not "":
+                # Load image and draw it
+                self._cover_pixbuf = Application.load_cover(url)
+                self._resize_image()
+            else:
+                # Reset image
+                self._cover_pixbuf = None
+                self._cover_image.clear()
+        self._cover_stack.set_visible_child(self._cover_scroll)
+        self._cover_spinner.stop()
 
 
     def _set_tracks(self, album):
