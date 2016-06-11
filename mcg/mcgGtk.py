@@ -816,25 +816,19 @@ class CoverPanel(mcg.Base):
 
     def set_album(self, album):
         # Set labels
-        self._album_title_label.set_markup(
-            "<b><big>{}</big></b>".format(
-                GObject.markup_escape_text(
-                    album.get_title()
-                )
+        self._album_title_label.set_label(
+            GObject.markup_escape_text(
+                album.get_title()
             )
         )
         self._album_date_label.set_markup(
-            "<big>{}</big>".format(
-                GObject.markup_escape_text(
-                    ', '.join(album.get_dates())
-                )
+            GObject.markup_escape_text(
+                ', '.join(album.get_dates())
             )
         )
         self._album_artist_label.set_markup(
-            "<big>{}</big>".format(
-                GObject.markup_escape_text(
-                    ', '.join(album.get_artists())
-                )
+            GObject.markup_escape_text(
+                ', '.join(album.get_artists())
             )
         )
     

@@ -408,60 +408,112 @@
               <object class="GtkBox" id="cover-panel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="homogeneous">True</property>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkStack" id="cover-stack">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="homogeneous">True</property>
                     <child>
-                      <object class="GtkStack" id="cover-stack">
+                      <object class="GtkSpinner" id="cover-spinner">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="name">cover-spinner</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="cover-scroll">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="kinetic_scrolling">False</property>
+                        <property name="overlay_scrolling">False</property>
+                        <signal name="size-allocate" handler="on_cover-scroll_size_allocate" swapped="no"/>
                         <child>
-                          <object class="GtkSpinner" id="cover-spinner">
+                          <object class="GtkViewport">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                          </object>
-                          <packing>
-                            <property name="name">cover-spinner</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="cover-scroll">
-                            <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="kinetic_scrolling">False</property>
-                            <property name="overlay_scrolling">False</property>
-                            <signal name="size-allocate" handler="on_cover-scroll_size_allocate" swapped="no"/>
                             <child>
-                              <object class="GtkViewport">
+                              <object class="GtkEventBox">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
                                 <child>
-                                  <object class="GtkEventBox">
+                                  <object class="GtkImage" id="cover-image">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <child>
-                                      <object class="GtkImage" id="cover-image">
-                                        <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="stock">gtk-missing-image</property>
-                                      </object>
-                                    </child>
+                                    <property name="stock">gtk-missing-image</property>
                                   </object>
                                 </child>
                               </object>
                             </child>
                           </object>
-                          <packing>
-                            <property name="name">cover-scroll</property>
-                            <property name="position">1</property>
-                          </packing>
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
+                        <property name="name">cover-scroll</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkGrid">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="margin_top">5</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="row_spacing">5</property>
+                        <property name="row_homogeneous">True</property>
+                        <property name="column_homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel" id="cover-album">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label">Album</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="cover-date">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label">Date</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="cover-artist">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="label">Artist</property>
+                          </object>
+                          <packing>
+                            <property name="left_attach">0</property>
+                            <property name="top_attach">2</property>
+                          </packing>
+                        </child>
+                        <style>
+                          <class name="cover-labels"/>
+                        </style>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
                         <property name="fill">True</property>
                         <property name="padding">10</property>
                         <property name="position">0</property>
@@ -473,7 +525,6 @@
                         <property name="can_focus">True</property>
                         <property name="halign">start</property>
                         <property name="orientation">vertical</property>
-                        <property name="round_digits">1</property>
                         <property name="draw_value">False</property>
                         <signal name="button-press-event" handler="on_cover-songs_button_press_event" swapped="no"/>
                         <signal name="button-release-event" handler="on_cover-songs_button_release_event" swapped="no"/>
@@ -481,59 +532,7 @@
                       <packing>
                         <property name="expand">True</property>
                         <property name="fill">True</property>
-                        <property name="padding">10</property>
-                        <property name="pack_type">end</property>
                         <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="padding">10</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkGrid">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_top">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="row_spacing">5</property>
-                    <property name="row_homogeneous">True</property>
-                    <property name="column_homogeneous">True</property>
-                    <child>
-                      <object class="GtkLabel" id="cover-album">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Album</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="cover-date">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Date</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="cover-artist">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Artist</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">2</property>
                       </packing>
                     </child>
                   </object>
@@ -541,6 +540,7 @@
                     <property name="expand">False</property>
                     <property name="fill">True</property>
                     <property name="padding">10</property>
+                    <property name="pack_type">end</property>
                     <property name="position">1</property>
                   </packing>
                 </child>

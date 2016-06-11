@@ -11,6 +11,13 @@
     border:none;
 }
 
+.cover-labels label {
+    font-size:larger;
+}
+.cover-labels label:first-child {
+    font-weight:bold;
+}
+
 iconview.view:selected,
 iconview.view:selected:focus,
 GtkIconView.cell:selected,
