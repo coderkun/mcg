@@ -780,11 +780,16 @@ class CoverPanel(mcg.Base):
 
     def get_signal_handlers(self):
         return {
+            'on_cover-toolbar-fullscreen_clicked': self.on_fullscreen_clicked,
             'on_cover-box_button_press_event': self.on_cover_box_pressed,
             'on_cover-scroll_size_allocate': self.on_cover_size_allocate,
             'on_cover-songs_button_press_event': self.on_songs_start_change,
             'on_cover-songs_button_release_event': self.on_songs_change
         }
+
+
+    def on_fullscreen_clicked(self, widget):
+        self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
 
 
     def on_cover_box_pressed(self, widget, event):
