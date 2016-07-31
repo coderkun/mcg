@@ -58,6 +58,62 @@
       </object>
     </child>
   </object>
+  <object class="GtkHeaderBar" id="headerbar-playlist-standalone">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkButton" id="headerbar-playlist-standalone-close">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="on_headerbar-playlist-standalone-close_clicked" swapped="no"/>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="icon_name">go-previous-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child type="title">
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="headerbar-playlist-standalone-title">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Title</property>
+            <property name="selectable">True</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+              <attribute name="scale" value="1"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="headerbar-playlist-standalone-artist">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Artist</property>
+            <property name="selectable">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAdjustment" id="library-scale-adjustment">
     <property name="lower">100</property>
     <property name="upper">1000</property>
@@ -553,28 +609,109 @@
               </packing>
             </child>
             <child>
-              <object class="GtkScrolledWindow" id="playlist-panel">
+              <object class="GtkStack" id="playlist-panel">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can_focus">False</property>
+                <property name="transition_type">slide-left-right</property>
                 <child>
-                  <object class="GtkIconView" id="playlist-iconview">
+                  <object class="GtkScrolledWindow" id="playlist-panel-normal">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="margin">0</property>
-                    <property name="item_orientation">horizontal</property>
-                    <property name="columns">3</property>
-                    <property name="row_spacing">0</property>
-                    <property name="column_spacing">0</property>
-                    <property name="tooltip_column">1</property>
-                    <property name="item_padding">0</property>
+                    <child>
+                      <object class="GtkIconView" id="playlist-iconview">
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="margin">0</property>
+                        <property name="item_orientation">horizontal</property>
+                        <property name="row_spacing">0</property>
+                        <property name="column_spacing">0</property>
+                        <property name="tooltip_column">1</property>
+                        <property name="item_padding">0</property>
+                        <property name="activate_on_single_click">True</property>
+                        <signal name="item-activated" handler="on_playlist-iconview_item_activated" swapped="no"/>
+                        <style>
+                          <class name="no-bg"/>
+                        </style>
+                      </object>
+                    </child>
                     <style>
                       <class name="no-bg"/>
                     </style>
                   </object>
+                  <packing>
+                    <property name="name">page0</property>
+                    <property name="title" translatable="yes">page0</property>
+                  </packing>
                 </child>
-                <style>
-                  <class name="no-bg"/>
-                </style>
+                <child>
+                  <object class="GtkBox" id="playlist-panel-standalone">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkStack" id="playlist-standalone-stack">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkSpinner" id="playlist-standalone-spinner">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-spinne</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="playlist-standalone-scroll">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="kinetic_scrolling">False</property>
+                            <property name="overlay_scrolling">False</property>
+                            <child>
+                              <object class="GtkViewport">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <child>
+                                  <object class="GtkImage" id="playlist-standalone-image">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="stock">gtk-missing-image</property>
+                                    <property name="icon_size">6</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-scroll</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkActionBar" id="playlist-standalone-actionbar">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="name">page1</property>
+                    <property name="title" translatable="yes">page1</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
               </object>
               <packing>
                 <property name="name">playlist</property>

@@ -969,13 +969,22 @@ class PlaylistPanel(mcg.Base):
         self._host = None
         self._item_size = 150
         self._playlist = None
+        self._playlist_albums = None
         self._playlist_lock = threading.Lock()
         self._playlist_stop = threading.Event()
         self._icon_theme = Gtk.IconTheme.get_default()
+        self._standalone_pixbuf = None
+        self._selected_albums = []
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('playlist-panel')
         self._toolbar = builder.get_object('playlist-toolbar')
+        self._headerbar = builder.get_object('headerbar')
+        self._headerbar_standalone = builder.get_object('headerbar-playlist-standalone')
+        self._panel_normal = builder.get_object('playlist-panel-normal')
+        self._panel_standalone = builder.get_object('playlist-panel-standalone')
+
         # Clear button
         self._playlist_clear_button = builder.get_object('playlist-toolbar-clear')
         # Playlist Grid: Model
@@ -986,6 +995,17 @@ class PlaylistPanel(mcg.Base):
         self._playlist_grid.set_pixbuf_column(0)
         self._playlist_grid.set_text_column(-1)
         self._playlist_grid.set_tooltip_column(1)
+
+        # Standalone labels
+        self._standalone_title = builder.get_object('headerbar-playlist-standalone-title')
+        self._standalone_artist = builder.get_object('headerbar-playlist-standalone-artist')
+        # Standalone Image
+        self._standalone_stack = builder.get_object('playlist-standalone-stack')
+        self._standalone_spinner = builder.get_object('playlist-standalone-spinner')
+        self._standalone_scroll = builder.get_object('playlist-standalone-scroll')
+        self._standalone_image = builder.get_object('playlist-standalone-image')
+        # Action bar
+        action_bar = builder.get_object('playlist-standalone-actionbar')
 
 
     def get(self):
@@ -998,8 +1018,39 @@ class PlaylistPanel(mcg.Base):
 
     def get_signal_handlers(self):
         return {
-            'on_playlist-toolbar-clear_clicked': self._callback_from_widget
+            'on_playlist-toolbar-clear_clicked': self._callback_from_widget,
+            'on_playlist-iconview_item_activated': self.on_playlist_grid_clicked,
+            'on_playlist-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
+            'on_headerbar-playlist-standalone-close_clicked': self.on_standalone_close_clicked
         }
+
+
+    def on_playlist_grid_clicked(self, widget, path):
+        # Get selected album
+        iter = self._playlist_grid_model.get_iter(path)
+        hash = self._playlist_grid_model.get_value(iter, 2)
+        album = self._playlist_albums[hash]
+        self._selected_albums = [album]
+
+        # Set labels
+        self._standalone_title.set_text(album.get_title())
+        self._standalone_artist.set_text(", ".join(album.get_artists()))
+
+        # Show panel
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+        # Load cover
+        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+
+
+    def on_standalone_scroll_size_allocate(self, widget, allocation):
+        self._resize_standalone_image()
+
+
+    def on_standalone_close_clicked(self, widget):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def set_item_size(self, item_size):
@@ -1026,6 +1077,9 @@ class PlaylistPanel(mcg.Base):
         self._playlist_lock.acquire()
         self._playlist_stop.clear()
         self._playlist = playlist
+        self._playlist_albums = {}
+        for album in playlist:
+            self._playlist_albums[album.get_hash()] = album
         self._playlist_grid.set_model(None)
         self._playlist_grid.freeze_child_notify()
         self._playlist_grid_model.clear()
@@ -1066,6 +1120,48 @@ class PlaylistPanel(mcg.Base):
     def _redraw(self):
         if self._playlist is not None:
             self.set_playlist(self._host, self._playlist)
+
+
+    def _show_standalone_image(self, album):
+        self._standalone_stack.set_visible_child(self._standalone_spinner)
+        self._standalone_spinner.start()
+        url = album.get_cover()
+        if url is not None and url is not "":
+            # Load image and draw it
+            self._standalone_pixbuf = Application.load_cover(url)
+            self._resize_standalone_image()
+        else:
+            # Reset image
+            self._standalone_image.clear()
+        self._standalone_stack.set_visible_child(self._standalone_scroll)
+        self._standalone_spinner.stop()
+
+
+    def _resize_standalone_image(self):
+        """Diese Methode skaliert das geladene Bild aus dem Pixelpuffer
+        auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
+        """
+        pixbuf = self._standalone_pixbuf
+        size = self._standalone_scroll.get_allocation()
+        # Check pixelbuffer
+        if pixbuf is None:
+            return
+
+        # Skalierungswert für Breite und Höhe ermitteln
+        ratioW = float(size.width) / float(pixbuf.get_width())
+        ratioH = float(size.height) / float(pixbuf.get_height())
+        # Kleineren beider Skalierungswerte nehmen, nicht Hochskalieren
+        ratio = min(ratioW, ratioH)
+        ratio = min(ratio, 1)
+        # Neue Breite und Höhe berechnen
+        width = int(math.floor(pixbuf.get_width()*ratio))
+        height = int(math.floor(pixbuf.get_height()*ratio))
+        if width <= 0 or height <= 0:
+            return
+        # Pixelpuffer auf Oberfläche zeichnen
+        self._standalone_image.set_allocation(self._standalone_scroll.get_allocation())
+        self._standalone_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+        self._standalone_image.show()
 
 
     def _callback_from_widget(self, widget):
