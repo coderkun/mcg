@@ -38,6 +38,7 @@ class Application(Gtk.Application):
     SETTING_WINDOW_SIZE = 'window-size'
     SETTING_WINDOW_MAXIMIZED = 'window-maximized'
     SETTING_PANEL = 'panel'
+    SETTING_TRACKLIST_SIZE = 'tracklist-size'
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
@@ -169,6 +170,7 @@ class Window():
         if use_keyring:
             self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Application.SETTING_IMAGE_DIR))
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_string(Application.SETTING_TRACKLIST_SIZE))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Application.SETTING_SORT_ORDER))
@@ -181,6 +183,7 @@ class Window():
         self._header_bar.connect_signal(HeaderBar.SIGNAL_SET_VOLUME, self.on_header_bar_set_volume)
         self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.on_connection_panel_connection_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
+        self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, self.on_cover_panel_tracklist_size_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_SET_SONG, self.on_cover_panel_set_song)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_UPDATE, self.on_library_panel_update)
@@ -194,6 +197,7 @@ class Window():
         self._mcg.connect_signal(mcg.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
         self._mcg.connect_signal(mcg.Client.SIGNAL_ERROR, self.on_mcg_error)
         self._settings.connect('changed::'+Application.SETTING_PANEL, self.on_settings_panel_changed)
+        self._settings.connect('changed::'+Application.SETTING_TRACKLIST_SIZE, self.on_settings_tracklist_size_changed)
         self._settings.connect('changed::'+Application.SETTING_ITEM_SIZE, self.on_settings_item_size_changed)
         self._settings.connect('changed::'+Application.SETTING_SORT_ORDER, self.on_settings_sort_order_changed)
         self._settings.connect('changed::'+Application.SETTING_SORT_TYPE, self.on_settings_sort_type_changed)
@@ -285,6 +289,10 @@ class Window():
             self._appwindow.unfullscreen()
 
 
+    def on_cover_panel_tracklist_size_changed(self, size):
+        self._settings.set_string(Application.SETTING_TRACKLIST_SIZE, size)
+
+
     def on_cover_panel_set_song(self, pos, time):
         self._mcg.seek(pos, time)
 
@@ -359,6 +367,11 @@ class Window():
     def on_settings_panel_changed(self, settings, key):
         panel_index = settings.get_int(key)
         self._stack.set_visible_child(self._panels[panel_index].get())
+
+
+    def on_settings_tracklist_size_changed(self, settings, key):
+        size = settings.get_string(key)
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(size)
 
 
     def on_settings_item_size_changed(self, settings, key):
@@ -741,7 +754,11 @@ class ConnectionPanel(mcg.Base):
 
 class CoverPanel(mcg.Base):
     SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
+    SIGNAL_TRACKLIST_SIZE_CHANGED = 'tracklist-size-changed'
     SIGNAL_SET_SONG = 'set-song'
+    TRACKLIST_SIZE_LARGE = 'large'
+    TRACKLIST_SIZE_SMALL = 'small'
+    TRACKLIST_SIZE_HIDDEN = 'hidden'
 
 
     def __init__(self, builder):
@@ -751,11 +768,18 @@ class CoverPanel(mcg.Base):
         self._cover_pixbuf = None
         self._timer = None
         self._properties = {}
+        self._tracklist_size = CoverPanel.TRACKLIST_SIZE_LARGE
 
         # Widgets
         self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('cover-panel')
         self._toolbar = builder.get_object('cover-toolbar')
+        # Toolbar menu
+        self._toolbar_tracklist_buttons = {
+            CoverPanel.TRACKLIST_SIZE_LARGE: builder.get_object('cover-toolbar-tracklist-large'),
+            CoverPanel.TRACKLIST_SIZE_SMALL: builder.get_object('cover-toolbar-tracklist-small'),
+            CoverPanel.TRACKLIST_SIZE_HIDDEN: builder.get_object('cover-toolbar-tracklist-hidden')
+        }
         # Cover
         self._cover_stack = builder.get_object('cover-stack')
         self._cover_spinner = builder.get_object('cover-spinner')
@@ -763,6 +787,7 @@ class CoverPanel(mcg.Base):
         self._cover_box = builder.get_object('cover-box')
         self._cover_image = builder.get_object('cover-image')
         # Album Infos
+        self._info_revealer = builder.get_object('cover-info-revealer')
         self._info_box = builder.get_object('cover-info-box')
         self._album_title_label = builder.get_object('cover-album')
         self._album_date_label = builder.get_object('cover-date')
@@ -783,6 +808,7 @@ class CoverPanel(mcg.Base):
     def get_signal_handlers(self):
         return {
             'on_cover-toolbar-fullscreen_clicked': self.on_fullscreen_clicked,
+            'on_cover-toolbar-tracklist_toggled': self.on_tracklist_togged,
             'on_cover-box_button_press_event': self.on_cover_box_pressed,
             'on_cover-scroll_size_allocate': self.on_cover_size_allocate,
             'on_cover-songs_button_press_event': self.on_songs_start_change,
@@ -792,6 +818,12 @@ class CoverPanel(mcg.Base):
 
     def on_fullscreen_clicked(self, widget):
         self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
+
+
+    def on_tracklist_togged(self, widget):
+        if widget.get_active():
+            size = [key for key, value in self._toolbar_tracklist_buttons.items() if value is widget][0]
+            self._change_tracklist_size(size)
 
 
     def on_cover_box_pressed(self, widget, event):
@@ -821,6 +853,18 @@ class CoverPanel(mcg.Base):
                 break
         time = max(value - time - 1, 0)
         self._callback(self.SIGNAL_SET_SONG, pos, time)
+
+
+    def set_tracklist_size(self, size):
+        if self._tracklist_size != size:
+            button = self._toolbar_tracklist_buttons[size]
+            if button and not button.get_active():
+                button.set_active(True)
+                self._change_tracklist_size(size, False)
+
+
+    def get_tracklist_size(self):
+        return self._tracklist_size
 
 
     def set_album(self, album):
@@ -868,8 +912,7 @@ class CoverPanel(mcg.Base):
 
     def set_fullscreen(self, active):
         if active:
-            self._songs_scale.hide()
-            self._info_box.hide()
+            self._change_tracklist_size(CoverPanel.TRACKLIST_SIZE_HIDDEN, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
             GObject.idle_add(self._resize_image)
             # Hide curser
@@ -877,8 +920,7 @@ class CoverPanel(mcg.Base):
                 Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "none")
             )
         else:
-            self._songs_scale.show()
-            self._info_box.show()
+            self._change_tracklist_size(self._tracklist_size, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
             GObject.idle_add(self._resize_image)
             # Reset cursor
@@ -922,6 +964,27 @@ class CoverPanel(mcg.Base):
             )
             length = length + track.get_length()
         self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
+
+
+    def _change_tracklist_size(self, size, notify=True, store=True):
+        # Set tracklist size
+        if size == CoverPanel.TRACKLIST_SIZE_LARGE:
+            self._panel.set_homogeneous(True)
+            self._info_revealer.set_reveal_child(True)
+        elif size == CoverPanel.TRACKLIST_SIZE_SMALL:
+            self._panel.set_homogeneous(False)
+            self._info_revealer.set_reveal_child(True)
+        else:
+            self._panel.set_homogeneous(False)
+            self._info_revealer.set_reveal_child(False)
+        # Store size
+        if store:
+            self._tracklist_size = size
+        # Notify signals
+        if notify:
+            self._callback(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, size)
+        # Resize image
+        self._resize_image()
 
 
     def _playing(self):
