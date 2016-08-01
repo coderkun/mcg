@@ -1296,7 +1296,7 @@ class LibraryPanel(mcg.Base):
         self._library_grid.set_pixbuf_column(0)
         self._library_grid.set_text_column(-1)
         self._library_grid.set_tooltip_column(1)
-        # Standalon labels
+        # Standalone labels
         self._standalone_title = builder.get_object('headerbar-library-standalone-title')
         self._standalone_artist = builder.get_object('headerbar-library-standalone-artist')
         # Standalone Image
