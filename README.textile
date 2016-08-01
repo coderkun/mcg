@@ -16,6 +16,12 @@ Dependencies:
 * "GTK":http://www.gtk.org 3 ("python-gobject":https://live.gnome.org/PyGObject)
 * "python-keyring":http://pypi.python.org/pypi/keyring (optional)
 
+h2. Run application
+
+To run the application just donwload/clone the code, “cd” into the application directory and run the following command:
+
+bc. ./mcg.py
+
 h2. Screenshots
 
 !https://www.coderkun.de/images/mcg-cover.png(Cover)!
