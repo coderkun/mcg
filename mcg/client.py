@@ -14,6 +14,8 @@ import urllib.request
 
 from hashlib import md5
 
+from mcg.utils import SortOrder
+
 
 
 
@@ -605,9 +607,6 @@ class Client(Base):
 
 class MCGAlbum:
     DEFAULT_ALBUM = 'Various'
-    SORT_BY_ARTIST = 'artist'
-    SORT_BY_TITLE = 'title'
-    SORT_BY_YEAR = 'year'
     _FILE_NAMES = ['cover', 'folder']
     _FILE_EXTS = ['jpg', 'png', 'jpeg']
     _FILTER_DELIMITER = ' '
@@ -720,12 +719,12 @@ class MCGAlbum:
 
     def compare(album1, album2, criterion=None):
         if criterion == None:
-            criterion = MCGAlbum.SORT_BY_TITLE
-        if criterion == MCGAlbum.SORT_BY_ARTIST:
+            criterion = SortOrder.TITLE
+        if criterion == SortOrder.ARTIST:
             value_function = "get_artists"
-        elif criterion == MCGAlbum.SORT_BY_TITLE:
+        elif criterion == SortOrder.TITLE:
             value_function = "get_title"
-        elif criterion == MCGAlbum.SORT_BY_YEAR:
+        elif criterion == SortOrder.YEAR:
             value_function = "get_date"
 
         value1 = getattr(album1, value_function)()

@@ -52,3 +52,19 @@ class Utils:
                     filetype = 'jpeg'
                 pixbuf.savev(cache.create_filename(album), filetype, [], [])
         return pixbuf
+
+
+
+
+class TracklistSize:
+    LARGE = 0
+    SMALL = 1
+    HIDDEN = 2
+
+
+
+
+class SortOrder:
+    ARTIST = 0
+    TITLE = 1
+    YEAR = 2

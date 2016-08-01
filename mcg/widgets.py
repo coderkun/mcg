@@ -16,6 +16,8 @@ import threading
 from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, GLib
 
 from mcg import client
+from mcg.utils import SortOrder
+from mcg.utils import TracklistSize
 from mcg.utils import Utils
 from mcg.zeroconf import ZeroconfProvider
 
@@ -81,10 +83,10 @@ class Window():
         if use_keyring:
             self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Window.SETTING_IMAGE_DIR))
-        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_string(Window.SETTING_TRACKLIST_SIZE))
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_enum(Window.SETTING_TRACKLIST_SIZE))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
-        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Window.SETTING_SORT_ORDER))
+        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_enum(Window.SETTING_SORT_ORDER))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(self._settings.get_boolean(Window.SETTING_SORT_TYPE))
 
         # Signals
@@ -201,7 +203,7 @@ class Window():
 
 
     def on_cover_panel_tracklist_size_changed(self, size):
-        self._settings.set_string(Window.SETTING_TRACKLIST_SIZE, size)
+        self._settings.set_enum(Window.SETTING_TRACKLIST_SIZE, size)
 
 
     def on_cover_panel_set_song(self, pos, time):
@@ -222,7 +224,7 @@ class Window():
 
 
     def on_library_panel_sort_order_changed(self, sort_order):
-        self._settings.set_string(Window.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
+        self._settings.set_enum(Window.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
 
 
     def on_library_panel_sort_type_changed(self, sort_type):
@@ -281,7 +283,7 @@ class Window():
 
 
     def on_settings_tracklist_size_changed(self, settings, key):
-        size = settings.get_string(key)
+        size = settings.get_enum(key)
         self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(size)
 
 
@@ -292,7 +294,7 @@ class Window():
 
 
     def on_settings_sort_order_changed(self, settings, key):
-        sort_order = settings.get_string(key)
+        sort_order = settings.get_enum(key)
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(sort_order)
 
 
@@ -667,9 +669,6 @@ class CoverPanel(client.Base):
     SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
     SIGNAL_TRACKLIST_SIZE_CHANGED = 'tracklist-size-changed'
     SIGNAL_SET_SONG = 'set-song'
-    TRACKLIST_SIZE_LARGE = 'large'
-    TRACKLIST_SIZE_SMALL = 'small'
-    TRACKLIST_SIZE_HIDDEN = 'hidden'
 
 
     def __init__(self, builder):
@@ -679,7 +678,7 @@ class CoverPanel(client.Base):
         self._cover_pixbuf = None
         self._timer = None
         self._properties = {}
-        self._tracklist_size = CoverPanel.TRACKLIST_SIZE_LARGE
+        self._tracklist_size = TracklistSize.LARGE
 
         # Widgets
         self._appwindow = builder.get_object('appwindow')
@@ -687,9 +686,9 @@ class CoverPanel(client.Base):
         self._toolbar = builder.get_object('cover-toolbar')
         # Toolbar menu
         self._toolbar_tracklist_buttons = {
-            CoverPanel.TRACKLIST_SIZE_LARGE: builder.get_object('cover-toolbar-tracklist-large'),
-            CoverPanel.TRACKLIST_SIZE_SMALL: builder.get_object('cover-toolbar-tracklist-small'),
-            CoverPanel.TRACKLIST_SIZE_HIDDEN: builder.get_object('cover-toolbar-tracklist-hidden')
+            TracklistSize.LARGE: builder.get_object('cover-toolbar-tracklist-large'),
+            TracklistSize.SMALL: builder.get_object('cover-toolbar-tracklist-small'),
+            TracklistSize.HIDDEN: builder.get_object('cover-toolbar-tracklist-hidden')
         }
         # Cover
         self._cover_stack = builder.get_object('cover-stack')
@@ -823,7 +822,7 @@ class CoverPanel(client.Base):
 
     def set_fullscreen(self, active):
         if active:
-            self._change_tracklist_size(CoverPanel.TRACKLIST_SIZE_HIDDEN, False, False)
+            self._change_tracklist_size(TracklistSize.HIDDEN, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
             GObject.idle_add(self._resize_image)
             # Hide curser
@@ -879,10 +878,10 @@ class CoverPanel(client.Base):
 
     def _change_tracklist_size(self, size, notify=True, store=True):
         # Set tracklist size
-        if size == CoverPanel.TRACKLIST_SIZE_LARGE:
+        if size == TracklistSize.LARGE:
             self._panel.set_homogeneous(True)
             self._info_revealer.set_reveal_child(True)
-        elif size == CoverPanel.TRACKLIST_SIZE_SMALL:
+        elif size == TracklistSize.SMALL:
             self._panel.set_homogeneous(False)
             self._info_revealer.set_reveal_child(True)
         else:
@@ -1160,7 +1159,7 @@ class LibraryPanel(client.Base):
         self._host = "localhost"
         self._filter_string = ""
         self._item_size = 150
-        self._sort_order = client.MCGAlbum.SORT_BY_YEAR
+        self._sort_order = SortOrder.YEAR
         self._sort_type = Gtk.SortType.DESCENDING
         self._grid_pixbufs = {}
         self._old_ranges = {}
@@ -1188,9 +1187,9 @@ class LibraryPanel(client.Base):
         # Toolbar menu
         self._toolbar_search_bar = builder.get_object('library-toolbar-search')
         self._toolbar_sort_buttons = {
-            client.MCGAlbum.SORT_BY_ARTIST: builder.get_object('library-toolbar-sort-artist'),
-            client.MCGAlbum.SORT_BY_TITLE: builder.get_object('library-toolbar-sort-title'),
-            client.MCGAlbum.SORT_BY_YEAR: builder.get_object('library-toolbar-sort-year')
+            SortOrder.ARTIST: builder.get_object('library-toolbar-sort-artist'),
+            SortOrder.TITLE: builder.get_object('library-toolbar-sort-title'),
+            SortOrder.YEAR: builder.get_object('library-toolbar-sort-year')
         }
         self._toolbar_sort_order_button = builder.get_object('library-toolbar-sort-order')
         self._grid_scale = builder.get_object('library-toolbar-scale')

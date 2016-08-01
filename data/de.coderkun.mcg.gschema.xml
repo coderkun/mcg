@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
+    <enum id="de.coderkun.mcg.TracklistSize">
+        <value nick="large" value="0" />
+        <value nick="small" value="1" />
+        <value nick="hidden" value="2" />
+    </enum>
+    <enum id="de.coderkun.mcg.SortOrder">
+        <value nick="artist" value="0" />
+        <value nick="title" value="1" />
+        <value nick="year" value="2" />
+    </enum>
 	<schema path="/de/coderkun/mcg/" id="de.coderkun.mcg" gettext-domain="mcg">
 		<key type="s" name="host">
 			<default>'localhost'</default>
@@ -37,13 +47,8 @@
 			<summary>Last selected panel</summary>
 			<description>The index of the last selected panel.</description>
 		</key>
-		<key type="s" name="tracklist-size">
+		<key enum="de.coderkun.mcg.TracklistSize" name="tracklist-size">
 			<default>'large'</default>
-			<choices>
-				<choice value='large' />
-				<choice value='small' />
-				<choice value='hidden' />
-			</choices>
 			<summary>Size of tracklist on cover panel</summary>
 			<description>The size of the tracklist on the cover panel.</description>
 		</key>
@@ -53,13 +58,8 @@
 			<summary>Size of library items</summary>
 			<description>The size of items displayed in the library.</description>
 		</key>
-		<key type="s" name="sort-order">
+		<key enum="de.coderkun.mcg.SortOrder" name="sort-order">
 			<default>'year'</default>
-			<choices>
-				<choice value='artist' />
-				<choice value='title' />
-				<choice value='year' />
-			</choices>
 			<summary>Sort criterium for library items</summary>
 			<description>The sort criterium of items displayed in the library.</description>
 		</key>
