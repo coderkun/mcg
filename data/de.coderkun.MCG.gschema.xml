@@ -37,6 +37,16 @@
 			<summary>Last selected panel</summary>
 			<description>The index of the last selected panel.</description>
 		</key>
+		<key type="s" name="tracklist-size">
+			<default>'large'</default>
+			<choices>
+				<choice value='large' />
+				<choice value='small' />
+				<choice value='hidden' />
+			</choices>
+			<summary>Size of tracklist on cover panel</summary>
+			<description>The size of the tracklist on the cover panel.</description>
+		</key>
 		<key type="i" name="item-size">
 			<range min="100" max="1000" />
 			<default>150</default>

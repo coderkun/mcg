@@ -38,6 +38,7 @@ class Application(Gtk.Application):
     SETTING_WINDOW_SIZE = 'window-size'
     SETTING_WINDOW_MAXIMIZED = 'window-maximized'
     SETTING_PANEL = 'panel'
+    SETTING_TRACKLIST_SIZE = 'tracklist-size'
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
@@ -46,7 +47,7 @@ class Application(Gtk.Application):
 
 
     def __init__(self):
-        Gtk.Application.__init__(self, application_id="de.coderkun.mcg", flags=Gio.ApplicationFlags.FLAGS_NONE)
+        Gtk.Application.__init__(self, application_id="de.coderkun.mcg-dev", flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
 
 
@@ -77,6 +78,27 @@ class Application(Gtk.Application):
         )
 
 
+    def load_cover(url):
+        if not url:
+            return None
+        if url.startswith('/'):
+            try:
+                return GdkPixbuf.Pixbuf.new_from_file(url)
+            except Exception as e:
+                print(e)
+                return None
+        else:
+            try:
+                response = urllib.request.urlopen(url)
+                loader = GdkPixbuf.PixbufLoader()
+                loader.write(response.read())
+                loader.close()
+                return loader.get_pixbuf()
+            except Exception as e:
+                print(e)
+                return None
+
+
     def load_thumbnail(cache, album, size):
         cache_url = cache.create_filename(album)
         pixbuf = None
@@ -88,26 +110,13 @@ class Application(Gtk.Application):
                 print(e)
         else:
             url = album.get_cover()
-            if url is not None:
-                if url.startswith('/'):
-                    try:
-                        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(url, size, size)
-                    except Exception as e:
-                        print(e)
-                else:
-                    try:
-                        response = urllib.request.urlopen(url)
-                        loader = GdkPixbuf.PixbufLoader()
-                        loader.write(response.read())
-                        loader.close()
-                        pixbuf = loader.get_pixbuf().scale_simple(size, size, GdkPixbuf.InterpType.HYPER)
-                    except Exception as e:
-                        print(e)
-                if pixbuf is not None:
-                    filetype = os.path.splitext(url)[1][1:]
-                    if filetype == 'jpg':
-                        filetype = 'jpeg'
-                    pixbuf.savev(cache.create_filename(album), filetype, [], [])
+            pixbuf = Application.load_cover(url)
+            if pixbuf is not None:
+                pixbuf = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.HYPER)
+                filetype = os.path.splitext(url)[1][1:]
+                if filetype == 'jpg':
+                    filetype = 'jpeg'
+                pixbuf.savev(cache.create_filename(album), filetype, [], [])
         return pixbuf
 
 
@@ -151,6 +160,8 @@ class Window():
         self._stack = builder.get_object('panelstack')
         # Header
         self._header_bar = HeaderBar(builder)
+        # Toolbar stack
+        self._toolbar_stack = builder.get_object('toolbarstack')
 
         # Properties
         self._header_bar.set_sensitive(False, False)
@@ -159,6 +170,7 @@ class Window():
         if use_keyring:
             self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME))
         self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Application.SETTING_IMAGE_DIR))
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_string(Application.SETTING_TRACKLIST_SIZE))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Application.SETTING_SORT_ORDER))
@@ -171,6 +183,7 @@ class Window():
         self._header_bar.connect_signal(HeaderBar.SIGNAL_SET_VOLUME, self.on_header_bar_set_volume)
         self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.on_connection_panel_connection_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
+        self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, self.on_cover_panel_tracklist_size_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_SET_SONG, self.on_cover_panel_set_song)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_UPDATE, self.on_library_panel_update)
@@ -184,6 +197,7 @@ class Window():
         self._mcg.connect_signal(mcg.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
         self._mcg.connect_signal(mcg.Client.SIGNAL_ERROR, self.on_mcg_error)
         self._settings.connect('changed::'+Application.SETTING_PANEL, self.on_settings_panel_changed)
+        self._settings.connect('changed::'+Application.SETTING_TRACKLIST_SIZE, self.on_settings_tracklist_size_changed)
         self._settings.connect('changed::'+Application.SETTING_ITEM_SIZE, self.on_settings_item_size_changed)
         self._settings.connect('changed::'+Application.SETTING_SORT_ORDER, self.on_settings_sort_order_changed)
         self._settings.connect('changed::'+Application.SETTING_SORT_TYPE, self.on_settings_sort_type_changed)
@@ -233,6 +247,7 @@ class Window():
     # HeaderBar callbacks
 
     def on_header_bar_stack_switched(self, widget):
+        self._set_visible_toolbar()
         self._save_visible_panel()
 
 
@@ -269,9 +284,13 @@ class Window():
 
     def on_cover_panel_toggle_fullscreen(self):
         if not self._fullscreened:
-            self.fullscreen()
+            self._appwindow.fullscreen()
         else:
-            self.unfullscreen()
+            self._appwindow.unfullscreen()
+
+
+    def on_cover_panel_tracklist_size_changed(self, size):
+        self._settings.set_string(Application.SETTING_TRACKLIST_SIZE, size)
 
 
     def on_cover_panel_set_song(self, pos, time):
@@ -350,6 +369,11 @@ class Window():
         self._stack.set_visible_child(self._panels[panel_index].get())
 
 
+    def on_settings_tracklist_size_changed(self, settings, key):
+        size = settings.get_string(key)
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(size)
+
+
     def on_settings_item_size_changed(self, settings, key):
         size = settings.get_int(key)
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(size)
@@ -404,10 +428,10 @@ class Window():
         if fullscreened_new != self._fullscreened:
             self._fullscreened = fullscreened_new
             if self._fullscreened:
-                self._header_bar.hide()
+                self._header_bar.get().hide()
                 self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(True)
             else:
-                self._header_bar.show()
+                self._header_bar.get().show()
                 self._panels[Window._PANEL_INDEX_COVER].set_fullscreen(False)
 
 
@@ -416,6 +440,13 @@ class Window():
         panel_index_selected = panels.index(self._stack.get_visible_child())
         if panel_index_selected > 0:
             self._settings.set_int(Application.SETTING_PANEL, panel_index_selected)
+
+
+    def _set_visible_toolbar(self):
+        panels = [panel.get() for panel in self._panels]
+        panel_index_selected = panels.index(self._stack.get_visible_child())
+        toolbar = self._panels[panel_index_selected].get_toolbar()
+        self._toolbar_stack.set_visible_child(toolbar)
 
 
     def _show_error(self, message):
@@ -605,6 +636,7 @@ class ConnectionPanel(mcg.Base):
 
         # Widgets
         self._panel = builder.get_object('server-panel')
+        self._toolbar = builder.get_object('server-toolbar')
         # Zeroconf
         self._zeroconf_list = builder.get_object('server-zeroconf-list')
         self._zeroconf_list.set_model(self._services)
@@ -627,6 +659,10 @@ class ConnectionPanel(mcg.Base):
 
     def get(self):
         return self._panel
+
+
+    def get_toolbar(self):
+        return self._toolbar
 
 
     def get_signal_handlers(self):
@@ -718,7 +754,11 @@ class ConnectionPanel(mcg.Base):
 
 class CoverPanel(mcg.Base):
     SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
+    SIGNAL_TRACKLIST_SIZE_CHANGED = 'tracklist-size-changed'
     SIGNAL_SET_SONG = 'set-song'
+    TRACKLIST_SIZE_LARGE = 'large'
+    TRACKLIST_SIZE_SMALL = 'small'
+    TRACKLIST_SIZE_HIDDEN = 'hidden'
 
 
     def __init__(self, builder):
@@ -728,32 +768,62 @@ class CoverPanel(mcg.Base):
         self._cover_pixbuf = None
         self._timer = None
         self._properties = {}
+        self._tracklist_size = CoverPanel.TRACKLIST_SIZE_LARGE
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('cover-panel')
+        self._toolbar = builder.get_object('cover-toolbar')
+        # Toolbar menu
+        self._toolbar_tracklist_buttons = {
+            CoverPanel.TRACKLIST_SIZE_LARGE: builder.get_object('cover-toolbar-tracklist-large'),
+            CoverPanel.TRACKLIST_SIZE_SMALL: builder.get_object('cover-toolbar-tracklist-small'),
+            CoverPanel.TRACKLIST_SIZE_HIDDEN: builder.get_object('cover-toolbar-tracklist-hidden')
+        }
         # Cover
+        self._cover_stack = builder.get_object('cover-stack')
+        self._cover_spinner = builder.get_object('cover-spinner')
         self._cover_scroll = builder.get_object('cover-scroll')
+        self._cover_box = builder.get_object('cover-box')
         self._cover_image = builder.get_object('cover-image')
-        # Songs
-        self._songs_scale = builder.get_object('cover-songs')
-        self._songs_scale.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
         # Album Infos
+        self._info_revealer = builder.get_object('cover-info-revealer')
+        self._info_box = builder.get_object('cover-info-box')
         self._album_title_label = builder.get_object('cover-album')
         self._album_date_label = builder.get_object('cover-date')
         self._album_artist_label = builder.get_object('cover-artist')
+        # Songs
+        self._songs_scale = builder.get_object('cover-songs')
+        self._songs_scale.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
 
 
     def get(self):
         return self._panel
 
 
+    def get_toolbar(self):
+        return self._toolbar
+
+
     def get_signal_handlers(self):
         return {
+            'on_cover-toolbar-fullscreen_clicked': self.on_fullscreen_clicked,
+            'on_cover-toolbar-tracklist_toggled': self.on_tracklist_togged,
             'on_cover-box_button_press_event': self.on_cover_box_pressed,
             'on_cover-scroll_size_allocate': self.on_cover_size_allocate,
             'on_cover-songs_button_press_event': self.on_songs_start_change,
             'on_cover-songs_button_release_event': self.on_songs_change
         }
+
+
+    def on_fullscreen_clicked(self, widget):
+        self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
+
+
+    def on_tracklist_togged(self, widget):
+        if widget.get_active():
+            size = [key for key, value in self._toolbar_tracklist_buttons.items() if value is widget][0]
+            self._change_tracklist_size(size)
 
 
     def on_cover_box_pressed(self, widget, event):
@@ -785,30 +855,41 @@ class CoverPanel(mcg.Base):
         self._callback(self.SIGNAL_SET_SONG, pos, time)
 
 
+    def set_tracklist_size(self, size):
+        if self._tracklist_size != size:
+            button = self._toolbar_tracklist_buttons[size]
+            if button and not button.get_active():
+                button.set_active(True)
+                self._change_tracklist_size(size, False)
+
+
+    def get_tracklist_size(self):
+        return self._tracklist_size
+
+
     def set_album(self, album):
-        self._album_title_label.set_markup(
-            "<b><big>{}</big></b>".format(
-                GObject.markup_escape_text(
-                    album.get_title()
-                )
+        # Set labels
+        self._album_title_label.set_label(
+            GObject.markup_escape_text(
+                album.get_title()
             )
         )
         self._album_date_label.set_markup(
-            "<big>{}</big>".format(
-                GObject.markup_escape_text(
-                    ', '.join(album.get_dates())
-                )
+            GObject.markup_escape_text(
+                ', '.join(album.get_dates())
             )
         )
         self._album_artist_label.set_markup(
-            "<big>{}</big>".format(
-                GObject.markup_escape_text(
-                    ', '.join(album.get_artists())
-                )
+            GObject.markup_escape_text(
+                ', '.join(album.get_artists())
             )
         )
-        self._set_cover(album)
+    
+        # Set tracks
         self._set_tracks(album)
+
+        # Load cover
+        threading.Thread(target=self._set_cover, args=(album,)).start()
 
 
     def set_play(self, pos, time):
@@ -831,33 +912,39 @@ class CoverPanel(mcg.Base):
 
     def set_fullscreen(self, active):
         if active:
-            self._songs_scale.hide()
-            self._info_grid.hide()
-            self.child_set_property(self._current_box, 'padding', 0)
-            self._current_box.child_set_property(self._cover_scroll, 'padding', 0)
+            self._change_tracklist_size(CoverPanel.TRACKLIST_SIZE_HIDDEN, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
+            GObject.idle_add(self._resize_image)
+            # Hide curser
+            self._appwindow.get_window().set_cursor(
+                Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "none")
+            )
         else:
-            self._songs_scale.show()
-            self._info_grid.show()
-            self.child_set_property(self._current_box, 'padding', 10)
-            self._current_box.child_set_property(self._cover_scroll, 'padding', 10)
+            self._change_tracklist_size(self._tracklist_size, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
             GObject.idle_add(self._resize_image)
+            # Reset cursor
+            self._appwindow.get_window().set_cursor(
+                Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "default")
+            )
 
 
     def _set_cover(self, album):
-        if self._current_album is not None and album.get_hash() == self._current_album.get_hash():
-            return
-        self._current_album = album
-        url = album.get_cover()
-        if url is not None and url is not "":
-            # Load image and draw it
-            self._cover_pixbuf = self._load_cover(url)
-            self._resize_image()
-        else:
-            # Reset image
-            self._cover_pixbuf = None
-            self._cover_image.clear()
+        self._cover_stack.set_visible_child(self._cover_spinner)
+        self._cover_spinner.start()
+        if self._current_album is None or album.get_hash() != self._current_album.get_hash():
+            self._current_album = album
+            url = album.get_cover()
+            if url is not None and url is not "":
+                # Load image and draw it
+                self._cover_pixbuf = Application.load_cover(url)
+                self._resize_image()
+            else:
+                # Reset image
+                self._cover_pixbuf = None
+                self._cover_image.clear()
+        self._cover_stack.set_visible_child(self._cover_scroll)
+        self._cover_spinner.stop()
 
 
     def _set_tracks(self, album):
@@ -879,30 +966,32 @@ class CoverPanel(mcg.Base):
         self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
 
 
+    def _change_tracklist_size(self, size, notify=True, store=True):
+        # Set tracklist size
+        if size == CoverPanel.TRACKLIST_SIZE_LARGE:
+            self._panel.set_homogeneous(True)
+            self._info_revealer.set_reveal_child(True)
+        elif size == CoverPanel.TRACKLIST_SIZE_SMALL:
+            self._panel.set_homogeneous(False)
+            self._info_revealer.set_reveal_child(True)
+        else:
+            self._panel.set_homogeneous(False)
+            self._info_revealer.set_reveal_child(False)
+        # Store size
+        if store:
+            self._tracklist_size = size
+        # Notify signals
+        if notify:
+            self._callback(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, size)
+        # Resize image
+        self._resize_image()
+
+
     def _playing(self):
         value = self._songs_scale.get_value() + 1
         self._songs_scale.set_value(value)
 
         return True
-
-
-    def _load_cover(self, url):
-        if url.startswith('/'):
-            try:
-                return GdkPixbuf.Pixbuf.new_from_file(url)
-            except Exception as e:
-                print(e)
-                return None
-        else:
-            try:
-                response = urllib.request.urlopen(url)
-                loader = GdkPixbuf.PixbufLoader()
-                loader.write(response.read())
-                loader.close()
-                return loader.get_pixbuf()
-            except Exception as e:
-                print(e)
-                return None
 
 
     def _resize_image(self):
@@ -943,14 +1032,24 @@ class PlaylistPanel(mcg.Base):
         self._host = None
         self._item_size = 150
         self._playlist = None
+        self._playlist_albums = None
         self._playlist_lock = threading.Lock()
         self._playlist_stop = threading.Event()
         self._icon_theme = Gtk.IconTheme.get_default()
+        self._standalone_pixbuf = None
+        self._selected_albums = []
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('playlist-panel')
+        self._toolbar = builder.get_object('playlist-toolbar')
+        self._headerbar = builder.get_object('headerbar')
+        self._headerbar_standalone = builder.get_object('headerbar-playlist-standalone')
+        self._panel_normal = builder.get_object('playlist-panel-normal')
+        self._panel_standalone = builder.get_object('playlist-panel-standalone')
+
         # Clear button
-        self._playlist_clear_button = builder.get_object('playlist-clear')
+        self._playlist_clear_button = builder.get_object('playlist-toolbar-clear')
         # Playlist Grid: Model
         self._playlist_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         # Playlist Grid
@@ -960,15 +1059,61 @@ class PlaylistPanel(mcg.Base):
         self._playlist_grid.set_text_column(-1)
         self._playlist_grid.set_tooltip_column(1)
 
+        # Standalone labels
+        self._standalone_title = builder.get_object('headerbar-playlist-standalone-title')
+        self._standalone_artist = builder.get_object('headerbar-playlist-standalone-artist')
+        # Standalone Image
+        self._standalone_stack = builder.get_object('playlist-standalone-stack')
+        self._standalone_spinner = builder.get_object('playlist-standalone-spinner')
+        self._standalone_scroll = builder.get_object('playlist-standalone-scroll')
+        self._standalone_image = builder.get_object('playlist-standalone-image')
+        # Action bar
+        action_bar = builder.get_object('playlist-standalone-actionbar')
+
 
     def get(self):
         return self._panel
 
 
+    def get_toolbar(self):
+        return self._toolbar
+
+
     def get_signal_handlers(self):
         return {
-            'on_playlist-clear_clicked': self._callback_from_widget
+            'on_playlist-toolbar-clear_clicked': self._callback_from_widget,
+            'on_playlist-iconview_item_activated': self.on_playlist_grid_clicked,
+            'on_playlist-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
+            'on_headerbar-playlist-standalone-close_clicked': self.on_standalone_close_clicked
         }
+
+
+    def on_playlist_grid_clicked(self, widget, path):
+        # Get selected album
+        iter = self._playlist_grid_model.get_iter(path)
+        hash = self._playlist_grid_model.get_value(iter, 2)
+        album = self._playlist_albums[hash]
+        self._selected_albums = [album]
+
+        # Set labels
+        self._standalone_title.set_text(album.get_title())
+        self._standalone_artist.set_text(", ".join(album.get_artists()))
+
+        # Show panel
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+        # Load cover
+        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+
+
+    def on_standalone_scroll_size_allocate(self, widget, allocation):
+        self._resize_standalone_image()
+
+
+    def on_standalone_close_clicked(self, widget):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def set_item_size(self, item_size):
@@ -995,9 +1140,13 @@ class PlaylistPanel(mcg.Base):
         self._playlist_lock.acquire()
         self._playlist_stop.clear()
         self._playlist = playlist
+        self._playlist_albums = {}
+        for album in playlist:
+            self._playlist_albums[album.get_hash()] = album
         self._playlist_grid.set_model(None)
         self._playlist_grid.freeze_child_notify()
         self._playlist_grid_model.clear()
+        GObject.idle_add(self._playlist_grid.set_item_padding, size / 100)
 
         cache = mcg.MCGCache(host, size)
         for album in playlist:
@@ -1036,6 +1185,48 @@ class PlaylistPanel(mcg.Base):
             self.set_playlist(self._host, self._playlist)
 
 
+    def _show_standalone_image(self, album):
+        self._standalone_stack.set_visible_child(self._standalone_spinner)
+        self._standalone_spinner.start()
+        url = album.get_cover()
+        if url is not None and url is not "":
+            # Load image and draw it
+            self._standalone_pixbuf = Application.load_cover(url)
+            self._resize_standalone_image()
+        else:
+            # Reset image
+            self._standalone_image.clear()
+        self._standalone_stack.set_visible_child(self._standalone_scroll)
+        self._standalone_spinner.stop()
+
+
+    def _resize_standalone_image(self):
+        """Diese Methode skaliert das geladene Bild aus dem Pixelpuffer
+        auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
+        """
+        pixbuf = self._standalone_pixbuf
+        size = self._standalone_scroll.get_allocation()
+        # Check pixelbuffer
+        if pixbuf is None:
+            return
+
+        # Skalierungswert für Breite und Höhe ermitteln
+        ratioW = float(size.width) / float(pixbuf.get_width())
+        ratioH = float(size.height) / float(pixbuf.get_height())
+        # Kleineren beider Skalierungswerte nehmen, nicht Hochskalieren
+        ratio = min(ratioW, ratioH)
+        ratio = min(ratio, 1)
+        # Neue Breite und Höhe berechnen
+        width = int(math.floor(pixbuf.get_width()*ratio))
+        height = int(math.floor(pixbuf.get_height()*ratio))
+        if width <= 0 or height <= 0:
+            return
+        # Pixelpuffer auf Oberfläche zeichnen
+        self._standalone_image.set_allocation(self._standalone_scroll.get_allocation())
+        self._standalone_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+        self._standalone_image.show()
+
+
     def _callback_from_widget(self, widget):
         if widget is self._playlist_clear_button:
             self._callback(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST)
@@ -1065,32 +1256,34 @@ class LibraryPanel(mcg.Base):
         self._library_lock = threading.Lock()
         self._library_stop = threading.Event()
         self._icon_theme = Gtk.IconTheme.get_default()
+        self._standalone_pixbuf = None
+        self._selected_albums = []
 
         # Widgets
+        self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('library-panel')
+        self._toolbar = builder.get_object('library-toolbar')
+        self._headerbar = builder.get_object('headerbar')
+        self._headerbar_standalone = builder.get_object('headerbar-library-standalone')
+        self._panel_normal = builder.get_object('library-panel-normal')
+        self._panel_standalone = builder.get_object('library-panel-standalone')
+
+        # Filter/search bar
+        self._filter_bar = builder.get_object('library-filter-bar')
+        self._filter_entry = builder.get_object('library-filter')
         # Progress Bar
         self._progress_revealer = builder.get_object('library-progress-revealer')
         self._progress_bar = builder.get_object('library-progress')
-        # Toolbar
-        # Filter entry
-        self._filter_entry = builder.get_object('library-filter')
-        # Grid scale
-        self._grid_scale = builder.get_object('library-grid-scale')
+        # Toolbar menu
+        self._toolbar_search_bar = builder.get_object('library-toolbar-search')
+        self._toolbar_sort_buttons = {
+            mcg.MCGAlbum.SORT_BY_ARTIST: builder.get_object('library-toolbar-sort-artist'),
+            mcg.MCGAlbum.SORT_BY_TITLE: builder.get_object('library-toolbar-sort-title'),
+            mcg.MCGAlbum.SORT_BY_YEAR: builder.get_object('library-toolbar-sort-year')
+        }
+        self._toolbar_sort_order_button = builder.get_object('library-toolbar-sort-order')
+        self._grid_scale = builder.get_object('library-toolbar-scale')
         self._grid_scale.set_value(self._item_size)
-        # Sort menu
-        library_sort_store = Gtk.ListStore(str, str)
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_ARTIST, "sort by artist"])
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_TITLE, "sort by title"])
-        library_sort_store.append([mcg.MCGAlbum.SORT_BY_YEAR, "sort by year"])        
-        self._library_sort_combo = builder.get_object('library-sort')
-        self._library_sort_combo.set_model(library_sort_store)
-        renderer_text = Gtk.CellRendererText()
-        self._library_sort_combo.pack_start(renderer_text, True)
-        self._library_sort_combo.add_attribute(renderer_text, "text", 1)
-        self._library_sort_combo.set_id_column(0)
-        self._library_sort_combo.set_active_id(self._sort_order)
-        # Sort type
-        self._library_sort_type_button = builder.get_object('library-sort-order')
         # Library Grid: Model
         self._library_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
@@ -1103,39 +1296,47 @@ class LibraryPanel(mcg.Base):
         self._library_grid.set_pixbuf_column(0)
         self._library_grid.set_text_column(-1)
         self._library_grid.set_tooltip_column(1)
+        # Standalon labels
+        self._standalone_title = builder.get_object('headerbar-library-standalone-title')
+        self._standalone_artist = builder.get_object('headerbar-library-standalone-artist')
+        # Standalone Image
+        self._standalone_stack = builder.get_object('library-standalone-stack')
+        self._standalone_spinner = builder.get_object('library-standalone-spinner')
+        self._standalone_scroll = builder.get_object('library-standalone-scroll')
+        self._standalone_image = builder.get_object('library-standalone-image')
+        # Action bar
+        action_bar = builder.get_object('library-standalone-actionbar')
+        play_button = Gtk.Button('play')
+        play_button.connect('clicked', self.on_standalone_play_clicked)
+        action_bar.pack_end(play_button)
 
 
     def get(self):
         return self._panel
 
 
+    def get_toolbar(self):
+        return self._toolbar
+
+
     def get_signal_handlers(self):
         return {
-            'on_library-update_clicked': self.on_update_clicked,
-            'on_library-grid-scale_change_value': self.on_grid_scale_change,
-            'on_library-grid-scale_button_release_event': self.on_grid_scale_changed,
-            'on_library-sort_changed': self.on_library_sort_combo_changed,
-            'on_library-sort-order_clicked': self.on_library_sort_type_button_activated,
+            'on_library-toolbar-search_toggled': self.on_search_toggled,
+            'on_library-toolbar-scale_change_value': self.on_grid_scale_change,
+            'on_library-toolbar-scale_button_release_event': self.on_grid_scale_changed,
+            'on_library-toolbar-update_clicked': self.on_update_clicked,
+            'on_library-toolbar-sort-toggled': self.on_sort_toggled,
+            'on_library-toolbar-sort-order_toggled': self.on_sort_order_toggled,
+            'on_library-filter-bar_notify': self.on_filter_bar_notify,
             'on_library-filter_search_changed': self.on_filter_entry_changed,
-            'on_library-iconview_item_activated': self.on_library_grid_clicked
+            'on_library-iconview_item_activated': self.on_library_grid_clicked,
+            'on_library-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
+            'on_headerbar-library-standalone-close_clicked': self.on_standalone_close_clicked
         }
 
 
-    def on_update_clicked(self, widget):
-        self._callback(self.SIGNAL_UPDATE)
-
-
-    def on_filter_visible(self, model, iter, data):
-        hash = model.get_value(iter, 2)
-        if not hash in self._albums.keys():
-            return
-        album = self._albums[hash]
-        return album.filter(self._filter_string)
-
-
-    def on_filter_entry_changed(self, widget):
-        self._filter_string = self._filter_entry.get_text()
-        GObject.idle_add(self._library_grid_filter.refilter)
+    def on_search_toggled(self, widget):
+        self._filter_bar.set_search_mode(widget.get_active())
 
 
     def on_grid_scale_change(self, widget, scroll, value):
@@ -1145,6 +1346,7 @@ class LibraryPanel(mcg.Base):
             return
         self._item_size = size
         GObject.idle_add(self._set_widget_grid_size, self._library_grid, size, True)
+        GObject.idle_add(self._library_grid.set_item_padding, size / 100)
 
 
     def on_grid_scale_changed(self, widget, event):
@@ -1156,29 +1358,75 @@ class LibraryPanel(mcg.Base):
         self._redraw()
 
 
-    def on_library_sort_combo_changed(self, combo):
-        sort_order = combo.get_active_id()
-        self._sort_order = sort_order
-        self._library_grid_model.set_sort_func(2, self.compare_albums, sort_order)
-        self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort_order)
+    def on_update_clicked(self, widget):
+        self._callback(self.SIGNAL_UPDATE)
 
 
-    def on_library_sort_type_button_activated(self, button):
+    def on_sort_toggled(self, widget):
+        if widget.get_active():
+            sort = [key for key, value in self._toolbar_sort_buttons.items() if value is widget][0]
+            self._change_sort(sort)
+
+
+    def on_sort_order_toggled(self, button):
         if button.get_active():
             sort_type = Gtk.SortType.DESCENDING
-            button.set_stock_id(Gtk.STOCK_SORT_DESCENDING)
         else:
             sort_type = Gtk.SortType.ASCENDING
-            button.set_stock_id(Gtk.STOCK_SORT_ASCENDING)
         self._sort_type = sort_type
         self._library_grid_model.set_sort_column_id(2, sort_type)
         self._callback(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, sort_type)
 
 
+    def on_filter_bar_notify(self, widget, value):
+        if self._toolbar_search_bar.get_active() is not self._filter_bar.get_search_mode():
+            self._toolbar_search_bar.set_active(self._filter_bar.get_search_mode())
+
+
+    def on_filter_entry_changed(self, widget):
+        self._filter_string = self._filter_entry.get_text()
+        GObject.idle_add(self._library_grid_filter.refilter)
+
+
     def on_library_grid_clicked(self, widget, path):
+        # Get selected album
         path = self._library_grid_filter.convert_path_to_child_path(path)
         iter = self._library_grid_model.get_iter(path)
-        self._callback(LibraryPanel.SIGNAL_PLAY, self._library_grid_model.get_value(iter, 2))
+        hash = self._library_grid_model.get_value(iter, 2)
+        album = self._albums[hash]
+        self._selected_albums = [album]
+
+        # Set labels
+        self._standalone_title.set_text(album.get_title())
+        self._standalone_artist.set_text(", ".join(album.get_artists()))
+
+        # Show panel
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+        # Load cover
+        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+
+
+    def on_filter_visible(self, model, iter, data):
+        hash = model.get_value(iter, 2)
+        if not hash in self._albums.keys():
+            return
+        album = self._albums[hash]
+        return album.filter(self._filter_string)
+
+
+    def on_standalone_scroll_size_allocate(self, widget, allocation):
+        self._resize_standalone_image()
+
+
+    def on_standalone_play_clicked(self, widget):
+        self._callback(LibraryPanel.SIGNAL_PLAY, self._selected_albums[0].get_hash())
+
+
+    def on_standalone_close_clicked(self, widget):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def set_item_size(self, item_size):
@@ -1192,11 +1440,12 @@ class LibraryPanel(mcg.Base):
         return self._item_size
 
 
-    def set_sort_order(self, sort_order):
-        if self._sort_order != sort_order:
-            result = self._library_sort_combo.set_active_id(sort_order)
-            if self._sort_order != sort_order:
-                self._sort_order = sort_order
+    def set_sort_order(self, sort):
+        if self._sort_order != sort:
+            button = self._toolbar_sort_buttons[sort]
+            if button and not button.get_active():
+                button.set_active(True)
+                self._sort_order = sort
                 self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
 
 
@@ -1208,15 +1457,12 @@ class LibraryPanel(mcg.Base):
         if self._sort_type != sort_type:
             if sort_type:
                 sort_type_gtk = Gtk.SortType.DESCENDING
-                stock_id = Gtk.STOCK_SORT_DESCENDING
-                self._library_sort_type_button.set_active(True)
+                self._toolbar_sort_order_button.set_active(True)
             else:
                 sort_type_gtk = Gtk.SortType.ASCENDING
-                self._library_sort_type_button.set_active(False)
-                stock_id = Gtk.STOCK_SORT_ASCENDING
+                self._toolbar_sort_order_button.set_active(False)
             if self._sort_type != sort_type_gtk:
                 self._sort_type = sort_type_gtk
-                self._library_sort_type_button.set_stock_id(stock_id)
                 self._library_grid_model.set_sort_column_id(2, sort_type)
 
 
@@ -1243,12 +1489,19 @@ class LibraryPanel(mcg.Base):
         self._library_stop.set()
 
 
+    def _change_sort(self, sort):
+        self._sort_order = sort
+        self._library_grid_model.set_sort_func(2, self.compare_albums, sort)
+        self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort)
+
+
     def _set_albums(self, host, albums, size):
         self._library_lock.acquire()
         self._library_stop.clear()
         self._albums = albums
-        self._progress_revealer.set_reveal_child(True)
+        GObject.idle_add(self._progress_revealer.set_reveal_child, True)
         GObject.idle_add(self._progress_bar.set_fraction, 0.0)
+        GObject.idle_add(self._library_grid.set_item_padding, size / 100)
         self._library_grid.set_model(None)
         self._library_grid.freeze_child_notify()
         self._library_grid_model.clear()
@@ -1349,6 +1602,48 @@ class LibraryPanel(mcg.Base):
     def _redraw(self):
         if self._albums is not None:
             self.set_albums(self._host, self._albums)
+
+
+    def _show_standalone_image(self, album):
+        self._standalone_stack.set_visible_child(self._standalone_spinner)
+        self._standalone_spinner.start()
+        url = album.get_cover()
+        if url is not None and url is not "":
+            # Load image and draw it
+            self._standalone_pixbuf = Application.load_cover(url)
+            self._resize_standalone_image()
+        else:
+            # Reset image
+            self._standalone_image.clear()
+        self._standalone_stack.set_visible_child(self._standalone_scroll)
+        self._standalone_spinner.stop()
+
+
+    def _resize_standalone_image(self):
+        """Diese Methode skaliert das geladene Bild aus dem Pixelpuffer
+        auf die Größe des Fensters unter Beibehalt der Seitenverhältnisse
+        """
+        pixbuf = self._standalone_pixbuf
+        size = self._standalone_scroll.get_allocation()
+        # Check pixelbuffer
+        if pixbuf is None:
+            return
+
+        # Skalierungswert für Breite und Höhe ermitteln
+        ratioW = float(size.width) / float(pixbuf.get_width())
+        ratioH = float(size.height) / float(pixbuf.get_height())
+        # Kleineren beider Skalierungswerte nehmen, nicht Hochskalieren
+        ratio = min(ratioW, ratioH)
+        ratio = min(ratio, 1)
+        # Neue Breite und Höhe berechnen
+        width = int(math.floor(pixbuf.get_width()*ratio))
+        height = int(math.floor(pixbuf.get_height()*ratio))
+        if width <= 0 or height <= 0:
+            return
+        # Pixelpuffer auf Oberfläche zeichnen
+        self._standalone_image.set_allocation(self._standalone_scroll.get_allocation())
+        self._standalone_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
+        self._standalone_image.show()
 
 
 

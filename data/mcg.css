@@ -11,6 +11,13 @@
     border:none;
 }
 
+.cover-labels label {
+    font-size:larger;
+}
+.cover-labels label:first-child {
+    font-weight:bold;
+}
+
 iconview.view:selected,
 iconview.view:selected:focus,
 GtkIconView.cell:selected,
@@ -20,4 +27,8 @@ GtkIconView.cell:selected:focus {
 
 iconview.view:hover {
     -gtk-icon-effect:highlight;
+}
+
+actionbar {
+    background-color:@theme_unfocused_bg_color;
 }

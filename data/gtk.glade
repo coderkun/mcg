@@ -2,12 +2,352 @@
 <!-- Generated with glade 3.20.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <object class="GtkPopover" id="cover-toolbar-popover">
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkBox" id="cover-toolbar-tracklist">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Tracklist</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="cover-toolbar-tracklist-large">
+                <property name="label" translatable="yes">large tracklist</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_cover-toolbar-tracklist_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="cover-toolbar-tracklist-small">
+                <property name="label" translatable="yes">small tracklist</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">cover-toolbar-tracklist-large</property>
+                <signal name="toggled" handler="on_cover-toolbar-tracklist_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="cover-toolbar-tracklist-hidden">
+                <property name="label" translatable="yes">hide tracklist</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">cover-toolbar-tracklist-large</property>
+                <signal name="toggled" handler="on_cover-toolbar-tracklist_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkHeaderBar" id="headerbar-library-standalone">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkButton" id="headerbar-library-standalone-close">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="on_headerbar-library-standalone-close_clicked" swapped="no"/>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="icon_name">go-previous-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child type="title">
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="headerbar-library-standalone-title">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Title</property>
+            <property name="selectable">True</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+              <attribute name="scale" value="1"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="headerbar-library-standalone-artist">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Artist</property>
+            <property name="selectable">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkHeaderBar" id="headerbar-playlist-standalone">
+    <property name="visible">True</property>
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkButton" id="headerbar-playlist-standalone-close">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="receives_default">True</property>
+        <signal name="clicked" handler="on_headerbar-playlist-standalone-close_clicked" swapped="no"/>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="icon_name">go-previous-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child type="title">
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkLabel" id="headerbar-playlist-standalone-title">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Title</property>
+            <property name="selectable">True</property>
+            <attributes>
+              <attribute name="weight" value="bold"/>
+              <attribute name="scale" value="1"/>
+            </attributes>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="headerbar-playlist-standalone-artist">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Artist</property>
+            <property name="selectable">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkAdjustment" id="library-scale-adjustment">
     <property name="lower">100</property>
     <property name="upper">1000</property>
     <property name="value">150</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
+  </object>
+  <object class="GtkPopover" id="library-toolbar-popover">
+    <property name="can_focus">False</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkScale" id="library-toolbar-scale">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="adjustment">library-scale-adjustment</property>
+            <property name="round_digits">0</property>
+            <property name="draw_value">False</property>
+            <property name="has_origin">False</property>
+            <signal name="button-release-event" handler="on_library-toolbar-scale_button_release_event" swapped="no"/>
+            <signal name="change-value" handler="on_library-toolbar-scale_change_value" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="library-toolbar-update">
+            <property name="label">gtk-refresh</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="relief">none</property>
+            <property name="use_stock">True</property>
+            <signal name="clicked" handler="on_library-toolbar-update_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="library-toolbar-sort">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkSeparator">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="orientation">vertical</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Sort</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="library-toolbar-sort-artist">
+                <property name="label" translatable="yes">sort by artist</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">library-toolbar-sort-year</property>
+                <signal name="toggled" handler="on_library-toolbar-sort-toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="library-toolbar-sort-title">
+                <property name="label" translatable="yes">sort by title</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="draw_indicator">True</property>
+                <property name="group">library-toolbar-sort-year</property>
+                <signal name="toggled" handler="on_library-toolbar-sort-toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkRadioButton" id="library-toolbar-sort-year">
+                <property name="label" translatable="yes">sort by year</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_library-toolbar-sort-toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">4</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="library-toolbar-sort-order">
+                <property name="label">gtk-sort-descending</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">False</property>
+                <property name="use_stock">True</property>
+                <property name="active">True</property>
+                <property name="draw_indicator">True</property>
+                <signal name="toggled" handler="on_library-toolbar-sort-order_toggled" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">5</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
+      </object>
+    </child>
   </object>
   <object class="GtkAdjustment" id="server-port-adjustment">
     <property name="lower">1024</property>
@@ -208,26 +548,36 @@
               <object class="GtkBox" id="cover-panel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="homogeneous">True</property>
                 <child>
-                  <object class="GtkBox">
+                  <object class="GtkStack" id="cover-stack">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="homogeneous">True</property>
+                    <child>
+                      <object class="GtkSpinner" id="cover-spinner">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="name">cover-spinner</property>
+                      </packing>
+                    </child>
                     <child>
                       <object class="GtkScrolledWindow" id="cover-scroll">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="kinetic_scrolling">False</property>
                         <property name="overlay_scrolling">False</property>
+                        <signal name="size-allocate" handler="on_cover-scroll_size_allocate" swapped="no"/>
                         <child>
                           <object class="GtkViewport">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <child>
-                              <object class="GtkEventBox">
+                              <object class="GtkEventBox" id="cover-box">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
+                                <signal name="button-press-event" handler="on_cover-box_button_press_event" swapped="no"/>
                                 <child>
                                   <object class="GtkImage" id="cover-image">
                                     <property name="visible">True</property>
@@ -241,28 +591,7 @@
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="padding">10</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkScale" id="cover-songs">
-                        <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="halign">start</property>
-                        <property name="orientation">vertical</property>
-                        <property name="round_digits">1</property>
-                        <property name="draw_value">False</property>
-                        <signal name="button-press-event" handler="on_cover-songs_button_press_event" swapped="no"/>
-                        <signal name="button-release-event" handler="on_cover-songs_button_release_event" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="padding">10</property>
-                        <property name="pack_type">end</property>
+                        <property name="name">cover-scroll</property>
                         <property name="position">1</property>
                       </packing>
                     </child>
@@ -270,57 +599,95 @@
                   <packing>
                     <property name="expand">True</property>
                     <property name="fill">True</property>
-                    <property name="padding">10</property>
                     <property name="position">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkGrid">
+                  <object class="GtkRevealer" id="cover-info-revealer">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_top">5</property>
-                    <property name="margin_bottom">5</property>
-                    <property name="row_spacing">5</property>
-                    <property name="row_homogeneous">True</property>
-                    <property name="column_homogeneous">True</property>
+                    <property name="transition_type">slide-right</property>
+                    <property name="reveal_child">True</property>
                     <child>
-                      <object class="GtkLabel" id="cover-album">
+                      <object class="GtkBox" id="cover-info-box">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Album</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkGrid">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="margin_top">5</property>
+                            <property name="margin_bottom">5</property>
+                            <property name="row_spacing">5</property>
+                            <property name="row_homogeneous">True</property>
+                            <property name="column_homogeneous">True</property>
+                            <child>
+                              <object class="GtkLabel" id="cover-album">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label">Album</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="cover-date">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label">Date</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="cover-artist">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="label">Artist</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">0</property>
+                                <property name="top_attach">2</property>
+                              </packing>
+                            </child>
+                            <style>
+                              <class name="cover-labels"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="padding">10</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScale" id="cover-songs">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="halign">start</property>
+                            <property name="orientation">vertical</property>
+                            <property name="draw_value">False</property>
+                            <signal name="button-press-event" handler="on_cover-songs_button_press_event" swapped="no"/>
+                            <signal name="button-release-event" handler="on_cover-songs_button_release_event" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
                       </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="cover-date">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Date</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="cover-artist">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="label" translatable="yes">Artist</property>
-                      </object>
-                      <packing>
-                        <property name="left_attach">0</property>
-                        <property name="top_attach">2</property>
-                      </packing>
                     </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="padding">10</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -332,40 +699,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="playlist-panel">
+              <object class="GtkStack" id="playlist-panel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="transition_type">slide-left-right</property>
                 <child>
-                  <object class="GtkToolbar">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="show_arrow">False</property>
-                    <child>
-                      <object class="GtkToolButton" id="playlist-clear">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="icon_name">edit-clear</property>
-                        <signal name="clicked" handler="on_playlist-clear_clicked" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="homogeneous">True</property>
-                      </packing>
-                    </child>
-                    <style>
-                      <class name="no-bg"/>
-                    </style>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow">
+                  <object class="GtkScrolledWindow" id="playlist-panel-normal">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <child>
@@ -374,11 +713,12 @@
                         <property name="can_focus">True</property>
                         <property name="margin">0</property>
                         <property name="item_orientation">horizontal</property>
-                        <property name="columns">3</property>
                         <property name="row_spacing">0</property>
                         <property name="column_spacing">0</property>
                         <property name="tooltip_column">1</property>
-                        <property name="item_padding">5</property>
+                        <property name="item_padding">0</property>
+                        <property name="activate_on_single_click">True</property>
+                        <signal name="item-activated" handler="on_playlist-iconview_item_activated" swapped="no"/>
                         <style>
                           <class name="no-bg"/>
                         </style>
@@ -389,8 +729,76 @@
                     </style>
                   </object>
                   <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
+                    <property name="name">page0</property>
+                    <property name="title" translatable="yes">page0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="playlist-panel-standalone">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkStack" id="playlist-standalone-stack">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkSpinner" id="playlist-standalone-spinner">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-spinne</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="playlist-standalone-scroll">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="kinetic_scrolling">False</property>
+                            <property name="overlay_scrolling">False</property>
+                            <child>
+                              <object class="GtkViewport">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <child>
+                                  <object class="GtkImage" id="playlist-standalone-image">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="stock">gtk-missing-image</property>
+                                    <property name="icon_size">6</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-scroll</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkActionBar" id="playlist-standalone-actionbar">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="name">page1</property>
+                    <property name="title" translatable="yes">page1</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -402,177 +810,164 @@
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="library-panel">
+              <object class="GtkStack" id="library-panel">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
-                <property name="orientation">vertical</property>
+                <property name="transition_type">slide-left-right</property>
                 <child>
-                  <object class="GtkRevealer" id="library-progress-revealer">
+                  <object class="GtkBox" id="library-panel-normal">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="transition_type">none</property>
+                    <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkProgressBar" id="library-progress">
+                      <object class="GtkSearchBar" id="library-filter-bar">
                         <property name="visible">True</property>
+                        <property name="app_paintable">True</property>
                         <property name="can_focus">False</property>
-                        <property name="fraction">0.5</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkHeaderBar">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="spacing">0</property>
-                    <child>
-                      <object class="GtkToolbar">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <signal name="notify" handler="on_library-filter-bar_notify" swapped="no"/>
                         <child>
-                          <object class="GtkToolButton" id="library-update">
+                          <object class="GtkSearchEntry" id="library-filter">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="primary_icon_name">edit-find-symbolic</property>
+                            <property name="primary_icon_activatable">False</property>
+                            <property name="primary_icon_sensitive">False</property>
+                            <property name="placeholder_text" translatable="yes">search library</property>
+                            <signal name="search-changed" handler="on_library-filter_search_changed" swapped="no"/>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRevealer" id="library-progress-revealer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="transition_type">none</property>
+                        <child>
+                          <object class="GtkProgressBar" id="library-progress">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="use_underline">True</property>
-                            <property name="icon_name">view-refresh</property>
-                            <signal name="clicked" handler="on_library-update_clicked" swapped="no"/>
+                            <property name="fraction">0.5</property>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
                         </child>
-                        <style>
-                          <class name="no-bg"/>
-                        </style>
                       </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
                     </child>
-                    <child type="title">
-                      <object class="GtkSearchEntry" id="library-filter">
+                    <child>
+                      <object class="GtkScrolledWindow" id="library-scroll">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="primary_icon_name">edit-find-symbolic</property>
-                        <property name="primary_icon_activatable">False</property>
-                        <property name="primary_icon_sensitive">False</property>
-                        <property name="placeholder_text" translatable="yes">search library</property>
-                        <signal name="search-changed" handler="on_library-filter_search_changed" swapped="no"/>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkToolbar">
-                        <property name="visible">True</property>
-                        <property name="can_focus">False</property>
                         <child>
-                          <object class="GtkToolItem">
+                          <object class="GtkIconView" id="library-iconview">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <child>
-                              <object class="GtkScale" id="library-grid-scale">
-                                <property name="width_request">100</property>
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="adjustment">library-scale-adjustment</property>
-                                <property name="lower_stepper_sensitivity">off</property>
-                                <property name="upper_stepper_sensitivity">off</property>
-                                <property name="restrict_to_fill_level">False</property>
-                                <property name="fill_level">0</property>
-                                <property name="digits">0</property>
-                                <property name="draw_value">False</property>
-                                <signal name="button-release-event" handler="on_library-grid-scale_button_release_event" swapped="no"/>
-                                <signal name="change-value" handler="on_library-grid-scale_change_value" swapped="no"/>
-                              </object>
-                            </child>
+                            <property name="can_focus">True</property>
+                            <property name="margin">0</property>
+                            <property name="selection_mode">none</property>
+                            <property name="item_orientation">horizontal</property>
+                            <property name="row_spacing">0</property>
+                            <property name="column_spacing">0</property>
+                            <property name="tooltip_column">1</property>
+                            <property name="item_padding">0</property>
+                            <property name="activate_on_single_click">True</property>
+                            <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
+                            <style>
+                              <class name="no-bg"/>
+                            </style>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkToolItem">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <child>
-                              <object class="GtkComboBox" id="library-sort">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <signal name="changed" handler="on_library-sort_changed" swapped="no"/>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkToggleToolButton" id="library-sort-order">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="use_underline">True</property>
-                            <property name="icon_name">view-sort-descending</property>
-                            <property name="active">True</property>
-                            <signal name="clicked" handler="on_library-sort-order_clicked" swapped="no"/>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="homogeneous">True</property>
-                          </packing>
                         </child>
                         <style>
                           <class name="no-bg"/>
                         </style>
                       </object>
                       <packing>
-                        <property name="pack_type">end</property>
-                        <property name="position">1</property>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
-                    <style>
-                      <class name="no-bg"/>
-                      <class name="no-border"/>
-                    </style>
                   </object>
                   <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
+                    <property name="name">page0</property>
+                    <property name="title" translatable="yes">page0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkScrolledWindow">
+                  <object class="GtkBox" id="library-panel-standalone">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkIconView" id="library-iconview">
+                      <object class="GtkStack" id="library-standalone-stack">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
-                        <property name="margin">0</property>
-                        <property name="item_orientation">horizontal</property>
-                        <property name="row_spacing">0</property>
-                        <property name="column_spacing">0</property>
-                        <property name="tooltip_column">1</property>
-                        <property name="item_padding">5</property>
-                        <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
-                        <style>
-                          <class name="no-bg"/>
-                        </style>
+                        <property name="can_focus">False</property>
+                        <child>
+                          <object class="GtkSpinner" id="library-standalone-spinner">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-spinne</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="library-standalone-scroll">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="kinetic_scrolling">False</property>
+                            <property name="overlay_scrolling">False</property>
+                            <signal name="size-allocate" handler="on_library-standalone-scroll_size_allocate" swapped="no"/>
+                            <child>
+                              <object class="GtkViewport">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <child>
+                                  <object class="GtkImage" id="library-standalone-image">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="stock">gtk-missing-image</property>
+                                    <property name="icon_size">6</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="name">standalone-scroll</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
                       </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
                     </child>
-                    <style>
-                      <class name="no-bg"/>
-                    </style>
+                    <child>
+                      <object class="GtkActionBar" id="library-standalone-actionbar">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="pack_type">end</property>
-                    <property name="position">2</property>
+                    <property name="name">page1</property>
+                    <property name="title" translatable="yes">page1</property>
+                    <property name="position">1</property>
                   </packing>
                 </child>
               </object>
@@ -647,61 +1042,83 @@
         <property name="can_focus">False</property>
         <property name="show_close_button">True</property>
         <child>
-          <placeholder/>
-        </child>
-        <child>
-          <object class="GtkToolbar">
+          <object class="GtkSwitch" id="headerbar-connection">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="show_arrow">False</property>
-            <child>
-              <object class="GtkToolItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <child>
-                  <object class="GtkSwitch" id="headerbar-connection">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <signal name="notify::active" handler="on_headerbar-connection_active_notify" swapped="no"/>
-                    <signal name="state-set" handler="on_headerbar-connection_state_set" swapped="no"/>
-                  </object>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkSeparatorToolItem">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkToggleToolButton" id="headerbar-playpause">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="use_underline">True</property>
-                <property name="icon_name">media-playback-start</property>
-                <signal name="toggled" handler="on_headerbar-playpause_toggled" swapped="no"/>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
-              </packing>
-            </child>
-            <style>
-              <class name="no-bg"/>
-            </style>
+            <property name="can_focus">True</property>
+            <signal name="notify::active" handler="on_headerbar-connection_active_notify" swapped="no"/>
+            <signal name="state-set" handler="on_headerbar-connection_state_set" swapped="no"/>
           </object>
           <packing>
             <property name="position">1</property>
           </packing>
+        </child>
+        <child>
+          <object class="GtkSeparator">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToggleButton" id="headerbar-playpause">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="toggled" handler="on_headerbar-playpause_toggled" swapped="no"/>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="icon_name">media-playback-start</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">3</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkVolumeButton" id="headerbar-volume">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="focus_on_click">False</property>
+            <property name="receives_default">True</property>
+            <property name="relief">none</property>
+            <property name="orientation">vertical</property>
+            <property name="icons">audio-volume-muted
+        audio-volume-high
+        audio-volume-low
+        audio-volume-medium</property>
+            <signal name="button-press-event" handler="on_headerbar-volume_button_press_event" swapped="no"/>
+            <signal name="button-release-event" handler="on_headerbar-volume_button_release_event" swapped="no"/>
+            <signal name="value-changed" handler="on_headerbar-volume_value_changed" swapped="no"/>
+            <child internal-child="plus_button">
+              <object class="GtkButton">
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="relief">none</property>
+              </object>
+            </child>
+            <child internal-child="minus_button">
+              <object class="GtkButton">
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <property name="relief">none</property>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">4</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
         </child>
         <child type="title">
           <object class="GtkStackSwitcher" id="header-panelswitcher">
@@ -711,62 +1128,172 @@
           </object>
         </child>
         <child>
-          <object class="GtkToolbar">
+          <object class="GtkStack" id="toolbarstack">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="show_arrow">False</property>
             <child>
-              <object class="GtkToolItem">
+              <object class="GtkButtonBox" id="cover-toolbar">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
                 <child>
-                  <object class="GtkVolumeButton" id="headerbar-volume">
+                  <object class="GtkButton" id="cover-toolbar-fullscreen">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
-                    <property name="focus_on_click">False</property>
                     <property name="receives_default">True</property>
-                    <property name="relief">none</property>
-                    <property name="orientation">vertical</property>
-                    <property name="icons">audio-volume-muted-symbolic
-        audio-volume-high-symbolic
-        audio-volume-low-symbolic
-        audio-volume-medium-symbolic</property>
-                    <signal name="button-press-event" handler="on_headerbar-volume_button_press_event" swapped="no"/>
-                    <signal name="button-release-event" handler="on_headerbar-volume_button_release_event" swapped="no"/>
-                    <signal name="value-changed" handler="on_headerbar-volume_value_changed" swapped="no"/>
-                    <child internal-child="plus_button">
-                      <object class="GtkButton">
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">center</property>
-                        <property name="valign">center</property>
-                        <property name="relief">none</property>
-                      </object>
-                    </child>
-                    <child internal-child="minus_button">
-                      <object class="GtkButton">
-                        <property name="can_focus">True</property>
-                        <property name="receives_default">True</property>
-                        <property name="halign">center</property>
-                        <property name="valign">center</property>
-                        <property name="relief">none</property>
+                    <signal name="clicked" handler="on_cover-toolbar-fullscreen_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">view-fullscreen-symbolic</property>
                       </object>
                     </child>
                   </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkMenuButton">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="popover">cover-toolbar-popover</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">open-menu-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
                 </child>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="homogeneous">True</property>
+                <property name="name">cover</property>
+                <property name="title" translatable="yes">Cover</property>
               </packing>
             </child>
-            <style>
-              <class name="no-bg"/>
-            </style>
+            <child>
+              <object class="GtkButtonBox" id="server-toolbar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="name">server</property>
+                <property name="title" translatable="yes">Server</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButtonBox" id="playlist-toolbar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
+                <child>
+                  <object class="GtkButton" id="playlist-toolbar-clear">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="clicked" handler="on_playlist-toolbar-clear_clicked" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">edit-clear</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">playlist</property>
+                <property name="title" translatable="yes">Playlist</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButtonBox" id="library-toolbar">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="spacing">6</property>
+                <property name="layout_style">end</property>
+                <child>
+                  <object class="GtkToggleButton" id="library-toolbar-search">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <signal name="toggled" handler="on_library-toolbar-search_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">system-search-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkMenuButton">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="popover">library-toolbar-popover</property>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">open-menu-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="name">library</property>
+                <property name="title" translatable="yes">Library</property>
+                <property name="position">3</property>
+              </packing>
+            </child>
           </object>
           <packing>
             <property name="pack_type">end</property>
-            <property name="position">1</property>
+            <property name="position">5</property>
           </packing>
         </child>
       </object>
