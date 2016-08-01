@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 
-"""MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks."""
-
-__version__ = "0.6"
-
 
 import gi
 gi.require_version('Gtk', '3.0')
-gi.require_version('Avahi', '0.6')
 try:
     import keyring
     use_keyring = True
@@ -15,22 +10,19 @@ except:
     use_keyring = False
 import logging
 import math
-import os
 import sys
 import threading
-import urllib
 
-from gi.repository import Gio, Gtk, Gdk, GObject, GdkPixbuf, GLib
-from gi.repository import Avahi
+from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, GLib
 
-import mcg
-
-
+from mcg import client
+from mcg.utils import Utils
+from mcg.zeroconf import ZeroconfProvider
 
 
-class Application(Gtk.Application):
-    TITLE = "MPDCoverGrid (Gtk)"
-    SETTINGS_BASE_KEY = 'de.coderkun.mcg'
+
+
+class Window():
     SETTING_HOST = 'host'
     SETTING_PORT = 'port'
     SETTING_CONNECTED = 'connected'
@@ -42,87 +34,6 @@ class Application(Gtk.Application):
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
-    KEYRING_SYSTEM = 'MPDCoverGrid (Gtk)'
-    KEYRING_USERNAME = 'mpd'
-
-
-    def __init__(self):
-        Gtk.Application.__init__(self, application_id="de.coderkun.mcg-dev", flags=Gio.ApplicationFlags.FLAGS_NONE)
-        self._window = None
-
-
-    def do_startup(self):
-        Gtk.Application.do_startup(self)
-        self._settings = Gio.Settings.new(Application.SETTINGS_BASE_KEY)
-        self.load_css()
-
-        # Create builder to load UI
-        self._builder = Gtk.Builder()
-        self._builder.add_from_file('data/gtk.glade')
-
-
-    def do_activate(self):
-        Gtk.Application.do_activate(self)
-        if not self._window:
-            self._window = Window(self, self._builder, Application.TITLE, self._settings)
-        self._window.present()
-
-
-    def load_css(self):
-        styleProvider = Gtk.CssProvider()
-        styleProvider.load_from_file(Gio.File.new_for_path('data/mcg.css'))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            styleProvider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
-        )
-
-
-    def load_cover(url):
-        if not url:
-            return None
-        if url.startswith('/'):
-            try:
-                return GdkPixbuf.Pixbuf.new_from_file(url)
-            except Exception as e:
-                print(e)
-                return None
-        else:
-            try:
-                response = urllib.request.urlopen(url)
-                loader = GdkPixbuf.PixbufLoader()
-                loader.write(response.read())
-                loader.close()
-                return loader.get_pixbuf()
-            except Exception as e:
-                print(e)
-                return None
-
-
-    def load_thumbnail(cache, album, size):
-        cache_url = cache.create_filename(album)
-        pixbuf = None
-
-        if os.path.isfile(cache_url):
-            try:
-                pixbuf = GdkPixbuf.Pixbuf.new_from_file(cache_url)
-            except Exception as e:
-                print(e)
-        else:
-            url = album.get_cover()
-            pixbuf = Application.load_cover(url)
-            if pixbuf is not None:
-                pixbuf = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.HYPER)
-                filetype = os.path.splitext(url)[1][1:]
-                if filetype == 'jpg':
-                    filetype = 'jpeg'
-                pixbuf.savev(cache.create_filename(album), filetype, [], [])
-        return pixbuf
-
-
-
-
-class Window():
     _PANEL_INDEX_CONNECTION = 0
     _PANEL_INDEX_COVER = 1
     _PANEL_INDEX_PLAYLIST = 2
@@ -135,16 +46,16 @@ class Window():
         self._appwindow.set_title(title)
         self._settings = settings
         self._panels = []
-        self._mcg = mcg.Client()    
+        self._mcg = client.Client()    
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
         self._logger.setLevel(logging.ERROR)
-        logging.getLogger(mcg.__name__).addHandler(logging.StreamHandler(stream=sys.stdout))
-        logging.getLogger(mcg.__name__).setLevel(logging.ERROR)
+        logging.getLogger(client.__name__).addHandler(logging.StreamHandler(stream=sys.stdout))
+        logging.getLogger(client.__name__).setLevel(logging.ERROR)
         #self._mcg.get_logger().addHandler(logging.StreamHandler(stream=sys.stdout))
         #self._mcg.get_logger().setLevel(logging.ERROR)
-        self._size = self._settings.get_value(Application.SETTING_WINDOW_SIZE)
-        self._maximized = self._settings.get_boolean(Application.SETTING_WINDOW_MAXIMIZED)
+        self._size = self._settings.get_value(Window.SETTING_WINDOW_SIZE)
+        self._maximized = self._settings.get_boolean(Window.SETTING_WINDOW_MAXIMIZED)
         self._fullscreened = False
 
         # Panels
@@ -165,16 +76,16 @@ class Window():
 
         # Properties
         self._header_bar.set_sensitive(False, False)
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Application.SETTING_HOST))
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Application.SETTING_PORT))
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Window.SETTING_HOST))
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Window.SETTING_PORT))
         if use_keyring:
-            self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME))
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Application.SETTING_IMAGE_DIR))
-        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_string(Application.SETTING_TRACKLIST_SIZE))
-        self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
-        self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Application.SETTING_ITEM_SIZE))
-        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Application.SETTING_SORT_ORDER))
-        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(self._settings.get_boolean(Application.SETTING_SORT_TYPE))
+            self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME))
+        self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Window.SETTING_IMAGE_DIR))
+        self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_string(Window.SETTING_TRACKLIST_SIZE))
+        self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
+        self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
+        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_order(self._settings.get_string(Window.SETTING_SORT_ORDER))
+        self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(self._settings.get_boolean(Window.SETTING_SORT_TYPE))
 
         # Signals
         self._header_bar.connect_signal(HeaderBar.SIGNAL_STACK_SWITCHED, self.on_header_bar_stack_switched)
@@ -191,16 +102,16 @@ class Window():
         self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_ITEM_SIZE_CHANGED, self.on_library_panel_item_size_changed)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, self.on_library_panel_sort_order_changed)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, self.on_library_panel_sort_type_changed)
-        self._mcg.connect_signal(mcg.Client.SIGNAL_CONNECTION, self.on_mcg_connect)
-        self._mcg.connect_signal(mcg.Client.SIGNAL_STATUS, self.on_mcg_status)
-        self._mcg.connect_signal(mcg.Client.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
-        self._mcg.connect_signal(mcg.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
-        self._mcg.connect_signal(mcg.Client.SIGNAL_ERROR, self.on_mcg_error)
-        self._settings.connect('changed::'+Application.SETTING_PANEL, self.on_settings_panel_changed)
-        self._settings.connect('changed::'+Application.SETTING_TRACKLIST_SIZE, self.on_settings_tracklist_size_changed)
-        self._settings.connect('changed::'+Application.SETTING_ITEM_SIZE, self.on_settings_item_size_changed)
-        self._settings.connect('changed::'+Application.SETTING_SORT_ORDER, self.on_settings_sort_order_changed)
-        self._settings.connect('changed::'+Application.SETTING_SORT_TYPE, self.on_settings_sort_type_changed)
+        self._mcg.connect_signal(client.Client.SIGNAL_CONNECTION, self.on_mcg_connect)
+        self._mcg.connect_signal(client.Client.SIGNAL_STATUS, self.on_mcg_status)
+        self._mcg.connect_signal(client.Client.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
+        self._mcg.connect_signal(client.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
+        self._mcg.connect_signal(client.Client.SIGNAL_ERROR, self.on_mcg_error)
+        self._settings.connect('changed::'+Window.SETTING_PANEL, self.on_settings_panel_changed)
+        self._settings.connect('changed::'+Window.SETTING_TRACKLIST_SIZE, self.on_settings_tracklist_size_changed)
+        self._settings.connect('changed::'+Window.SETTING_ITEM_SIZE, self.on_settings_item_size_changed)
+        self._settings.connect('changed::'+Window.SETTING_SORT_ORDER, self.on_settings_sort_order_changed)
+        self._settings.connect('changed::'+Window.SETTING_SORT_TYPE, self.on_settings_sort_type_changed)
         handlers = {
             'on_appwindow_size_allocate': self.on_resize,
             'on_appwindow_window_state_event': self.on_state,
@@ -220,7 +131,7 @@ class Window():
             self._appwindow.maximize()
         self._appwindow.show_all()
         self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION].get())
-        if self._settings.get_boolean(Application.SETTING_CONNECTED):
+        if self._settings.get_boolean(Window.SETTING_CONNECTED):
             self._connect()
 
 
@@ -237,11 +148,11 @@ class Window():
     def on_state(self, widget, state):
         self._maximized = (state.new_window_state & Gdk.WindowState.MAXIMIZED > 0)
         self._fullscreen((state.new_window_state & Gdk.WindowState.FULLSCREEN > 0))
-        self._settings.set_boolean(Application.SETTING_WINDOW_MAXIMIZED, self._maximized)
+        self._settings.set_boolean(Window.SETTING_WINDOW_MAXIMIZED, self._maximized)
 
 
     def on_destroy(self, window):
-        self._settings.set_value(Application.SETTING_WINDOW_SIZE, GLib.Variant('ai', list(self._size)))
+        self._settings.set_value(Window.SETTING_WINDOW_SIZE, GLib.Variant('ai', list(self._size)))
 
 
     # HeaderBar callbacks
@@ -267,15 +178,15 @@ class Window():
     # Panel callbacks
 
     def on_connection_panel_connection_changed(self, host, port, password, image_dir):
-        self._settings.set_string(Application.SETTING_HOST, host)
-        self._settings.set_int(Application.SETTING_PORT, port)
+        self._settings.set_string(Window.SETTING_HOST, host)
+        self._settings.set_int(Window.SETTING_PORT, port)
         if use_keyring:
             if password:
-                keyring.set_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME, password)
+                keyring.set_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME, password)
             else:
-                if keyring.get_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME):
-                   keyring.delete_password(Application.KEYRING_SYSTEM, Application.KEYRING_USERNAME)
-        self._settings.set_string(Application.SETTING_IMAGE_DIR, image_dir)
+                if keyring.get_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME):
+                   keyring.delete_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME)
+        self._settings.set_string(Window.SETTING_IMAGE_DIR, image_dir)
 
 
     def on_playlist_panel_clear_playlist(self):
@@ -290,7 +201,7 @@ class Window():
 
 
     def on_cover_panel_tracklist_size_changed(self, size):
-        self._settings.set_string(Application.SETTING_TRACKLIST_SIZE, size)
+        self._settings.set_string(Window.SETTING_TRACKLIST_SIZE, size)
 
 
     def on_cover_panel_set_song(self, pos, time):
@@ -307,15 +218,15 @@ class Window():
 
     def on_library_panel_item_size_changed(self, size):
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(size)
-        self._settings.set_int(Application.SETTING_ITEM_SIZE, self._panels[Window._PANEL_INDEX_LIBRARY].get_item_size())
+        self._settings.set_int(Window.SETTING_ITEM_SIZE, self._panels[Window._PANEL_INDEX_LIBRARY].get_item_size())
 
 
     def on_library_panel_sort_order_changed(self, sort_order):
-        self._settings.set_string(Application.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
+        self._settings.set_string(Window.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
 
 
     def on_library_panel_sort_type_changed(self, sort_type):
-        self._settings.set_boolean(Application.SETTING_SORT_TYPE, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_type())
+        self._settings.set_boolean(Window.SETTING_SORT_TYPE, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_type())
 
 
     # MCG callbacks
@@ -398,20 +309,20 @@ class Window():
         self._header_bar.set_sensitive(False, True)
         if self._mcg.is_connected():
             self._mcg.disconnect()
-            self._settings.set_boolean(Application.SETTING_CONNECTED, False)
+            self._settings.set_boolean(Window.SETTING_CONNECTED, False)
         else:
             host = connection_panel.get_host()
             port = connection_panel.get_port()
             password = connection_panel.get_password()
             image_dir = connection_panel.get_image_dir()
             self._mcg.connect(host, port, password, image_dir)
-            self._settings.set_boolean(Application.SETTING_CONNECTED, True)
+            self._settings.set_boolean(Window.SETTING_CONNECTED, True)
 
 
     def _connect_connected(self):
         self._header_bar.connected()
         self._header_bar.set_sensitive(True, False)
-        self._stack.set_visible_child(self._panels[self._settings.get_int(Application.SETTING_PANEL)].get())
+        self._stack.set_visible_child(self._panels[self._settings.get_int(Window.SETTING_PANEL)].get())
 
 
     def _connect_disconnected(self):
@@ -439,7 +350,7 @@ class Window():
         panels = [panel.get() for panel in self._panels]
         panel_index_selected = panels.index(self._stack.get_visible_child())
         if panel_index_selected > 0:
-            self._settings.set_int(Application.SETTING_PANEL, panel_index_selected)
+            self._settings.set_int(Window.SETTING_PANEL, panel_index_selected)
 
 
     def _set_visible_toolbar(self):
@@ -455,7 +366,7 @@ class Window():
 
 
 
-class HeaderBar(mcg.Base):
+class HeaderBar(client.Base):
     SIGNAL_STACK_SWITCHED = 'stack-switched'
     SIGNAL_CONNECT = 'on_headerbar-connection_active_notify'
     SIGNAL_PLAYPAUSE = 'on_headerbar-playpause_toggled'
@@ -463,7 +374,7 @@ class HeaderBar(mcg.Base):
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
 
         self._buttons = {}
         self._changing_volume = False
@@ -625,12 +536,12 @@ class InfoBar():
 
 
 
-class ConnectionPanel(mcg.Base):
+class ConnectionPanel(client.Base):
     SIGNAL_CONNECTION_CHANGED = 'connection-changed'
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
         self._services = Gtk.ListStore(str, str, int)
         self._profile = None
 
@@ -752,7 +663,7 @@ class ConnectionPanel(mcg.Base):
 
 
 
-class CoverPanel(mcg.Base):
+class CoverPanel(client.Base):
     SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
     SIGNAL_TRACKLIST_SIZE_CHANGED = 'tracklist-size-changed'
     SIGNAL_SET_SONG = 'set-song'
@@ -762,7 +673,7 @@ class CoverPanel(mcg.Base):
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
 
         self._current_album = None
         self._cover_pixbuf = None
@@ -937,7 +848,7 @@ class CoverPanel(mcg.Base):
             url = album.get_cover()
             if url is not None and url is not "":
                 # Load image and draw it
-                self._cover_pixbuf = Application.load_cover(url)
+                self._cover_pixbuf = Utils.load_cover(url)
                 self._resize_image()
             else:
                 # Reset image
@@ -1023,12 +934,12 @@ class CoverPanel(mcg.Base):
 
 
 
-class PlaylistPanel(mcg.Base):
+class PlaylistPanel(client.Base):
     SIGNAL_CLEAR_PLAYLIST = 'clear-playlist'
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
         self._host = None
         self._item_size = 150
         self._playlist = None
@@ -1148,12 +1059,12 @@ class PlaylistPanel(mcg.Base):
         self._playlist_grid_model.clear()
         GObject.idle_add(self._playlist_grid.set_item_padding, size / 100)
 
-        cache = mcg.MCGCache(host, size)
+        cache = client.MCGCache(host, size)
         for album in playlist:
             pixbuf = None
             if album.get_cover() is not None:
                 try:
-                    pixbuf = Application.load_thumbnail(cache, album, size)
+                    pixbuf = Utils.load_thumbnail(cache, album, size)
                 except Exception as e:
                     print(e)
             if pixbuf is None:
@@ -1191,7 +1102,7 @@ class PlaylistPanel(mcg.Base):
         url = album.get_cover()
         if url is not None and url is not "":
             # Load image and draw it
-            self._standalone_pixbuf = Application.load_cover(url)
+            self._standalone_pixbuf = Utils.load_cover(url)
             self._resize_standalone_image()
         else:
             # Reset image
@@ -1234,7 +1145,7 @@ class PlaylistPanel(mcg.Base):
 
 
 
-class LibraryPanel(mcg.Base):
+class LibraryPanel(client.Base):
     SIGNAL_UPDATE = 'update'
     SIGNAL_PLAY = 'play'
     SIGNAL_ITEM_SIZE_CHANGED = 'item-size-changed'
@@ -1243,13 +1154,13 @@ class LibraryPanel(mcg.Base):
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
         self._buttons = {}
         self._albums = None
         self._host = "localhost"
         self._filter_string = ""
         self._item_size = 150
-        self._sort_order = mcg.MCGAlbum.SORT_BY_YEAR
+        self._sort_order = client.MCGAlbum.SORT_BY_YEAR
         self._sort_type = Gtk.SortType.DESCENDING
         self._grid_pixbufs = {}
         self._old_ranges = {}
@@ -1277,9 +1188,9 @@ class LibraryPanel(mcg.Base):
         # Toolbar menu
         self._toolbar_search_bar = builder.get_object('library-toolbar-search')
         self._toolbar_sort_buttons = {
-            mcg.MCGAlbum.SORT_BY_ARTIST: builder.get_object('library-toolbar-sort-artist'),
-            mcg.MCGAlbum.SORT_BY_TITLE: builder.get_object('library-toolbar-sort-title'),
-            mcg.MCGAlbum.SORT_BY_YEAR: builder.get_object('library-toolbar-sort-year')
+            client.MCGAlbum.SORT_BY_ARTIST: builder.get_object('library-toolbar-sort-artist'),
+            client.MCGAlbum.SORT_BY_TITLE: builder.get_object('library-toolbar-sort-title'),
+            client.MCGAlbum.SORT_BY_YEAR: builder.get_object('library-toolbar-sort-year')
         }
         self._toolbar_sort_order_button = builder.get_object('library-toolbar-sort-order')
         self._grid_scale = builder.get_object('library-toolbar-scale')
@@ -1482,7 +1393,7 @@ class LibraryPanel(mcg.Base):
 
         if hash1 == "" or hash2 == "":
             return
-        return mcg.MCGAlbum.compare(self._albums[hash1], self._albums[hash2], criterion)
+        return client.MCGAlbum.compare(self._albums[hash1], self._albums[hash2], criterion)
 
 
     def stop_threads(self):
@@ -1508,13 +1419,13 @@ class LibraryPanel(mcg.Base):
 
         i = 0
         n = len(albums)
-        cache = mcg.MCGCache(host, size)
+        cache = client.MCGCache(host, size)
         self._grid_pixbufs.clear()
         for hash in albums.keys():
             album = albums[hash]
             pixbuf = None
             try:
-                pixbuf = Application.load_thumbnail(cache, album, size)
+                pixbuf = Utils.load_thumbnail(cache, album, size)
             except Exception as e:
                 print(e)
             if pixbuf is None:
@@ -1610,7 +1521,7 @@ class LibraryPanel(mcg.Base):
         url = album.get_cover()
         if url is not None and url is not "":
             # Load image and draw it
-            self._standalone_pixbuf = Application.load_cover(url)
+            self._standalone_pixbuf = Utils.load_cover(url)
             self._resize_standalone_image()
         else:
             # Reset image
@@ -1648,12 +1559,12 @@ class LibraryPanel(mcg.Base):
 
 
 
-class StackSwitcher(mcg.Base):
+class StackSwitcher(client.Base):
     SIGNAL_STACK_SWITCHED = 'stack-switched'
 
 
     def __init__(self, builder):
-        mcg.Base.__init__(self)
+        client.Base.__init__(self)
 
         self._temp_button = None
         self._stack_switcher = builder.get_object('header-panelswitcher')
@@ -1672,65 +1583,3 @@ class StackSwitcher(mcg.Base):
 
     def get(self):
         return self._stack_switcher
-
-
-
-
-class ZeroconfProvider(mcg.Base):
-    SIGNAL_SERVICE_NEW = 'service-new'
-    TYPE = '_mpd._tcp'
-
-
-    def __init__(self):
-        mcg.Base.__init__(self)
-        self._service_resolvers = []
-        self._services = {}
-        self._logger = logging.getLogger(__name__)
-        # Client
-        self._client = Avahi.Client(flags=0,)
-        self._logger.info("avahi info")
-        self._logger.warning("avahi warning")
-        self._logger.error("avahi error")
-        try:
-            self._client.start()
-            # Browser
-            self._service_browser = Avahi.ServiceBrowser(domain='local', flags=0, interface=-1, protocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, type=ZeroconfProvider.TYPE)
-            self._service_browser.connect('new_service', self.on_new_service)
-            self._service_browser.attach(self._client)
-        except Exception as e:
-            self._logger.info(e)
-
-
-    def on_new_service(self, browser, interface, protocol, name, type, domain, flags):
-        #if not (flags & Avahi.LookupResultFlags.GA_LOOKUP_RESULT_LOCAL):
-        service_resolver = Avahi.ServiceResolver(interface=interface, protocol=protocol, name=name, type=type, domain=domain, aprotocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, flags=0,)
-        service_resolver.connect('found', self.on_found)
-        service_resolver.connect('failure', self.on_failure)
-        service_resolver.attach(self._client)
-        self._service_resolvers.append(service_resolver)
-
-
-    def on_found(self, resolver, interface, protocol, name, type, domain, host, date, port, *args):
-        if (host, port) not in self._services.keys():
-            service = (name,host,port)
-            self._services[(host,port)] = service
-            self._callback(ZeroconfProvider.SIGNAL_SERVICE_NEW, service)
-
-
-    def on_failure(self, resolver, date):
-        if resolver in self._service_resolvers:
-            self._service_resolvers.remove(resolver)
-
-
-
-
-if __name__ == "__main__":
-    # Set environment
-    srcdir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    if not os.environ.get('GSETTINGS_SCHEMA_DIR'):
-        os.environ['GSETTINGS_SCHEMA_DIR'] = os.path.join(srcdir, 'data')
-
-    # Start application
-    app = Application()
-    exit_status = app.run(sys.argv)
-    sys.exit(exit_status)

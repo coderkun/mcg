@@ -8,8 +8,8 @@ from setuptools import setup
 
 
 setup(
-    name = "MPD Cover Grid",
-    version = "0.4",
+    name = "MPDCoverGrid",
+    version = "0.6",
     description = "MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",
     url = "http://www.coderkun.de/codes/mcg",
     author = "coderkun",
@@ -27,12 +27,14 @@ setup(
     },
     entry_points = {
         "gui_scripts": [
-            "frontend = mcgGtk:main"
+            "frontend = mcg:main"
         ]
     },
     data_files = [
         "data/MPDCoverGridGTK.desktop",
         "data/gschemas.compiled",
+        "data/gtk.glade",
+        "data/mcg.css",
         "data/noise-texture.png"
     ],
     classifiers = [
