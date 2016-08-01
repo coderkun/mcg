@@ -2,7 +2,7 @@
 
 """MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks."""
 
-__version__ = "0.5"
+__version__ = "0.6"
 
 
 import gi
