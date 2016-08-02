@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+    <gresource prefix="/de/coderkun/mcg">
+        <file>gtk.glade</file>
+        <file>mcg.css</file>
+        <file>noise-texture.png</file>
+    </gresource>
+</gresources>

@@ -14,3 +14,17 @@ datadir = os.path.join(srcdir, '..', 'data')
 # Set GSettings schema dir (if not set already)
 if not os.environ.get('GSETTINGS_SCHEMA_DIR'):
     os.environ['GSETTINGS_SCHEMA_DIR'] = datadir
+
+
+
+
+class Environment:
+    """Wrapper class to access environment settings."""
+
+
+    def get_srcdir():
+        return srcdir
+
+
+    def get_data(subdir):
+        return os.path.join(datadir, subdir)
