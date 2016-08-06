@@ -90,20 +90,20 @@ class Window():
         self._panels[Window._PANEL_INDEX_LIBRARY].set_sort_type(self._settings.get_boolean(Window.SETTING_SORT_TYPE))
 
         # Signals
-        self._header_bar.connect_signal(HeaderBar.SIGNAL_STACK_SWITCHED, self.on_header_bar_stack_switched)
-        self._header_bar.connect_signal(HeaderBar.SIGNAL_CONNECT, self.on_header_bar_connect)
-        self._header_bar.connect_signal(HeaderBar.SIGNAL_PLAYPAUSE, self.on_header_bar_playpause)
-        self._header_bar.connect_signal(HeaderBar.SIGNAL_SET_VOLUME, self.on_header_bar_set_volume)
-        self._panels[Window._PANEL_INDEX_CONNECTION].connect_signal(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.on_connection_panel_connection_changed)
-        self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TOGGLE_FULLSCREEN, self.on_cover_panel_toggle_fullscreen)
-        self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, self.on_cover_panel_tracklist_size_changed)
-        self._panels[Window._PANEL_INDEX_COVER].connect_signal(CoverPanel.SIGNAL_SET_SONG, self.on_cover_panel_set_song)
-        self._panels[Window._PANEL_INDEX_PLAYLIST].connect_signal(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST, self.on_playlist_panel_clear_playlist)
-        self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_UPDATE, self.on_library_panel_update)
-        self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_PLAY, self.on_library_panel_play)
-        self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_ITEM_SIZE_CHANGED, self.on_library_panel_item_size_changed)
-        self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, self.on_library_panel_sort_order_changed)
-        self._panels[Window._PANEL_INDEX_LIBRARY].connect_signal(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, self.on_library_panel_sort_type_changed)
+        self._header_bar.connect('stack-switched', self.on_header_bar_stack_switched)
+        self._header_bar.connect('toolbar-connect', self.on_header_bar_connect)
+        self._header_bar.connect('toolbar-playpause', self.on_header_bar_playpause)
+        self._header_bar.connect('toolbar-set-volume', self.on_header_bar_set_volume)
+        self._panels[Window._PANEL_INDEX_CONNECTION].connect('connection-changed', self.on_connection_panel_connection_changed)
+        self._panels[Window._PANEL_INDEX_COVER].connect('toggle-fullscreen', self.on_cover_panel_toggle_fullscreen)
+        self._panels[Window._PANEL_INDEX_COVER].connect('tracklist-size-changed', self.on_cover_panel_tracklist_size_changed)
+        self._panels[Window._PANEL_INDEX_COVER].connect('set-song', self.on_cover_panel_set_song)
+        self._panels[Window._PANEL_INDEX_PLAYLIST].connect('clear-playlist', self.on_playlist_panel_clear_playlist)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('update', self.on_library_panel_update)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('play', self.on_library_panel_play)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('item-size-changed', self.on_library_panel_item_size_changed)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('sort-order-changed', self.on_library_panel_sort_order_changed)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('sort-type-changed', self.on_library_panel_sort_type_changed)
         self._mcg.connect_signal(client.Client.SIGNAL_CONNECTION, self.on_mcg_connect)
         self._mcg.connect_signal(client.Client.SIGNAL_STATUS, self.on_mcg_status)
         self._mcg.connect_signal(client.Client.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
@@ -164,22 +164,22 @@ class Window():
         self._save_visible_panel()
 
 
-    def on_header_bar_connect(self):
+    def on_header_bar_connect(self, widget):
         self._connect()
 
 
-    def on_header_bar_playpause(self):
+    def on_header_bar_playpause(self, widget):
         self._mcg.playpause()
         self._mcg.get_status()
 
 
-    def on_header_bar_set_volume(self, volume):
+    def on_header_bar_set_volume(self, widget, volume):
         self._mcg.set_volume(volume)
 
 
     # Panel callbacks
 
-    def on_connection_panel_connection_changed(self, host, port, password, image_dir):
+    def on_connection_panel_connection_changed(self, widget, host, port, password, image_dir):
         self._settings.set_string(Window.SETTING_HOST, host)
         self._settings.set_int(Window.SETTING_PORT, port)
         if use_keyring:
@@ -191,43 +191,43 @@ class Window():
         self._settings.set_string(Window.SETTING_IMAGE_DIR, image_dir)
 
 
-    def on_playlist_panel_clear_playlist(self):
+    def on_playlist_panel_clear_playlist(self, widget):
         self._mcg.clear_playlist()
 
 
-    def on_cover_panel_toggle_fullscreen(self):
+    def on_cover_panel_toggle_fullscreen(self, widget):
         if not self._fullscreened:
             self._appwindow.fullscreen()
         else:
             self._appwindow.unfullscreen()
 
 
-    def on_cover_panel_tracklist_size_changed(self, size):
+    def on_cover_panel_tracklist_size_changed(self, widget, size):
         self._settings.set_enum(Window.SETTING_TRACKLIST_SIZE, size)
 
 
-    def on_cover_panel_set_song(self, pos, time):
+    def on_cover_panel_set_song(self, widget, pos, time):
         self._mcg.seek(pos, time)
 
 
-    def on_library_panel_update(self):
+    def on_library_panel_update(self, widget):
         self._mcg.update()
 
 
-    def on_library_panel_play(self, album):
+    def on_library_panel_play(self, widget, album):
         self._mcg.play_album(album)
 
 
-    def on_library_panel_item_size_changed(self, size):
+    def on_library_panel_item_size_changed(self, widget, size):
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(size)
         self._settings.set_int(Window.SETTING_ITEM_SIZE, self._panels[Window._PANEL_INDEX_LIBRARY].get_item_size())
 
 
-    def on_library_panel_sort_order_changed(self, sort_order):
+    def on_library_panel_sort_order_changed(self, widget, sort_order):
         self._settings.set_enum(Window.SETTING_SORT_ORDER, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_order())
 
 
-    def on_library_panel_sort_type_changed(self, sort_type):
+    def on_library_panel_sort_type_changed(self, widget, sort_type):
         self._settings.set_boolean(Window.SETTING_SORT_TYPE, self._panels[Window._PANEL_INDEX_LIBRARY].get_sort_type())
 
 
@@ -368,33 +368,33 @@ class Window():
 
 
 
-class HeaderBar(client.Base):
-    SIGNAL_STACK_SWITCHED = 'stack-switched'
-    SIGNAL_CONNECT = 'on_headerbar-connection_active_notify'
-    SIGNAL_PLAYPAUSE = 'on_headerbar-playpause_toggled'
-    SIGNAL_SET_VOLUME = 'set-volume'
+class HeaderBar(GObject.GObject):
+    __gsignals__ = {
+        'stack-switched': (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'toolbar-connect': (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'toolbar-playpause': (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'toolbar-set-volume': (GObject.SIGNAL_RUN_FIRST, None, (int,))
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
-
-        self._buttons = {}
+        GObject.GObject.__init__(self)
         self._changing_volume = False
         self._setting_volume = False
 
         # Widgets
         self._header_bar = builder.get_object('headerbar')
         self._stack_switcher = StackSwitcher(builder)
-        self._buttons[HeaderBar.SIGNAL_CONNECT] = builder.get_object('headerbar-connection')
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE] = builder.get_object('headerbar-playpause')
-        self._buttons[HeaderBar.SIGNAL_SET_VOLUME] = builder.get_object('headerbar-volume')
+        self._button_connect = builder.get_object('headerbar-connection')
+        self._button_playpause = builder.get_object('headerbar-playpause')
+        self._button_volume = builder.get_object('headerbar-volume')
 
         # Signals
-        self._stack_switcher.connect_signal(StackSwitcher.SIGNAL_STACK_SWITCHED, self.on_stack_switched)
+        self._stack_switcher.connect('stack-switched', self.on_stack_switched)
         self._button_handlers = {
-            'on_headerbar-connection_active_notify': self._callback_from_widget,
+            'on_headerbar-connection_active_notify': self.on_connection_active_notify,
             'on_headerbar-connection_state_set': self.on_connection_state_set,
-            'on_headerbar-playpause_toggled': self._callback_from_widget,
+            'on_headerbar-playpause_toggled': self.on_playpause_toggled,
             'on_headerbar-volume_value_changed': self.on_volume_changed,
             'on_headerbar-volume_button_press_event': self.on_volume_press,
             'on_headerbar-volume_button_release_event': self.on_volume_release
@@ -410,23 +410,31 @@ class HeaderBar(client.Base):
 
 
     def set_sensitive(self, sensitive, connecting):
-        for button_signal in self._buttons:
-            self._buttons[button_signal].set_sensitive(sensitive)
+        self._button_playpause.set_sensitive(sensitive)
+        self._button_volume.set_sensitive(sensitive)
         self._stack_switcher.get().set_sensitive(sensitive)
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_sensitive(not connecting)
+        self._button_connect.set_sensitive(not connecting)
+
+
+    def on_connection_active_notify(self, widget, status):
+        self.emit('toolbar-connect')
 
 
     def on_connection_state_set(self, widget, state):
         return True
 
 
+    def on_playpause_toggled(self, widget):
+        self.emit('toolbar-playpause')
+
+
     def on_stack_switched(self, widget):
-        self._callback(HeaderBar.SIGNAL_STACK_SWITCHED, widget)
+        self.emit('stack-switched')
 
 
     def on_volume_changed(self, widget, value):
         if not self._setting_volume:
-            self._callback(self.SIGNAL_SET_VOLUME, int(value*100))
+            self.emit('toolbar-set-volume', int(value*100))
 
 
     def on_volume_press(self, *args):
@@ -442,63 +450,56 @@ class HeaderBar(client.Base):
 
 
     def connected(self):
-        self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_CONNECT]
+        self._button_connect.handler_block_by_func(
+            self.on_connection_active_notify
         )
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(True)
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_state(True)
-        self._buttons[HeaderBar.SIGNAL_CONNECT].handler_unblock_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_CONNECT]
+        self._button_connect.set_active(True)
+        self._button_connect.set_state(True)
+        self._button_connect.handler_unblock_by_func(
+            self.on_connection_active_notify
         )
 
 
     def disconnected(self):
-        self._buttons[HeaderBar.SIGNAL_CONNECT].handler_block_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_CONNECT]
+        self._button_connect.handler_block_by_func(
+            self.on_connection_active_notify
         )
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_active(False)
-        self._buttons[HeaderBar.SIGNAL_CONNECT].set_state(False)
-        self._buttons[HeaderBar.SIGNAL_CONNECT].handler_unblock_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_CONNECT]
+        self._button_connect.set_active(False)
+        self._button_connect.set_state(False)
+        self._button_connect.handler_unblock_by_func(
+            self.on_connection_active_notify
         )
 
 
     def set_play(self):
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]
+        self._button_playpause.handler_block_by_func(
+            self.on_playpause_toggled
         )
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(True)
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_unblock_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]
+        self._button_playpause.set_active(True)
+        self._button_playpause.handler_unblock_by_func(
+            self.on_playpause_toggled
         )
 
 
     def set_pause(self):
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_block_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]
+        self._button_playpause.handler_block_by_func(
+            self.on_playpause_toggled
         )
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].set_active(False)
-        self._buttons[HeaderBar.SIGNAL_PLAYPAUSE].handler_unblock_by_func(
-            self._button_handlers[HeaderBar.SIGNAL_PLAYPAUSE]
+        self._button_playpause.set_active(False)
+        self._button_playpause.handler_unblock_by_func(
+            self.on_playpause_toggled
         )
 
 
     def set_volume(self, volume):
         if volume >= 0:
-            self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_visible(True)
+            self._button_volume.set_visible(True)
             if not self._changing_volume:
                 self._setting_volume = True
-                self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_value(volume / 100)
+                self._button_volume.set_value(volume / 100)
                 self._setting_volume = False
         else:
-            self._buttons[HeaderBar.SIGNAL_SET_VOLUME].set_visible(False)
-
-
-    def _callback_from_widget(self, widget, *args):
-        if widget is self._buttons[HeaderBar.SIGNAL_CONNECT]:
-            self._callback(self.SIGNAL_CONNECT)
-        elif widget is self._buttons[HeaderBar.SIGNAL_PLAYPAUSE]:
-            self._callback(self.SIGNAL_PLAYPAUSE)
+            self._button_volume.set_visible(False)
 
 
 
@@ -538,12 +539,14 @@ class InfoBar():
 
 
 
-class ConnectionPanel(client.Base):
-    SIGNAL_CONNECTION_CHANGED = 'connection-changed'
+class ConnectionPanel(GObject.GObject):
+    __gsignals__ = {
+        'connection-changed': (GObject.SIGNAL_RUN_FIRST, None, (str, int, str, str))
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
+        GObject.GObject.__init__(self)
         self._services = Gtk.ListStore(str, str, int)
         self._profile = None
 
@@ -660,19 +663,21 @@ class ConnectionPanel(client.Base):
 
 
     def _call_back(self):
-        self._callback(ConnectionPanel.SIGNAL_CONNECTION_CHANGED, self.get_host(), self.get_port(), self.get_password(), self.get_image_dir())
+        self.emit('connection-changed', self.get_host(), self.get_port(), self.get_password(), self.get_image_dir())
 
 
 
 
-class CoverPanel(client.Base):
-    SIGNAL_TOGGLE_FULLSCREEN = 'toggle-fullscreen'
-    SIGNAL_TRACKLIST_SIZE_CHANGED = 'tracklist-size-changed'
-    SIGNAL_SET_SONG = 'set-song'
+class CoverPanel(GObject.GObject):
+    __gsignals__ = {
+        'toggle-fullscreen': (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'tracklist-size-changed': (GObject.SIGNAL_RUN_FIRST, None, (int,)),
+        'set-song': (GObject.SIGNAL_RUN_FIRST, None, (int, int,))
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
+        GObject.GObject.__init__(self)
 
         self._current_album = None
         self._cover_pixbuf = None
@@ -727,7 +732,7 @@ class CoverPanel(client.Base):
 
 
     def on_fullscreen_clicked(self, widget):
-        self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
+        self.emit('toggle-fullscreen')
 
 
     def on_tracklist_togged(self, widget):
@@ -738,7 +743,7 @@ class CoverPanel(client.Base):
 
     def on_cover_box_pressed(self, widget, event):
         if event.type == Gdk.EventType._2BUTTON_PRESS:
-            self._callback(self.SIGNAL_TOGGLE_FULLSCREEN)
+            self.emit('toggle-fullscreen')
 
 
     def on_cover_size_allocate(self, widget, allocation):
@@ -762,7 +767,7 @@ class CoverPanel(client.Base):
             if time < value:
                 break
         time = max(value - time - 1, 0)
-        self._callback(self.SIGNAL_SET_SONG, pos, time)
+        self.emit('set-song', pos, time)
 
 
     def set_tracklist_size(self, size):
@@ -892,7 +897,7 @@ class CoverPanel(client.Base):
             self._tracklist_size = size
         # Notify signals
         if notify:
-            self._callback(CoverPanel.SIGNAL_TRACKLIST_SIZE_CHANGED, size)
+            self.emit('tracklist-size-changed', size)
         # Resize image
         self._resize_image()
 
@@ -933,12 +938,14 @@ class CoverPanel(client.Base):
 
 
 
-class PlaylistPanel(client.Base):
-    SIGNAL_CLEAR_PLAYLIST = 'clear-playlist'
+class PlaylistPanel(GObject.GObject):
+    __gsignals__ = {
+        'clear-playlist': (GObject.SIGNAL_RUN_FIRST, None, ())
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
+        GObject.GObject.__init__(self)
         self._host = None
         self._item_size = 150
         self._playlist = None
@@ -991,11 +998,16 @@ class PlaylistPanel(client.Base):
 
     def get_signal_handlers(self):
         return {
-            'on_playlist-toolbar-clear_clicked': self._callback_from_widget,
+            'on_playlist-toolbar-clear_clicked': self.clear_clicked,
             'on_playlist-iconview_item_activated': self.on_playlist_grid_clicked,
             'on_playlist-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
             'on_headerbar-playlist-standalone-close_clicked': self.on_standalone_close_clicked
         }
+
+
+    def clear_clicked(self, widget):
+        if widget is self._playlist_clear_button:
+            self.emit('clear-playlist')
 
 
     def on_playlist_grid_clicked(self, widget, path):
@@ -1137,23 +1149,20 @@ class PlaylistPanel(client.Base):
         self._standalone_image.show()
 
 
-    def _callback_from_widget(self, widget):
-        if widget is self._playlist_clear_button:
-            self._callback(PlaylistPanel.SIGNAL_CLEAR_PLAYLIST)
 
 
-
-
-class LibraryPanel(client.Base):
-    SIGNAL_UPDATE = 'update'
-    SIGNAL_PLAY = 'play'
-    SIGNAL_ITEM_SIZE_CHANGED = 'item-size-changed'
-    SIGNAL_SORT_ORDER_CHANGED = 'sort-order-changed'
-    SIGNAL_SORT_TYPE_CHANGED = 'sort-type-changed'
+class LibraryPanel(GObject.GObject):
+    __gsignals__ = {
+        'update': (GObject.SIGNAL_RUN_FIRST, None, ()),
+        'play': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+        'item-size-changed': (GObject.SIGNAL_RUN_FIRST, None, (int,)),
+        'sort-order-changed': (GObject.SIGNAL_RUN_FIRST, None, (int,)),
+        'sort-type-changed': (GObject.SIGNAL_RUN_FIRST, None, (Gtk.SortType,))
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
+        GObject.GObject.__init__(self)
         self._buttons = {}
         self._albums = None
         self._host = "localhost"
@@ -1264,12 +1273,12 @@ class LibraryPanel(client.Base):
         range =  self._grid_scale.get_adjustment()
         if size < range.get_lower() or size > range.get_upper():
             return
-        self._callback(LibraryPanel.SIGNAL_ITEM_SIZE_CHANGED, size)
+        self.emit('item-size-changed', size)
         self._redraw()
 
 
     def on_update_clicked(self, widget):
-        self._callback(self.SIGNAL_UPDATE)
+        self.emit('update')
 
 
     def on_sort_toggled(self, widget):
@@ -1285,7 +1294,7 @@ class LibraryPanel(client.Base):
             sort_type = Gtk.SortType.ASCENDING
         self._sort_type = sort_type
         self._library_grid_model.set_sort_column_id(2, sort_type)
-        self._callback(LibraryPanel.SIGNAL_SORT_TYPE_CHANGED, sort_type)
+        self.emit('sort-type-changed', sort_type)
 
 
     def on_filter_bar_notify(self, widget, value):
@@ -1331,7 +1340,7 @@ class LibraryPanel(client.Base):
 
 
     def on_standalone_play_clicked(self, widget):
-        self._callback(LibraryPanel.SIGNAL_PLAY, self._selected_albums[0].get_hash())
+        self.emit('play', self._selected_albums[0].get_hash())
 
 
     def on_standalone_close_clicked(self, widget):
@@ -1402,7 +1411,7 @@ class LibraryPanel(client.Base):
     def _change_sort(self, sort):
         self._sort_order = sort
         self._library_grid_model.set_sort_func(2, self.compare_albums, sort)
-        self._callback(LibraryPanel.SIGNAL_SORT_ORDER_CHANGED, sort)
+        self.emit('sort-order-changed', sort)
 
 
     def _set_albums(self, host, albums, size):
@@ -1558,12 +1567,14 @@ class LibraryPanel(client.Base):
 
 
 
-class StackSwitcher(client.Base):
-    SIGNAL_STACK_SWITCHED = 'stack-switched'
+class StackSwitcher(GObject.GObject):
+    __gsignals__ = {
+        'stack-switched': (GObject.SIGNAL_RUN_FIRST, None, ())
+    }
 
 
     def __init__(self, builder):
-        client.Base.__init__(self)
+        GObject.GObject.__init__(self)
 
         self._temp_button = None
         self._stack_switcher = builder.get_object('header-panelswitcher')
@@ -1577,7 +1588,7 @@ class StackSwitcher(client.Base):
             self._temp_button = widget
         else:
             self._temp_button = None
-            self._callback(StackSwitcher.SIGNAL_STACK_SWITCHED, self)
+            self.emit('stack-switched')
 
 
     def get(self):
