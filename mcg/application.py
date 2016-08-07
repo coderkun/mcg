@@ -30,7 +30,7 @@ class Application(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id=Application.ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
-        self._verbosity = 0
+        self._verbosity = self._verbosity = logging.WARNING
         self.add_main_option_entries([
             Application._get_option("v", "verbose", "Be verbose: show info messages"),
             Application._get_option("d", "debug", "Enable debugging: show debug messages")
