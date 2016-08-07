@@ -3,9 +3,10 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
+import logging
 import urllib
 
-from gi.repository import Gio, Gtk, Gdk
+from gi.repository import Gio, Gtk, Gdk, GLib
 
 from mcg import Environment
 from mcg import widgets
@@ -14,17 +15,40 @@ from mcg import widgets
 
 
 class Application(Gtk.Application):
-    TITLE = "MPDCoverGrid (Gtk)"
+    TITLE = "MPDCoverGrid"
     ID = 'de.coderkun.mcg'
+
+
+    def _get_option(shortname, longname, description):
+        option = GLib.OptionEntry()
+        option.short_name = ord(shortname)
+        option.long_name = longname
+        option.description = description
+        return option
 
 
     def __init__(self):
         Gtk.Application.__init__(self, application_id=Application.ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
+        self._verbosity = 0
+        self.add_main_option_entries([
+            Application._get_option("v", "verbose", "Be verbose: show info messages"),
+            Application._get_option("d", "debug", "Enable debugging: show debug messages")
+        ])
+        self.connect('handle-local-options', self.handle_local_options)
+
+
+    def handle_local_options(self, widget, options):
+        if options.contains("debug") and options.lookup_value('debug'):
+            self._verbosity = logging.DEBUG
+        elif options.contains("verbose") and options.lookup_value('verbose'):
+            self._verbosity = logging.INFO
+        return -1
 
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
+        self._setup_logging()
         self._load_resource()
         self._load_settings()
         self._load_css()
@@ -36,6 +60,13 @@ class Application(Gtk.Application):
         if not self._window:
             self._window = widgets.Window(self, self._builder, Application.TITLE, self._settings)
         self._window.present()
+
+
+    def _setup_logging(self):
+        logging.basicConfig(
+            level=self._verbosity,
+            format="%(asctime)s %(levelname)s: %(message)s"
+        )
 
 
     def _load_resource(self):

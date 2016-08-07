@@ -50,12 +50,6 @@ class Window():
         self._panels = []
         self._mcg = client.Client()    
         self._logger = logging.getLogger(__name__)
-        self._logger.addHandler(logging.StreamHandler(stream=sys.stdout))
-        self._logger.setLevel(logging.ERROR)
-        logging.getLogger(client.__name__).addHandler(logging.StreamHandler(stream=sys.stdout))
-        logging.getLogger(client.__name__).setLevel(logging.ERROR)
-        #self._mcg.get_logger().addHandler(logging.StreamHandler(stream=sys.stdout))
-        #self._mcg.get_logger().setLevel(logging.ERROR)
         self._size = self._settings.get_value(Window.SETTING_WINDOW_SIZE)
         self._maximized = self._settings.get_boolean(Window.SETTING_WINDOW_MAXIMIZED)
         self._fullscreened = False
