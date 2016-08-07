@@ -534,6 +534,15 @@ class Client(Base):
             self._callback(Client.SIGNAL_ERROR, e)
 
 
+    def _call_list(self, command, *args):
+        try:
+            self._write(command, args)
+        except MPDException as e:
+            if command == 'idle' and e.get_error() == Client.PROTOCOL_ERROR_PERMISSION:
+                self.disconnect()
+            self._callback(Client.SIGNAL_ERROR, e)
+
+
     def _write(self, command, args=None):
         if args is not None and len(args) > 0:
             line = '{} "{}"\n'.format(command, '" "'.join(str(x).replace('"', '\\\"') for x in args))
