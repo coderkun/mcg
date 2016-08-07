@@ -195,6 +195,12 @@ class Client(Base):
         self._add_action(self._clear_playlist)
 
 
+    def remove_album_from_playlist(self, album):
+        """Remove the given album from the playlist."""
+        self._logger.info("remove album from playlist")
+        self._add_action(self._remove_album_from_playlist, album)
+
+
     def playpause(self):
         """Play or pauses the current state."""
         self._logger.info("playpause")
@@ -441,6 +447,13 @@ class Client(Base):
     def _clear_playlist(self):
         """Action: Perform the real clearing of the current playlist."""
         self._call('clear')
+
+
+    def _remove_album_from_playlist(self, album):
+        self._call_list('command_list_begin')
+        for track in album.get_tracks():
+            self._call_list('deleteid', track.get_id())
+        self._call('command_list_end')
 
 
     def _playpause(self):
