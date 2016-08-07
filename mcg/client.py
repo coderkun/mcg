@@ -201,6 +201,12 @@ class Client(Base):
         self._add_action(self._remove_album_from_playlist, album)
 
 
+    def play_album_from_playlist(self, album):
+        """Play the given album from the playlist."""
+        self._logger.info("play album from playlist")
+        self._add_action(self._play_album_from_playlist, album)
+
+
     def playpause(self):
         """Play or pauses the current state."""
         self._logger.info("playpause")
@@ -454,6 +460,11 @@ class Client(Base):
         for track in album.get_tracks():
             self._call_list('deleteid', track.get_id())
         self._call('command_list_end')
+
+
+    def _play_album_from_playlist(self, album):
+        if album.get_tracks():
+            self._call('playid', album.get_tracks()[0].get_id())
 
 
     def _playpause(self):

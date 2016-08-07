@@ -94,6 +94,7 @@ class Window():
         self._panels[Window._PANEL_INDEX_COVER].connect('set-song', self.on_cover_panel_set_song)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('clear-playlist', self.on_playlist_panel_clear_playlist)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('remove', self.on_playlist_panel_remove)
+        self._panels[Window._PANEL_INDEX_PLAYLIST].connect('play', self.on_playlist_panel_play)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('update', self.on_library_panel_update)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('play', self.on_library_panel_play)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('item-size-changed', self.on_library_panel_item_size_changed)
@@ -192,6 +193,10 @@ class Window():
 
     def on_playlist_panel_remove(self, widget, album):
         self._mcg.remove_album_from_playlist(album)
+
+
+    def on_playlist_panel_play(self, widget, album):
+        self._mcg.play_album_from_playlist(album)
 
 
     def on_cover_panel_toggle_fullscreen(self, widget):
@@ -940,7 +945,8 @@ class CoverPanel(GObject.GObject):
 class PlaylistPanel(GObject.GObject):
     __gsignals__ = {
         'clear-playlist': (GObject.SIGNAL_RUN_FIRST, None, ()),
-        'remove': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,))
+        'remove': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        'play': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,))
     }
 
 
@@ -986,6 +992,9 @@ class PlaylistPanel(GObject.GObject):
         self._standalone_image = builder.get_object('playlist-standalone-image')
         # Action bar
         action_bar = builder.get_object('playlist-standalone-actionbar')
+        play_button = Gtk.Button('play')
+        play_button.connect('clicked', self.on_standalone_play_clicked)
+        action_bar.pack_end(play_button)
         remove_button = Gtk.Button('remove')
         remove_button.connect('clicked', self.on_standalone_remove_clicked)
         action_bar.pack_end(remove_button)
@@ -1043,6 +1052,10 @@ class PlaylistPanel(GObject.GObject):
 
     def on_standalone_remove_clicked(self, widget):
         self.emit('remove', self._selected_albums[0])
+
+
+    def on_standalone_play_clicked(self, widget):
+        self.emit('play', self._selected_albums[0])
 
 
     def set_item_size(self, item_size):
