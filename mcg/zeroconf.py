@@ -2,10 +2,13 @@
 
 
 import gi
-gi.require_version('Avahi', '0.6')
+try:
+    gi.require_version('Avahi', '0.6')
+    from gi.repository import Avahi
+    use_avahi = True
+except:
+    use_avahi = False
 import logging
-
-from gi.repository import Avahi
 
 from mcg import client
 
@@ -25,15 +28,8 @@ class ZeroconfProvider(client.Base):
         self._services = {}
         self._logger = logging.getLogger(__name__)
         # Client
-        self._client = Avahi.Client(flags=0,)
-        try:
-            self._client.start()
-            # Browser
-            self._service_browser = Avahi.ServiceBrowser(domain='local', flags=0, interface=-1, protocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, type=ZeroconfProvider.TYPE)
-            self._service_browser.connect('new_service', self.on_new_service)
-            self._service_browser.attach(self._client)
-        except Exception as e:
-            self._logger.info(e)
+        if use_avahi:
+            self._start_client()
 
 
     def on_new_service(self, browser, interface, protocol, name, type, domain, flags):
@@ -55,3 +51,16 @@ class ZeroconfProvider(client.Base):
     def on_failure(self, resolver, date):
         if resolver in self._service_resolvers:
             self._service_resolvers.remove(resolver)
+
+
+    def _start_client(self):
+        self._logger.info("Starting Avahi client")
+        self._client = Avahi.Client(flags=0,)
+        try:
+            self._client.start()
+            # Browser
+            self._service_browser = Avahi.ServiceBrowser(domain='local', flags=0, interface=-1, protocol=Avahi.Protocol.GA_PROTOCOL_UNSPEC, type=ZeroconfProvider.TYPE)
+            self._service_browser.connect('new_service', self.on_new_service)
+            self._service_browser.attach(self._client)
+        except Exception as e:
+            self._logger.info(e)
