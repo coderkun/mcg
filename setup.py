@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
+import os
+
 from setuptools import setup
 
 
@@ -18,24 +20,39 @@ setup(
     packages = [
         "mcg"
     ],
-    scripts = [],
+    package_dir = {
+        'mcg': 'mcg'
+    },
+    package_data = {
+        'mcg': [
+            'LICENSE',
+            'README.textile'
+        ]
+    },
     install_requires = [
-        "python-gobject"
+        "pygobject"
     ],
     extras_require = {
         'keyring support': ["python-keyring"]
     },
     entry_points = {
         "gui_scripts": [
-            "frontend = mcg:main"
+            "mcg = mcg.mcg:main"
         ]
     },
     data_files = [
-        "data/MPDCoverGridGTK.desktop",
-        "data/gschemas.compiled",
-        "data/gtk.glade",
-        "data/mcg.css",
-        "data/noise-texture.png"
+        (os.path.join('share', 'applications'), [
+            "data/MPDCoverGridGTK.desktop"
+        ]),
+        (os.path.join('share', 'glib-2.0', 'schemas'), [
+            "data/de.coderkun.mcg.gschema.xml"
+        ]),
+        (os.path.join('share', 'mcg'), [
+            "data/de.coderkun.mcg.gresource",
+            "data/gtk.glade",
+            "data/mcg.css",
+            "data/noise-texture.png"
+        ])
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

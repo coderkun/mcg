@@ -22,6 +22,18 @@ To run the application just donwload/clone the code, “cd” into the applicati
 
 bc. ./mcg.py
 
+h2. Building
+
+python3 setup.py build
+
+h2. Packaging
+
+python3 setup.py sdist
+
+h2. Installation
+
+python3 setup.py install
+
 h2. Screenshots
 
 !https://www.coderkun.de/images/mcg-cover.png(Cover)!
