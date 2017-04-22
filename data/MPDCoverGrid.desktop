@@ -7,3 +7,4 @@ Exec=mcg
 Path=
 Categories=AudioVideo;
 StartupNotify=true
+Name[de_DE]=MPDCoverGrid.desktop
