@@ -2,3 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Files created by setuptools
+build/
+dist/
+*.egg-info/
