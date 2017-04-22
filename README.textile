@@ -1,9 +1,5 @@
 h1. MPDCoverGrid
 
-A covergrid for the "Music Player Daemon":http://www.musicpd.org.
-
-h2. Description
-
 MPDCoverGrid (mcg) is a client for the "Music Player Daemon":http://www.musicpd.org (MPD), focusing on albums instead of single tracks. It is not intended to be a replacement for your favorite MPD client but an addition to get a better album-experience.
 
 Website: https://www.coderkun.de/codes/mcg
@@ -15,24 +11,39 @@ Dependencies:
 * "Python":http://www.python.org 3
 * "GTK":http://www.gtk.org 3 ("python-gobject":https://live.gnome.org/PyGObject)
 * "python-keyring":http://pypi.python.org/pypi/keyring (optional)
+* "python-setuptools":https://pypi.python.org/pypi/setuptools (building)
 
 h2. Run application
 
-To run the application just donwload/clone the code, “cd” into the application directory and run the following command:
+For testing the application and running it without (system-wide) installation, donwload/clone the code and use _setuptools_ to install it for the current user:
 
-bc. ./mcg.py
+bc. $ python3 setup.py develop --user
+
+After that you can run it with
+
+bc. $ ~/.local/bin/mcg
+
+or if _~/.local/bin/_ is on your PATH
+
+bc. $ mcg
 
 h2. Building
 
-python3 setup.py build
+Build the application with _setuptools_:
+
+bc. $ python3 setup.py build
 
 h2. Packaging
 
-python3 setup.py sdist
+Create a distribution package with _setuptools_:
+
+bc. $ python3 setup.py sdist
 
 h2. Installation
 
-python3 setup.py install
+Install the application system-wide with _setuptools_:
+
+bc. # python3 setup.py install
 
 h2. Screenshots
 
