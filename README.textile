@@ -13,7 +13,7 @@ Dependencies:
 * "python-keyring":http://pypi.python.org/pypi/keyring (optional)
 * "python-setuptools":https://pypi.python.org/pypi/setuptools (building)
 
-h2. Run application
+h2. Running/Testing
 
 For testing the application and running it without (system-wide) installation, donwload/clone the code and use _setuptools_ to install it for the current user:
 
@@ -49,8 +49,8 @@ h2. Screenshots
 
 !https://www.coderkun.de/images/mcg-cover.png(Cover)!
 
-!https://www.coderkun.de/images/mcg-library.png(Library)!
-
 !https://www.coderkun.de/images/mcg-playlist.png(Playlist)!
 
-!https://www.coderkun.de/images/mcg-server.png(Server)!
+!https://www.coderkun.de/images/mcg-library-m.png(Library (middle-sized))!
+
+!https://www.coderkun.de/images/mcg-library-s.png(Library (small-sized))!
