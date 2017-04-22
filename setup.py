@@ -3,13 +3,34 @@
 
 
 import os
+import subprocess
 
 from setuptools import setup
+from setuptools.command.build_py import build_py
+
+
+
+
+class build_mcg(build_py):
+    def run(self):
+        build_py.run(self)
+        self._build_gresources()
+        self._build_gschemas()
+
+    def _build_gresources(self):
+        print("compiling gresources")
+        subprocess.run(['glib-compile-resources', 'de.coderkun.mcg.gresource.xml'], cwd='data')
+
+
+    def _build_gschemas(self):
+        print("compiling gschemas")
+        subprocess.run(['glib-compile-schemas', 'data'])
 
 
 
 
 setup(
+    cmdclass = {'build_py': build_mcg},
     name = "MPDCoverGrid",
     version = "0.6",
     description = "MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",

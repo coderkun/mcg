@@ -14,9 +14,17 @@ Dependencies:
 * "python-keyring":http://pypi.python.org/pypi/keyring (optional)
 * "python-setuptools":https://pypi.python.org/pypi/setuptools (building)
 
+
+h2. Building
+
+Build the application with _setuptools_:
+
+bc. $ python3 setup.py build
+
+
 h2. Running/Testing
 
-For testing the application and running it without (system-wide) installation, donwload/clone the code and use _setuptools_ to install it for the current user:
+For testing the application and running it without (system-wide) installation, donwload/clone the code, build it as described above and then use _setuptools_ to install it for the current user:
 
 bc. $ python3 setup.py develop --user
 
@@ -28,11 +36,15 @@ or if _~/.local/bin/_ is on your PATH
 
 bc. $ mcg
 
-h2. Building
 
-Build the application with _setuptools_:
+h2. Installing
 
-bc. $ python3 setup.py build
+Install the application system-wide with _setuptools_:
+
+bc. # python3 setup.py install
+
+Note: _On Linux using the distribution’s package manager is the preferred way of installing applications system-wide._
+
 
 h2. Packaging
 
@@ -40,11 +52,6 @@ Create a distribution package with _setuptools_:
 
 bc. $ python3 setup.py sdist
 
-h2. Installation
-
-Install the application system-wide with _setuptools_:
-
-bc. # python3 setup.py install
 
 h2. Screenshots
 
