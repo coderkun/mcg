@@ -10,6 +10,7 @@ Dependencies:
 
 * "Python":http://www.python.org 3
 * "GTK":http://www.gtk.org 3 ("python-gobject":https://live.gnome.org/PyGObject)
+* "Avahi":http://www.avahi.org (optional)
 * "python-keyring":http://pypi.python.org/pypi/keyring (optional)
 * "python-setuptools":https://pypi.python.org/pypi/setuptools (building)
 
