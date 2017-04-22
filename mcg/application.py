@@ -3,6 +3,7 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
+import locale
 import logging
 import urllib
 
@@ -17,6 +18,7 @@ from mcg import widgets
 class Application(Gtk.Application):
     TITLE = "MPDCoverGrid"
     ID = 'de.coderkun.mcg'
+    DOMAIN = 'mcg'
 
 
     def _get_option(shortname, longname, description):
@@ -52,6 +54,7 @@ class Application(Gtk.Application):
         self._load_resource()
         self._load_settings()
         self._load_css()
+        self._setup_locale()
         self._load_ui()
 
 
@@ -90,9 +93,15 @@ class Application(Gtk.Application):
         )
 
 
+    def _setup_locale(self):
+        relpath = Environment.get_locale()
+        locale.bindtextdomain(Application.DOMAIN, relpath)
+
+
     def _load_ui(self):
         # Create builder to load UI
         self._builder = Gtk.Builder()
+        self._builder.set_translation_domain(Application.DOMAIN)
         self._builder.add_from_resource(self._get_resource_path('gtk.glade'))
 
 

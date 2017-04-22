@@ -1,0 +1,104 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MPDCoverGrid\n"
+"POT-Creation-Date: 2017-04-22 14:55+0200\n"
+"PO-Revision-Date: 2017-04-22 14:55+0200\n"
+"Last-Translator: coderkun <olli@coderkun.de>\n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.1\n"
+"X-Poedit-Basepath: ../../..\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: data/gtk.glade\n"
+
+#: data/gtk.glade:21
+msgid "Tracklist"
+msgstr "Titelliste"
+
+#: data/gtk.glade:31
+msgid "large tracklist"
+msgstr "große Titelliste"
+
+#: data/gtk.glade:47
+msgid "small tracklist"
+msgstr "kleine Titelliste"
+
+#: data/gtk.glade:64
+msgid "hide tracklist"
+msgstr "gar keine Titelliste"
+
+#: data/gtk.glade:116 data/gtk.glade:172
+msgid "Title"
+msgstr "Titel"
+
+#: data/gtk.glade:133 data/gtk.glade:189
+msgid "Artist"
+msgstr "Künstler"
+
+#: data/gtk.glade:269
+msgid "Sort"
+msgstr "Sortierung"
+
+#: data/gtk.glade:279
+msgid "sort by artist"
+msgstr "nach Künstler"
+
+#: data/gtk.glade:295
+msgid "sort by title"
+msgstr "nach Titel"
+
+#: data/gtk.glade:311
+msgid "sort by year"
+msgstr "nach Jahr"
+
+#: data/gtk.glade:435
+msgid "Enter hostname or IP address"
+msgstr "Hostnamen oder IP-Adresse eingeben"
+
+#: data/gtk.glade:447
+msgid "Enter URL or local path"
+msgstr "URL oder lokalen Pfad eingeben"
+
+#: data/gtk.glade:459
+msgid "Enter password or leave blank"
+msgstr "Passwort eingeben oder leer lassen"
+
+#: data/gtk.glade:484
+msgid "Host:"
+msgstr "Host:"
+
+#: data/gtk.glade:496
+msgid "Port:"
+msgstr "Port:"
+
+#: data/gtk.glade:508
+msgid "Password:"
+msgstr "Passwort:"
+
+#: data/gtk.glade:520
+msgid "Image Directory:"
+msgstr "Bildordner:"
+
+#: data/gtk.glade:544 data/gtk.glade:1200
+msgid "Server"
+msgstr "Server"
+
+#: data/gtk.glade:697 data/gtk.glade:1185
+msgid "Cover"
+msgstr "Cover"
+
+#: data/gtk.glade:808 data/gtk.glade:1234
+msgid "Playlist"
+msgstr "Wiedergabeliste"
+
+#: data/gtk.glade:835
+msgid "search library"
+msgstr "durchsuche Bibliothek"
+
+#: data/gtk.glade:976 data/gtk.glade:1289
+msgid "Library"
+msgstr "Bibliothek"

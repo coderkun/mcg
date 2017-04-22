@@ -569,7 +569,7 @@ class ConnectionPanel(GObject.GObject):
         self._port_spinner = builder.get_object('server-port')
         # Passwort
         self._password_entry = builder.get_object('server-password')
-        # Image dir
+        # Image directory
         self._image_dir_entry = builder.get_object('server-image-dir')
 
         # Zeroconf provider

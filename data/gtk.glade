@@ -431,8 +431,8 @@
                           <object class="GtkEntry" id="server-host">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="text" translatable="yes">localhost</property>
-                            <property name="placeholder_text" translatable="yes">Host</property>
+                            <property name="text">localhost</property>
+                            <property name="placeholder_text" translatable="yes">Enter hostname or IP address</property>
                             <signal name="focus-out-event" handler="on_server-host_focus_out_event" swapped="no"/>
                           </object>
                           <packing>
@@ -444,7 +444,7 @@
                           <object class="GtkEntry" id="server-image-dir">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="placeholder_text" translatable="yes">Image Directory</property>
+                            <property name="placeholder_text" translatable="yes">Enter URL or local path</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -456,7 +456,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="visibility">False</property>
-                            <property name="placeholder_text" translatable="yes">Password</property>
+                            <property name="placeholder_text" translatable="yes">Enter password or leave blank</property>
                             <property name="input_purpose">password</property>
                           </object>
                           <packing>
@@ -517,7 +517,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="halign">start</property>
-                            <property name="label" translatable="yes">Image Dir:</property>
+                            <property name="label" translatable="yes">Image Directory:</property>
                           </object>
                           <packing>
                             <property name="left_attach">1</property>
@@ -730,7 +730,7 @@
                   </object>
                   <packing>
                     <property name="name">page0</property>
-                    <property name="title" translatable="yes">page0</property>
+                    <property name="title">page0</property>
                   </packing>
                 </child>
                 <child>
@@ -798,7 +798,7 @@
                   </object>
                   <packing>
                     <property name="name">page1</property>
-                    <property name="title" translatable="yes">page1</property>
+                    <property name="title">page1</property>
                     <property name="position">1</property>
                   </packing>
                 </child>
@@ -897,7 +897,7 @@
                   </object>
                   <packing>
                     <property name="name">page0</property>
-                    <property name="title" translatable="yes">page0</property>
+                    <property name="title">page0</property>
                   </packing>
                 </child>
                 <child>
@@ -966,7 +966,7 @@
                   </object>
                   <packing>
                     <property name="name">page1</property>
-                    <property name="title" translatable="yes">page1</property>
+                    <property name="title">page1</property>
                     <property name="position">1</property>
                   </packing>
                 </child>

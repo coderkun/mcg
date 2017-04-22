@@ -52,6 +52,10 @@ setup(
             "data/gtk.glade",
             "data/mcg.css",
             "data/noise-texture.png"
+        ]),
+        (os.path.join('share', 'locale'), [
+            'locale/en/LC_MESSAGES/mcg.mo',
+            'locale/de/LC_MESSAGES/mcg.mo'
         ])
     ],
     classifiers = [

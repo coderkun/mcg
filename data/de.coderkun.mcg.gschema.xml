@@ -23,7 +23,7 @@
 		</key>
 		<key type="s" name="image-dir">
 			<default>''</default>
-			<summary>Image dir</summary>
+			<summary>Image directory</summary>
 			<description>Directory which a webserver is providing images on</description>
 		</key>
 		<key type="b" name="connected">
