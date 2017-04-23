@@ -318,6 +318,7 @@ class Client(Base):
         if subsystems:
             if subsystems['changed'] == 'player':
                 self.get_status()
+                self.load_playlist()
             if subsystems['changed'] == 'mixer':
                 self.get_status()
             if subsystems['changed'] == 'playlist':
