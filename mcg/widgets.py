@@ -803,7 +803,7 @@ class CoverPanel(GObject.GObject):
                 ', '.join(album.get_artists())
             )
         )
-    
+
         # Set tracks
         self._set_tracks(album)
 
@@ -1034,8 +1034,7 @@ class PlaylistPanel(GObject.GObject):
         self._standalone_artist.set_text(", ".join(album.get_artists()))
 
         # Show panel
-        self._panel.set_visible_child(self._panel_standalone)
-        self._appwindow.set_titlebar(self._headerbar_standalone)
+        self._open_standalone()
 
         # Load cover
         threading.Thread(target=self._show_standalone_image, args=(album,)).start()
@@ -1046,16 +1045,17 @@ class PlaylistPanel(GObject.GObject):
 
 
     def on_standalone_close_clicked(self, widget):
-        self._panel.set_visible_child(self._panel.get_children()[0])
-        self._appwindow.set_titlebar(self._headerbar)
+        self._close_standalone()
 
 
     def on_standalone_remove_clicked(self, widget):
         self.emit('remove', self._selected_albums[0])
+        self._close_standalone()
 
 
     def on_standalone_play_clicked(self, widget):
         self.emit('play', self._selected_albums[0])
+        self._close_standalone()
 
 
     def set_item_size(self, item_size):
@@ -1125,6 +1125,16 @@ class PlaylistPanel(GObject.GObject):
     def _redraw(self):
         if self._playlist is not None:
             self.set_playlist(self._host, self._playlist)
+
+
+    def _open_standalone(self):
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+
+    def _close_standalone(self):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def _show_standalone_image(self, album):
@@ -1340,8 +1350,7 @@ class LibraryPanel(GObject.GObject):
         self._standalone_artist.set_text(", ".join(album.get_artists()))
 
         # Show panel
-        self._panel.set_visible_child(self._panel_standalone)
-        self._appwindow.set_titlebar(self._headerbar_standalone)
+        self._open_standalone()
 
         # Load cover
         threading.Thread(target=self._show_standalone_image, args=(album,)).start()
@@ -1361,11 +1370,11 @@ class LibraryPanel(GObject.GObject):
 
     def on_standalone_play_clicked(self, widget):
         self.emit('play', self._selected_albums[0].get_hash())
+        self._close_standalone()
 
 
     def on_standalone_close_clicked(self, widget):
-        self._panel.set_visible_child(self._panel.get_children()[0])
-        self._appwindow.set_titlebar(self._headerbar)
+        self._close_standalone()
 
 
     def set_item_size(self, item_size):
@@ -1541,6 +1550,16 @@ class LibraryPanel(GObject.GObject):
     def _redraw(self):
         if self._albums is not None:
             self.set_albums(self._host, self._albums)
+
+
+    def _open_standalone(self):
+        self._panel.set_visible_child(self._panel_standalone)
+        self._appwindow.set_titlebar(self._headerbar_standalone)
+
+
+    def _close_standalone(self):
+        self._panel.set_visible_child(self._panel.get_children()[0])
+        self._appwindow.set_titlebar(self._headerbar)
 
 
     def _show_standalone_image(self, album):
