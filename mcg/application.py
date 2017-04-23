@@ -56,6 +56,8 @@ class Application(Gtk.Application):
         self._load_css()
         self._setup_locale()
         self._load_ui()
+        self._setup_actions()
+        self._load_appmenu()
 
 
     def do_activate(self):
@@ -63,6 +65,10 @@ class Application(Gtk.Application):
         if not self._window:
             self._window = widgets.Window(self, self._builder, Application.TITLE, self._settings)
         self._window.present()
+
+
+    def on_quit(self, action, param):
+        self.quit()
 
 
     def _setup_logging(self):
@@ -103,6 +109,19 @@ class Application(Gtk.Application):
         self._builder = Gtk.Builder()
         self._builder.set_translation_domain(Application.DOMAIN)
         self._builder.add_from_resource(self._get_resource_path('gtk.glade'))
+
+
+    def _setup_actions(self):
+        action = Gio.SimpleAction.new("quit", None)
+        action.connect('activate', self.on_quit)
+        self.add_action(action)
+
+
+    def _load_appmenu(self):
+        builder = Gtk.Builder()
+        builder.set_translation_domain(Application.DOMAIN)
+        builder.add_from_resource(self._get_resource_path('menu.ui'))
+        self.set_app_menu(builder.get_object('app-menu'))
 
 
     def _get_resource_path(self, path):

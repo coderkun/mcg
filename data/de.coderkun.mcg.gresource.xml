@@ -2,6 +2,7 @@
 <gresources>
     <gresource prefix="/de/coderkun/mcg">
         <file>gtk.glade</file>
+        <file>menu.ui</file>
         <file>mcg.css</file>
         <file>noise-texture.png</file>
     </gresource>

@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MPDCoverGrid\n"
-"POT-Creation-Date: 2017-04-22 14:55+0200\n"
-"PO-Revision-Date: 2017-04-22 14:56+0200\n"
+"POT-Creation-Date: 2017-04-23 11:44+0200\n"
+"PO-Revision-Date: 2017-04-23 11:44+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: en\n"
@@ -13,6 +13,7 @@ msgstr ""
 "X-Poedit-Basepath: ../../..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: data/gtk.glade\n"
+"X-Poedit-SearchPath-1: data/menu.ui\n"
 
 #: data/gtk.glade:21
 msgid "Tracklist"
@@ -54,50 +55,54 @@ msgstr "by Title"
 msgid "sort by year"
 msgstr "by Year"
 
-#: data/gtk.glade:435
+#: data/gtk.glade:436
 msgid "Enter hostname or IP address"
 msgstr "Enter hostname or IP address"
 
-#: data/gtk.glade:447
+#: data/gtk.glade:448
 msgid "Enter URL or local path"
 msgstr "Enter URL or local path"
 
-#: data/gtk.glade:459
+#: data/gtk.glade:460
 msgid "Enter password or leave blank"
 msgstr "Enter password or leave blank"
 
-#: data/gtk.glade:484
+#: data/gtk.glade:485
 msgid "Host:"
 msgstr "Host:"
 
-#: data/gtk.glade:496
+#: data/gtk.glade:497
 msgid "Port:"
 msgstr "Port:"
 
-#: data/gtk.glade:508
+#: data/gtk.glade:509
 msgid "Password:"
 msgstr "Password:"
 
-#: data/gtk.glade:520
+#: data/gtk.glade:521
 msgid "Image Directory:"
 msgstr "Image Directory:"
 
-#: data/gtk.glade:544 data/gtk.glade:1200
+#: data/gtk.glade:545 data/gtk.glade:1201
 msgid "Server"
 msgstr "Server"
 
-#: data/gtk.glade:697 data/gtk.glade:1185
+#: data/gtk.glade:698 data/gtk.glade:1186
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:808 data/gtk.glade:1234
+#: data/gtk.glade:809 data/gtk.glade:1235
 msgid "Playlist"
 msgstr "Playlist"
 
-#: data/gtk.glade:835
+#: data/gtk.glade:836
 msgid "search library"
 msgstr "search library"
 
-#: data/gtk.glade:976 data/gtk.glade:1289
+#: data/gtk.glade:977 data/gtk.glade:1290
 msgid "Library"
 msgstr "Library"
+
+#: data/menu.ui:7
+msgid "_Quit"
+msgstr "_Quit"
