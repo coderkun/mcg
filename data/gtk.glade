@@ -542,7 +542,7 @@
               </object>
               <packing>
                 <property name="name">connection</property>
-                <property name="title" translatable="yes">Server</property>
+                <property name="title" translatable="yes">Connection</property>
               </packing>
             </child>
             <child>
@@ -1183,7 +1183,6 @@
               </object>
               <packing>
                 <property name="name">cover</property>
-                <property name="title" translatable="yes">Cover</property>
               </packing>
             </child>
             <child>
@@ -1198,7 +1197,6 @@
               </object>
               <packing>
                 <property name="name">server</property>
-                <property name="title" translatable="yes">Server</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -1232,7 +1230,6 @@
               </object>
               <packing>
                 <property name="name">playlist</property>
-                <property name="title" translatable="yes">Playlist</property>
                 <property name="position">2</property>
               </packing>
             </child>
@@ -1287,7 +1284,6 @@
               </object>
               <packing>
                 <property name="name">library</property>
-                <property name="title" translatable="yes">Library</property>
                 <property name="position">3</property>
               </packing>
             </child>

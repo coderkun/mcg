@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MPDCoverGrid\n"
-"POT-Creation-Date: 2017-04-23 11:44+0200\n"
-"PO-Revision-Date: 2017-04-23 11:44+0200\n"
+"POT-Creation-Date: 2017-04-24 14:44+0200\n"
+"PO-Revision-Date: 2017-04-24 14:44+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: en\n"
@@ -83,15 +83,15 @@ msgstr "Password:"
 msgid "Image Directory:"
 msgstr "Image Directory:"
 
-#: data/gtk.glade:545 data/gtk.glade:1201
-msgid "Server"
-msgstr "Server"
+#: data/gtk.glade:545 data/menu.ui:26
+msgid "Connection"
+msgstr "Connection"
 
-#: data/gtk.glade:698 data/gtk.glade:1186
+#: data/gtk.glade:698 data/menu.ui:32
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:809 data/gtk.glade:1235
+#: data/gtk.glade:809 data/menu.ui:38
 msgid "Playlist"
 msgstr "Playlist"
 
@@ -99,10 +99,25 @@ msgstr "Playlist"
 msgid "search library"
 msgstr "search library"
 
-#: data/gtk.glade:977 data/gtk.glade:1290
+#: data/gtk.glade:977 data/menu.ui:44
 msgid "Library"
 msgstr "Library"
 
 #: data/menu.ui:7
+msgid "Connect"
+msgstr "Connect"
+
+#: data/menu.ui:14
+msgid "_Play"
+msgstr "Play"
+
+#: data/menu.ui:19
+msgid "Clear Playlist"
+msgstr "Clear Playlist"
+
+#: data/menu.ui:52
 msgid "_Quit"
 msgstr "_Quit"
+
+#~ msgid "Server"
+#~ msgstr "Server"
