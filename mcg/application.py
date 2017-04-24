@@ -67,7 +67,7 @@ class Application(Gtk.Application):
         self._window.present()
 
 
-    def on_quit(self, action, param):
+    def on_menu_quit(self, action, value):
         self.quit()
 
 
@@ -113,7 +113,7 @@ class Application(Gtk.Application):
 
     def _setup_actions(self):
         action = Gio.SimpleAction.new("quit", None)
-        action.connect('activate', self.on_quit)
+        action.connect('activate', self.on_menu_quit)
         self.add_action(action)
 
 

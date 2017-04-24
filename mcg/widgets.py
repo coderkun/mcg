@@ -13,7 +13,7 @@ import math
 import sys
 import threading
 
-from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, GLib
+from gi.repository import Gtk, Gdk, GObject, GdkPixbuf, GLib, Gio
 
 from mcg import client
 from mcg.utils import SortOrder
@@ -132,6 +132,21 @@ class Window():
         if self._settings.get_boolean(Window.SETTING_CONNECTED):
             self._connect()
 
+        # Menu actions
+        self._connect_action = Gio.SimpleAction.new_stateful("connect", None, GLib.Variant.new_boolean(False))
+        self._connect_action.connect('change-state', self.on_menu_connect)
+        self._appwindow.add_action(self._connect_action)
+        self._play_action = Gio.SimpleAction.new_stateful("play", None, GLib.Variant.new_boolean(False))
+        self._play_action.connect('change-state', self.on_menu_play)
+        self._appwindow.add_action(self._play_action)
+        self._clear_playlist_action = Gio.SimpleAction.new("clear-playlist", None)
+        self._clear_playlist_action.connect('activate', self.on_menu_clear_playlist)
+        self._appwindow.add_action(self._clear_playlist_action)
+        panel_variant = GLib.Variant.new_string("0")
+        self._panel_action = Gio.SimpleAction.new_stateful("panel", panel_variant.get_type(), panel_variant)
+        self._panel_action.connect('change-state', self.on_menu_panel)
+        self._appwindow.add_action(self._panel_action)
+
 
     def present(self):
         self._appwindow.present()
@@ -153,11 +168,29 @@ class Window():
         self._settings.set_value(Window.SETTING_WINDOW_SIZE, GLib.Variant('ai', list(self._size)))
 
 
+    def on_menu_connect(self, action, value):
+        self._connect()
+
+
+    def on_menu_play(self, action, value):
+        self._mcg.playpause()
+
+
+    def on_menu_clear_playlist(self, action, value):
+        self._mcg.clear_playlist()
+
+
+    def on_menu_panel(self, action, value):
+        action.set_state(value)
+        self._stack.set_visible_child(self._panels[int(value.get_string())].get())
+
+
     # HeaderBar callbacks
 
     def on_header_bar_stack_switched(self, widget):
         self._set_visible_toolbar()
         self._save_visible_panel()
+        self._set_menu_visible_panel()
 
 
     def on_header_bar_connect(self, widget):
@@ -243,8 +276,10 @@ class Window():
             self._mcg.load_playlist()
             self._mcg.load_albums()
             self._mcg.get_status()
+            self._connect_action.set_state(GLib.Variant.new_boolean(True))
         else:
             GObject.idle_add(self._connect_disconnected)
+            self._connect_action.set_state(GLib.Variant.new_boolean(False))
 
 
     def on_mcg_status(self, state, album, pos, time, volume, error):
@@ -255,9 +290,11 @@ class Window():
         if state == 'play':
             GObject.idle_add(self._header_bar.set_play)
             GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_play, pos, time)
+            self._play_action.set_state(GLib.Variant.new_boolean(True))
         elif state == 'pause' or state == 'stop':
             GObject.idle_add(self._header_bar.set_pause)
             GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_pause)
+            self._play_action.set_state(GLib.Variant.new_boolean(False))
         # Volume
         GObject.idle_add(self._header_bar.set_volume, volume)
         # Error
@@ -357,6 +394,12 @@ class Window():
         panel_index_selected = panels.index(self._stack.get_visible_child())
         if panel_index_selected > 0:
             self._settings.set_int(Window.SETTING_PANEL, panel_index_selected)
+
+
+    def _set_menu_visible_panel(self):
+        panels = [panel.get() for panel in self._panels]
+        panel_index_selected = panels.index(self._stack.get_visible_child())
+        self._panel_action.set_state(GLib.Variant.new_string(str(panel_index_selected)))
 
 
     def _set_visible_toolbar(self):

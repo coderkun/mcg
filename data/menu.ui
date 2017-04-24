@@ -3,6 +3,51 @@
     <menu id="app-menu">
         <section>
             <item>
+                <attribute name="action">win.connect</attribute>
+                <attribute name="label" translatable="yes">Connect</attribute>
+                <attribute name="accel">&lt;Primary&gt;c</attribute>
+            </item>
+        </section>
+        <section>
+            <item>
+                <attribute name="action">win.play</attribute>
+                <attribute name="label" translatable="yes">_Play</attribute>
+                <attribute name="accel">&lt;Primary&gt;p</attribute>
+            </item>
+            <item>
+                <attribute name="action">win.clear-playlist</attribute>
+                <attribute name="label" translatable="yes">Clear Playlist</attribute>
+                <attribute name="accel">&lt;Primary&gt;r</attribute>
+            </item>
+        </section>
+        <section>
+            <item>
+                <attribute name="action">win.panel</attribute>
+                <attribute name="label" translatable="yes">Connection</attribute>
+                <attribute name="target">0</attribute>
+                <attribute name="accel">&lt;alt&gt;KP_1</attribute>
+            </item>
+            <item>
+                <attribute name="action">win.panel</attribute>
+                <attribute name="label" translatable="yes">Cover</attribute>
+                <attribute name="target">1</attribute>
+                <attribute name="accel">&lt;alt&gt;KP_2</attribute>
+            </item>
+            <item>
+                <attribute name="action">win.panel</attribute>
+                <attribute name="label" translatable="yes">Playlist</attribute>
+                <attribute name="target">2</attribute>
+                <attribute name="accel">&lt;alt&gt;KP_3</attribute>
+            </item>
+            <item>
+                <attribute name="action">win.panel</attribute>
+                <attribute name="label" translatable="yes">Library</attribute>
+                <attribute name="target">3</attribute>
+                <attribute name="accel">&lt;alt&gt;KP_4</attribute>
+            </item>
+        </section>
+        <section>
+            <item>
                 <attribute name="action">app.quit</attribute>
                 <attribute name="label" translatable="yes">_Quit</attribute>
                 <attribute name="accel">&lt;Primary&gt;q</attribute>
