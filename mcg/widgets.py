@@ -24,6 +24,38 @@ from mcg.zeroconf import ZeroconfProvider
 
 
 
+class InfoDialog():
+
+
+    def __init__(self, builder):
+        self._logger = logging.getLogger(__name__)
+
+        # Widgets
+        self._info_dialog = builder.get_object('info-dialog')
+        self._resize_logo()
+
+
+    def get(self):
+        return self._info_dialog
+
+
+    def run(self):
+        self._info_dialog.run()
+        self._info_dialog.hide()
+
+
+    def _resize_logo(self):
+        try:
+            logo_pixbuf = self._info_dialog.get_logo()
+            self._info_dialog.set_logo(
+                logo_pixbuf.scale_simple(256, 256, GdkPixbuf.InterpType.HYPER)
+            )
+        except:
+            self._logger.warn("Failed to resize logo")
+
+
+
+
 class Window():
     SETTING_HOST = 'host'
     SETTING_PORT = 'port'

@@ -32,7 +32,8 @@ class Application(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id=Application.ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
-        self._verbosity = self._verbosity = logging.WARNING
+        self._info_dialog = None
+        self._verbosity = logging.WARNING
         self.add_main_option_entries([
             Application._get_option("v", "verbose", "Be verbose: show info messages"),
             Application._get_option("d", "debug", "Enable debugging: show debug messages")
@@ -65,6 +66,12 @@ class Application(Gtk.Application):
         if not self._window:
             self._window = widgets.Window(self, self._builder, Application.TITLE, self._settings)
         self._window.present()
+
+
+    def on_menu_info(self, action, value):
+        if not self._info_dialog:
+            self._info_dialog = widgets.InfoDialog(self._builder)
+        self._info_dialog.run()
 
 
     def on_menu_quit(self, action, value):
@@ -112,6 +119,9 @@ class Application(Gtk.Application):
 
 
     def _setup_actions(self):
+        action = Gio.SimpleAction.new("info", None)
+        action.connect('activate', self.on_menu_info)
+        self.add_action(action)
         action = Gio.SimpleAction.new("quit", None)
         action.connect('activate', self.on_menu_quit)
         self.add_action(action)
