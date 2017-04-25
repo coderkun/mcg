@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MPDCoverGrid\n"
-"POT-Creation-Date: 2017-04-24 14:44+0200\n"
-"PO-Revision-Date: 2017-04-24 14:44+0200\n"
+"POT-Creation-Date: 2017-04-24 15:54+0200\n"
+"PO-Revision-Date: 2017-04-24 15:56+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -103,6 +103,34 @@ msgstr "durchsuche Bibliothek"
 #: data/gtk.glade:977 data/menu.ui:44
 msgid "Library"
 msgstr "Bibliothek"
+
+#: data/gtk.glade:1049
+msgid "Connect or disconnect"
+msgstr "Die Verbindung herstellen oder trennen"
+
+#: data/gtk.glade:1071
+msgid "Switch between play and pause"
+msgstr "Wechsle zwischen Abspielen und Pause"
+
+#: data/gtk.glade:1091
+msgid "Adjust the volume"
+msgstr "Passe die Lautstärke an"
+
+#: data/gtk.glade:1149
+msgid "Show the cover in fullscreen mode"
+msgstr "Zeige das Cover im Vollbildmodus"
+
+#: data/gtk.glade:1171 data/gtk.glade:1275
+msgid "Settings and actions"
+msgstr "Einstellungen und Aktionen"
+
+#: data/gtk.glade:1219
+msgid "Clear the playlist"
+msgstr "Leere die Wiedergabeliste"
+
+#: data/gtk.glade:1253
+msgid "Search the library"
+msgstr "Die Bibliothek durchsuchen"
 
 #: data/menu.ui:7
 msgid "Connect"

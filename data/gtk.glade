@@ -1046,6 +1046,7 @@
           <object class="GtkSwitch" id="headerbar-connection">
             <property name="visible">True</property>
             <property name="can_focus">True</property>
+            <property name="tooltip_text" translatable="yes">Connect or disconnect</property>
             <signal name="notify::active" handler="on_headerbar-connection_active_notify" swapped="no"/>
             <signal name="state-set" handler="on_headerbar-connection_state_set" swapped="no"/>
           </object>
@@ -1067,6 +1068,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="receives_default">True</property>
+            <property name="tooltip_text" translatable="yes">Switch between play and pause</property>
             <signal name="toggled" handler="on_headerbar-playpause_toggled" swapped="no"/>
             <child>
               <object class="GtkImage">
@@ -1086,6 +1088,7 @@
             <property name="can_focus">True</property>
             <property name="focus_on_click">False</property>
             <property name="receives_default">True</property>
+            <property name="tooltip_text" translatable="yes">Adjust the volume</property>
             <property name="relief">none</property>
             <property name="orientation">vertical</property>
             <property name="icons">audio-volume-muted
@@ -1143,6 +1146,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Show the cover in fullscreen mode</property>
                     <signal name="clicked" handler="on_cover-toolbar-fullscreen_clicked" swapped="no"/>
                     <child>
                       <object class="GtkImage">
@@ -1164,6 +1168,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Settings and actions</property>
                     <property name="popover">cover-toolbar-popover</property>
                     <child>
                       <object class="GtkImage">
@@ -1211,6 +1216,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Clear the playlist</property>
                     <signal name="clicked" handler="on_playlist-toolbar-clear_clicked" swapped="no"/>
                     <child>
                       <object class="GtkImage">
@@ -1244,6 +1250,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Search the library</property>
                     <signal name="toggled" handler="on_library-toolbar-search_toggled" swapped="no"/>
                     <child>
                       <object class="GtkImage">
@@ -1265,6 +1272,7 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Settings and actions</property>
                     <property name="popover">library-toolbar-popover</property>
                     <child>
                       <object class="GtkImage">
