@@ -91,7 +91,7 @@ class Application(Gtk.Application):
 
     def _load_css(self):
         styleProvider = Gtk.CssProvider()
-        styleProvider.load_from_resource(self._get_resource_path('mcg.css'))
+        styleProvider.load_from_resource(self._get_resource_path('gtk.css'))
         Gtk.StyleContext.add_provider_for_screen(
             Gdk.Screen.get_default(),
             styleProvider,
