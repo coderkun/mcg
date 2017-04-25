@@ -31,9 +31,9 @@ class build_mcg(build_py):
 
 setup(
     cmdclass = {'build_py': build_mcg},
-    name = "MPDCoverGrid",
-    version = "0.6",
-    description = "MPDCoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",
+    name = "CoverGrid",
+    version = 0.6,
+    description = "CoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",
     url = "http://www.coderkun.de/codes/mcg",
     author = "coderkun",
     author_email = "olli@coderkun.de",

@@ -16,7 +16,7 @@ from mcg import widgets
 
 
 class Application(Gtk.Application):
-    TITLE = "MPDCoverGrid"
+    TITLE = "CoverGrid"
     ID = 'de.coderkun.mcg'
     DOMAIN = 'mcg'
 
