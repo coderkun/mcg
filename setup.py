@@ -73,9 +73,6 @@ setup(
         ]),
         (os.path.join('share', 'mcg'), [
             "data/de.coderkun.mcg.gresource",
-            "data/gtk.glade",
-            "data/mcg.css",
-            "data/noise-texture.png"
         ]),
         (os.path.join('share', 'locale'), [
             'locale/en/LC_MESSAGES/mcg.mo',
