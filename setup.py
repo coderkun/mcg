@@ -63,7 +63,7 @@ setup(
     },
     data_files = [
         (os.path.join('share', 'applications'), [
-            "data/MPDCoverGrid.desktop"
+            "data/mcg.desktop"
         ]),
         (os.path.join('share', 'icons'), [
             "data/mcg.svg"

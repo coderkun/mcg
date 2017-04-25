@@ -1,10 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=MPDCoverGrid
+Name=CoverGrid
 Comment=Covergrid for the Music Player Daemon
 Type=Application
+Icon=mcg.svg
 Exec=mcg
-Path=
 Categories=AudioVideo;
 StartupNotify=true
-Name[de_DE]=MPDCoverGrid.desktop
