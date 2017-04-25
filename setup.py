@@ -65,6 +65,9 @@ setup(
         (os.path.join('share', 'applications'), [
             "data/MPDCoverGrid.desktop"
         ]),
+        (os.path.join('share', 'icons'), [
+            "data/mcg.svg"
+        ]),
         (os.path.join('share', 'glib-2.0', 'schemas'), [
             "data/de.coderkun.mcg.gschema.xml"
         ]),

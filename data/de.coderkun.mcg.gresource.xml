@@ -4,6 +4,7 @@
         <file>gtk.glade</file>
         <file>menu.ui</file>
         <file>mcg.css</file>
+        <file>mcg.svg</file>
         <file>noise-texture.png</file>
     </gresource>
 </gresources>
