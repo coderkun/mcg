@@ -32,6 +32,7 @@ class Application(Gtk.Application):
     def __init__(self):
         Gtk.Application.__init__(self, application_id=Application.ID, flags=Gio.ApplicationFlags.FLAGS_NONE)
         self._window = None
+        self._shortcuts_window = None
         self._info_dialog = None
         self._verbosity = logging.WARNING
         self.add_main_option_entries([
@@ -66,6 +67,14 @@ class Application(Gtk.Application):
         if not self._window:
             self._window = widgets.Window(self, self._builder, Application.TITLE, self._settings)
         self._window.present()
+
+
+    def on_menu_shortcuts(self, action, value):
+        builder = Gtk.Builder()
+        builder.set_translation_domain(Application.DOMAIN)
+        builder.add_from_resource(self._get_resource_path('gtk.shortcuts.ui'))
+        shortcuts_dialog = widgets.ShortcutsDialog(builder, self._window)
+        shortcuts_dialog.present()
 
 
     def on_menu_info(self, action, value):
@@ -119,6 +128,9 @@ class Application(Gtk.Application):
 
 
     def _setup_actions(self):
+        action = Gio.SimpleAction.new("shortcuts", None)
+        action.connect('activate', self.on_menu_shortcuts)
+        self.add_action(action)
         action = Gio.SimpleAction.new("info", None)
         action.connect('activate', self.on_menu_info)
         self.add_action(action)

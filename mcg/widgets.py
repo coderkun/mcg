@@ -24,6 +24,25 @@ from mcg.zeroconf import ZeroconfProvider
 
 
 
+class ShortcutsDialog():
+
+
+    def __init__(self, builder, window):
+        # Widgets
+        self._window = builder.get_object('shortcuts-dialog')
+        self._window.set_transient_for(window.get())
+
+
+    def get(self):
+        return self._window
+
+
+    def present(self):
+        self._window.present()
+
+
+
+
 class InfoDialog():
 
 
@@ -181,6 +200,10 @@ class Window():
         self._panel_action.set_enabled(False)
         self._panel_action.connect('change-state', self.on_menu_panel)
         self._appwindow.add_action(self._panel_action)
+
+
+    def get(self):
+        return self._appwindow
 
 
     def present(self):

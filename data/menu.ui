@@ -48,6 +48,11 @@
         </section>
         <section>
             <item>
+                <attribute name="action">app.shortcuts</attribute>
+                <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+                <attribute name="accel">&lt;Primary&gt;k</attribute>
+            </item>
+            <item>
                 <attribute name="action">app.info</attribute>
                 <attribute name="label" translatable="yes">Info</attribute>
                 <attribute name="accel">&lt;Primary&gt;i</attribute>
