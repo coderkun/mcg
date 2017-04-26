@@ -142,7 +142,7 @@ class Application(Gtk.Application):
     def _load_appmenu(self):
         builder = Gtk.Builder()
         builder.set_translation_domain(Application.DOMAIN)
-        builder.add_from_resource(self._get_resource_path('menu.ui'))
+        builder.add_from_resource(self._get_resource_path('gtk.menu.ui'))
         self.set_app_menu(builder.get_object('app-menu'))
 
 

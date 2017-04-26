@@ -4,7 +4,7 @@
         <file>gtk.glade</file>
         <file>gtk.css</file>
         <file>gtk.shortcuts.ui</file>
-        <file>menu.ui</file>
+        <file>gtk.menu.ui</file>
         <file>mcg.svg</file>
         <file>noise-texture.png</file>
     </gresource>
