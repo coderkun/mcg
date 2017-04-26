@@ -1,6 +1,6 @@
-h1. MPDCoverGrid
+h1. CoverGrid
 
-MPDCoverGrid (mcg) is a client for the "Music Player Daemon":http://www.musicpd.org (MPD), focusing on albums instead of single tracks. It is not intended to be a replacement for your favorite MPD client but an addition to get a better album-experience.
+CoverGrid (mcg) is a client for the "Music Player Daemon":http://www.musicpd.org (MPD), focusing on albums instead of single tracks. It is not intended to be a replacement for your favorite MPD client but an addition to get a better album-experience.
 
 Website: https://www.coderkun.de/codes/mcg
 

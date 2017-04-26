@@ -33,7 +33,7 @@ setup(
     cmdclass = {'build_py': build_mcg},
     name = "CoverGrid",
     version = 0.6,
-    description = "CoverGrid is a client for the Music Player Daemon, focused on albums instead of single tracks.",
+    description = "CoverGrid is a client for the Music Player Daemon, focusing on albums instead of single tracks.",
     url = "http://www.coderkun.de/codes/mcg",
     author = "coderkun",
     author_email = "olli@coderkun.de",
