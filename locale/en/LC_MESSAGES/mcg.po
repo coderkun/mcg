@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MPDCoverGrid\n"
-"POT-Creation-Date: 2017-04-24 15:54+0200\n"
-"PO-Revision-Date: 2017-04-24 15:54+0200\n"
+"POT-Creation-Date: 2017-04-26 12:08+0200\n"
+"PO-Revision-Date: 2017-04-26 12:11+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: en\n"
@@ -13,7 +13,8 @@ msgstr ""
 "X-Poedit-Basepath: ../../..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SearchPath-0: data/gtk.glade\n"
-"X-Poedit-SearchPath-1: data/menu.ui\n"
+"X-Poedit-SearchPath-1: data/gtk.menu.ui\n"
+"X-Poedit-SearchPath-2: data/gtk.shortcuts.ui\n"
 
 #: data/gtk.glade:21
 msgid "Tracklist"
@@ -83,15 +84,15 @@ msgstr "Password:"
 msgid "Image Directory:"
 msgstr "Image Directory:"
 
-#: data/gtk.glade:545 data/menu.ui:26
+#: data/gtk.glade:545 data/gtk.menu.ui:24
 msgid "Connection"
 msgstr "Connection"
 
-#: data/gtk.glade:698 data/menu.ui:32
+#: data/gtk.glade:698 data/gtk.menu.ui:30
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:809 data/menu.ui:38
+#: data/gtk.glade:809 data/gtk.menu.ui:36
 msgid "Playlist"
 msgstr "Playlist"
 
@@ -99,15 +100,15 @@ msgstr "Playlist"
 msgid "search library"
 msgstr "search library"
 
-#: data/gtk.glade:977 data/menu.ui:44
+#: data/gtk.glade:977 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Library"
 
-#: data/gtk.glade:1049
+#: data/gtk.glade:1049 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Connect or disconnect"
 
-#: data/gtk.glade:1071
+#: data/gtk.glade:1071 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
 msgstr "Switch between play and pause"
 
@@ -115,37 +116,107 @@ msgstr "Switch between play and pause"
 msgid "Adjust the volume"
 msgstr "Adjust the volume"
 
-#: data/gtk.glade:1149
+#: data/gtk.glade:1149 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
 msgstr "Show the cover in fullscreen mode"
 
-#: data/gtk.glade:1171 data/gtk.glade:1275
+#: data/gtk.glade:1172 data/gtk.glade:1277
 msgid "Settings and actions"
 msgstr "Settings and actions"
 
-#: data/gtk.glade:1219
+#: data/gtk.glade:1220 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
 msgstr "Clear the playlist"
 
-#: data/gtk.glade:1253
+#: data/gtk.glade:1254 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Search the library"
 
-#: data/menu.ui:7
+#: data/gtk.glade:1322
+msgid ""
+"CoverGrid is a client for the Music Player Daemon, focused on albums instead "
+"of single tracks."
+msgstr ""
+
+#: data/gtk.menu.ui:7
 msgid "Connect"
 msgstr "Connect"
 
-#: data/menu.ui:14
-msgid "_Play"
+#: data/gtk.menu.ui:12
+msgid "Play"
 msgstr "Play"
 
-#: data/menu.ui:19
+#: data/gtk.menu.ui:17
 msgid "Clear Playlist"
 msgstr "Clear Playlist"
 
-#: data/menu.ui:52
-msgid "_Quit"
-msgstr "_Quit"
+#: data/gtk.menu.ui:50
+msgid "Keyboard Shortcuts"
+msgstr "Keyboard Shortcuts"
+
+#: data/gtk.menu.ui:55
+msgid "Info"
+msgstr "Info"
+
+#: data/gtk.menu.ui:60
+msgid "Quit"
+msgstr "Quit"
+
+#: data/gtk.shortcuts.ui:14
+msgid "General"
+msgstr "General"
+
+#: data/gtk.shortcuts.ui:19
+msgid "Switch to the Connection panel"
+msgstr "Switch to the Connection panel"
+
+#: data/gtk.shortcuts.ui:26
+msgid "Switch to the Cover panel"
+msgstr "Switch to the Cover panel"
+
+#: data/gtk.shortcuts.ui:33
+msgid "Switch to the Playlist panel"
+msgstr "Switch to the Playlist panel"
+
+#: data/gtk.shortcuts.ui:40
+msgid "Switch to the Library panel"
+msgstr "Switch to the Cover panel"
+
+#: data/gtk.shortcuts.ui:47
+msgid "Show the keyboard shortcuts"
+msgstr "Show the keyboard shortcuts (this dialog)"
+
+#: data/gtk.shortcuts.ui:54
+msgid "Open the info dialog"
+msgstr "Open the info dialog"
+
+#: data/gtk.shortcuts.ui:61
+msgid "Quit the application"
+msgstr "Quit the application"
+
+#: data/gtk.shortcuts.ui:69
+msgid "Player"
+msgstr "Player"
+
+#: data/gtk.shortcuts.ui:96
+msgid "Cover Panel"
+msgstr "Cover Panel"
+
+#: data/gtk.shortcuts.ui:109
+msgid "Library Panel"
+msgstr "Library Panel"
+
+#~ msgid "Show the keyboard shortcuts (this dialog)"
+#~ msgstr "Show the keyboard shortcuts (this dialog)"
+
+#~ msgid "_Play"
+#~ msgstr "Play"
+
+#~ msgid "_Keyboard Shortcuts"
+#~ msgstr "_Keyboard Shortcuts"
+
+#~ msgid "_Quit"
+#~ msgstr "_Quit"
 
 #~ msgid "Server"
 #~ msgstr "Server"

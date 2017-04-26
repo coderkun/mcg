@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MPDCoverGrid\n"
-"POT-Creation-Date: 2017-04-24 15:54+0200\n"
-"PO-Revision-Date: 2017-04-24 15:56+0200\n"
+"POT-Creation-Date: 2017-04-26 12:08+0200\n"
+"PO-Revision-Date: 2017-04-26 12:11+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -14,7 +14,8 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Poedit-SearchPath-0: data/gtk.glade\n"
-"X-Poedit-SearchPath-1: data/menu.ui\n"
+"X-Poedit-SearchPath-1: data/gtk.menu.ui\n"
+"X-Poedit-SearchPath-2: data/gtk.shortcuts.ui\n"
 
 #: data/gtk.glade:21
 msgid "Tracklist"
@@ -84,69 +85,139 @@ msgstr "Passwort:"
 msgid "Image Directory:"
 msgstr "Bildordner:"
 
-#: data/gtk.glade:545 data/menu.ui:26
+#: data/gtk.glade:545 data/gtk.menu.ui:24
 msgid "Connection"
 msgstr "Verbindung"
 
-#: data/gtk.glade:698 data/menu.ui:32
+#: data/gtk.glade:698 data/gtk.menu.ui:30
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:809 data/menu.ui:38
+#: data/gtk.glade:809 data/gtk.menu.ui:36
 msgid "Playlist"
 msgstr "Wiedergabeliste"
 
 #: data/gtk.glade:836
 msgid "search library"
-msgstr "durchsuche Bibliothek"
+msgstr "Bibliothek durchsuchen"
 
-#: data/gtk.glade:977 data/menu.ui:44
+#: data/gtk.glade:977 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Bibliothek"
 
-#: data/gtk.glade:1049
+#: data/gtk.glade:1049 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Die Verbindung herstellen oder trennen"
 
-#: data/gtk.glade:1071
+#: data/gtk.glade:1071 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
-msgstr "Wechsle zwischen Abspielen und Pause"
+msgstr "Zwischen Abspielen und Pause wechseln"
 
 #: data/gtk.glade:1091
 msgid "Adjust the volume"
-msgstr "Passe die Lautstärke an"
+msgstr "Die Lautstärke anpassen"
 
-#: data/gtk.glade:1149
+#: data/gtk.glade:1149 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
-msgstr "Zeige das Cover im Vollbildmodus"
+msgstr "Das Cover im Vollbildmodus anzeigen"
 
-#: data/gtk.glade:1171 data/gtk.glade:1275
+#: data/gtk.glade:1172 data/gtk.glade:1277
 msgid "Settings and actions"
 msgstr "Einstellungen und Aktionen"
 
-#: data/gtk.glade:1219
+#: data/gtk.glade:1220 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
-msgstr "Leere die Wiedergabeliste"
+msgstr "Die Wiedergabeliste leeren"
 
-#: data/gtk.glade:1253
+#: data/gtk.glade:1254 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Die Bibliothek durchsuchen"
 
-#: data/menu.ui:7
+#: data/gtk.glade:1322
+msgid ""
+"CoverGrid is a client for the Music Player Daemon, focused on albums instead "
+"of single tracks."
+msgstr ""
+
+#: data/gtk.menu.ui:7
 msgid "Connect"
 msgstr "Verbinden"
 
-#: data/menu.ui:14
-msgid "_Play"
-msgstr "_Abspielen"
+#: data/gtk.menu.ui:12
+msgid "Play"
+msgstr "Abspielen"
 
-#: data/menu.ui:19
+#: data/gtk.menu.ui:17
 msgid "Clear Playlist"
 msgstr "Playlist leeren"
 
-#: data/menu.ui:52
-msgid "_Quit"
-msgstr "_Beenden"
+#: data/gtk.menu.ui:50
+msgid "Keyboard Shortcuts"
+msgstr "Tastenkombinationen"
+
+#: data/gtk.menu.ui:55
+msgid "Info"
+msgstr "Info"
+
+#: data/gtk.menu.ui:60
+msgid "Quit"
+msgstr "Beenden"
+
+#: data/gtk.shortcuts.ui:14
+msgid "General"
+msgstr "Allgemein"
+
+#: data/gtk.shortcuts.ui:19
+msgid "Switch to the Connection panel"
+msgstr "Zum Verbindungspaneel wechseln"
+
+#: data/gtk.shortcuts.ui:26
+msgid "Switch to the Cover panel"
+msgstr "Zum Cover-Paneel wechseln"
+
+#: data/gtk.shortcuts.ui:33
+msgid "Switch to the Playlist panel"
+msgstr "Zum Wiedergabelistenpaneel wechseln"
+
+#: data/gtk.shortcuts.ui:40
+msgid "Switch to the Library panel"
+msgstr "Zum Bibliothekspaneel wechseln"
+
+#: data/gtk.shortcuts.ui:47
+msgid "Show the keyboard shortcuts"
+msgstr "Die Tastenkombinationen anzeigen (dieser Dialog)"
+
+#: data/gtk.shortcuts.ui:54
+msgid "Open the info dialog"
+msgstr "Den Infodialog öffnen"
+
+#: data/gtk.shortcuts.ui:61
+msgid "Quit the application"
+msgstr "Die Anwendung beenden"
+
+#: data/gtk.shortcuts.ui:69
+msgid "Player"
+msgstr "Wiedergabeprogramm"
+
+#: data/gtk.shortcuts.ui:96
+msgid "Cover Panel"
+msgstr "Cover-Paneel"
+
+#: data/gtk.shortcuts.ui:109
+msgid "Library Panel"
+msgstr "Bibliothekspaneel"
+
+#~ msgid "_Play"
+#~ msgstr "_Abspielen"
+
+#~ msgid "_Keyboard Shortcuts"
+#~ msgstr "Tastenkombinationen"
+
+#~ msgid "_Quit"
+#~ msgstr "_Beenden"
+
+#~ msgid "Show the keyboard shortcuts (this dialog)"
+#~ msgstr "Die Tastenkombinationen anzeigen (dieser Dialog)"
 
 #~ msgid "Server"
 #~ msgstr "Server"

@@ -9,7 +9,7 @@
             </item>
             <item>
                 <attribute name="action">win.play</attribute>
-                <attribute name="label" translatable="yes">_Play</attribute>
+                <attribute name="label" translatable="yes">Play</attribute>
                 <attribute name="accel">&lt;Primary&gt;p</attribute>
             </item>
             <item>
@@ -47,7 +47,7 @@
         <section>
             <item>
                 <attribute name="action">app.shortcuts</attribute>
-                <attribute name="label" translatable="yes">_Keyboard Shortcuts</attribute>
+                <attribute name="label" translatable="yes">Keyboard Shortcuts</attribute>
                 <attribute name="accel">&lt;Primary&gt;k</attribute>
             </item>
             <item>
@@ -57,7 +57,7 @@
             </item>
             <item>
                 <attribute name="action">app.quit</attribute>
-                <attribute name="label" translatable="yes">_Quit</attribute>
+                <attribute name="label" translatable="yes">Quit</attribute>
                 <attribute name="accel">&lt;Primary&gt;q</attribute>
             </item>
         </section>
