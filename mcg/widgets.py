@@ -169,13 +169,16 @@ class Window():
         self._connect_action.connect('change-state', self.on_menu_connect)
         self._appwindow.add_action(self._connect_action)
         self._play_action = Gio.SimpleAction.new_stateful("play", None, GLib.Variant.new_boolean(False))
+        self._play_action.set_enabled(False)
         self._play_action.connect('change-state', self.on_menu_play)
         self._appwindow.add_action(self._play_action)
         self._clear_playlist_action = Gio.SimpleAction.new("clear-playlist", None)
+        self._clear_playlist_action.set_enabled(False)
         self._clear_playlist_action.connect('activate', self.on_menu_clear_playlist)
         self._appwindow.add_action(self._clear_playlist_action)
         panel_variant = GLib.Variant.new_string("0")
         self._panel_action = Gio.SimpleAction.new_stateful("panel", panel_variant.get_type(), panel_variant)
+        self._panel_action.set_enabled(False)
         self._panel_action.connect('change-state', self.on_menu_panel)
         self._appwindow.add_action(self._panel_action)
 
@@ -309,9 +312,15 @@ class Window():
             self._mcg.load_albums()
             self._mcg.get_status()
             self._connect_action.set_state(GLib.Variant.new_boolean(True))
+            self._play_action.set_enabled(True)
+            self._clear_playlist_action.set_enabled(True)
+            self._panel_action.set_enabled(True)
         else:
             GObject.idle_add(self._connect_disconnected)
             self._connect_action.set_state(GLib.Variant.new_boolean(False))
+            self._play_action.set_enabled(False)
+            self._clear_playlist_action.set_enabled(False)
+            self._panel_action.set_enabled(False)
 
 
     def on_mcg_status(self, state, album, pos, time, volume, error):
