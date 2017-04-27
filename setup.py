@@ -7,15 +7,33 @@ import subprocess
 
 from setuptools import setup
 from setuptools.command.build_py import build_py
+from setuptools.dist import Distribution
+
+
+
+
+class MCGDistribution(Distribution):
+    global_options = Distribution.global_options + [
+        ("no-compile-schemas", None, "Don't compile gsettings schemas")
+    ]
+
+
+    def __init__(self, *args, **kwargs):
+        self.no_compile_schemas = False
+        super(self.__class__, self).__init__(*args, **kwargs)
 
 
 
 
 class build_mcg(build_py):
-    def run(self):
-        build_py.run(self)
+
+
+    def run(self, *args, **kwargs):
+        super(self.__class__, self).run(*args, **kwargs)
         self._build_gresources()
-        self._build_gschemas()
+        if not self.distribution.no_compile_schemas:
+            self._build_gschemas()
+
 
     def _build_gresources(self):
         print("compiling gresources")
@@ -30,7 +48,10 @@ class build_mcg(build_py):
 
 
 setup(
-    cmdclass = {'build_py': build_mcg},
+    distclass = MCGDistribution,
+    cmdclass = {
+        'build_py': build_mcg
+    },
     name = "CoverGrid",
     version = 0.6,
     description = "CoverGrid is a client for the Music Player Daemon, focusing on albums instead of single tracks.",
