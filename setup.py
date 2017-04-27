@@ -95,8 +95,10 @@ setup(
         (os.path.join('share', 'mcg'), [
             "data/de.coderkun.mcg.gresource",
         ]),
-        (os.path.join('share', 'locale'), [
-            'locale/en/LC_MESSAGES/mcg.mo',
+        (os.path.join('share', 'locale', 'en', 'LC_MESSAGES'), [
+            'locale/en/LC_MESSAGES/mcg.mo'
+        ]),
+        (os.path.join('share', 'locale', 'de', 'LC_MESSAGES'), [
             'locale/de/LC_MESSAGES/mcg.mo'
         ])
     ],
