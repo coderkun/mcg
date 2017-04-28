@@ -16,7 +16,7 @@ from mcg import client
 
 
 class ZeroconfProvider(client.Base):
-    KEYRING_SYSTEM = 'MPDCoverGrid'
+    KEYRING_SYSTEM = 'mcg'
     KEYRING_USERNAME = 'mpd'
     SIGNAL_SERVICE_NEW = 'service-new'
     TYPE = '_mpd._tcp'

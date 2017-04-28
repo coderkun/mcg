@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-"""MPDCoverGrid is a client for the Music Player Daemon, focusing on albums instead of single tracks."""
-
 
 import sys
 

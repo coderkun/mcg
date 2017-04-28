@@ -15,9 +15,9 @@
    version="1.1"
    id="svg8"
    inkscape:version="0.92.1 r"
-   sodipodi:docname="mcg3.svg">
+   sodipodi:docname="mcg.svg">
   <title
-     id="title4619">MPDCoverGrid</title>
+     id="title4619">CoverGrid (mcg)</title>
   <defs
      id="defs2">
     <filter
@@ -61,8 +61,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.7"
-     inkscape:cx="347.73101"
-     inkscape:cy="496.0823"
+     inkscape:cx="107.73101"
+     inkscape:cy="490.36801"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -93,14 +93,14 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title>MPDCoverGrid</dc:title>
+        <dc:title>CoverGrid (mcg)</dc:title>
         <dc:date>2017</dc:date>
         <dc:creator>
           <cc:Agent>
             <dc:title>coderkun</dc:title>
           </cc:Agent>
         </dc:creator>
-        <dc:description>http://www.coderkun.de/codes/mcg</dc:description>
+        <dc:description>https://www.coderkun.de/codes/mcg</dc:description>
         <cc:license
            rdf:resource="http://creativecommons.org/licenses/by-nc-nd/4.0/" />
       </cc:Work>
