@@ -1,7 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=CoverGrid
+Name=CoverGrid (mcg)
 Comment=CoverGrid for the Music Player Daemon
+Keywords=mpd;
 Type=Application
 Icon=mcg.svg
 Exec=mcg
