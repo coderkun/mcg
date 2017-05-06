@@ -9,12 +9,18 @@ import os
 
 # Set environment
 srcdir = os.path.abspath(os.path.dirname(__file__))
-datadir = os.path.join(srcdir, '..', 'data')
-localedir = os.path.join(srcdir, '..', 'locale')
+datadir = os.path.join(srcdir, 'data')
+datadirdev = os.path.join(srcdir, '..', 'data')
+if os.path.exists(datadirdev):
+    datadir = datadirdev
+localedir = None
+localedirdev = os.path.join(srcdir, '..', 'locale')
+if os.path.exists(localedirdev):
+    localedir = datadirdev
 
 # Set GSettings schema dir (if not set already)
 if not os.environ.get('GSETTINGS_SCHEMA_DIR'):
-    os.environ['GSETTINGS_SCHEMA_DIR'] = datadir
+    os.environ['GSETTINGS_SCHEMA_DIR'] = datadirdev
 
 
 

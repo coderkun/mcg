@@ -60,15 +60,20 @@ setup(
     author_email = "olli@coderkun.de",
     license = "GPL",
     packages = [
-        "mcg"
+        'mcg',
+        'mcg/data'
     ],
     package_dir = {
-        'mcg': 'mcg'
+        'mcg': 'mcg',
+        'mcg/data': 'data'
     },
     package_data = {
         'mcg': [
             'LICENSE',
             'README.textile'
+        ],
+        'mcg/data': [
+            'de.coderkun.mcg.gresource'
         ]
     },
     install_requires = [
@@ -91,9 +96,6 @@ setup(
         ]),
         (os.path.join('share', 'glib-2.0', 'schemas'), [
             "data/de.coderkun.mcg.gschema.xml"
-        ]),
-        (os.path.join('share', 'mcg'), [
-            "data/de.coderkun.mcg.gresource",
         ]),
         (os.path.join('share', 'locale', 'en', 'LC_MESSAGES'), [
             'locale/en/LC_MESSAGES/mcg.mo'
