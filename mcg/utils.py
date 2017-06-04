@@ -3,6 +3,7 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
+import locale
 import os
 import urllib
 
@@ -52,6 +53,26 @@ class Utils:
                     filetype = 'jpeg'
                 pixbuf.savev(cache.create_filename(album), filetype, [], [])
         return pixbuf
+
+
+    def create_artists_label(album):
+        label = ', '.join(album.get_albumartists())
+        if album.get_artists():
+            label = locale.gettext("{} feat. {}").format(
+                label,
+                ", ".join(album.get_artists())
+            )
+        return label
+
+
+    def create_track_title(track):
+        title = track.get_title()
+        if track.get_artists():
+            title = locale.gettext("{} feat. {}").format(
+                title,
+                ", ".join(track.get_artists())
+            )
+        return title
 
 
 

@@ -628,6 +628,8 @@ class Client(Base):
                 track.set_length(song['time'])
             if 'date' in song:
                 track.set_date(song['date'])
+            if 'albumartist' in song:
+                track.set_albumartists(song['albumartist'])
         return track
 
 
@@ -653,6 +655,7 @@ class MCGAlbum:
 
     def __init__(self, title, host, image_dir):
         self._artists = []
+        self._albumartists = []
         self._pathes = []
         if type(title) is list:
             title = title[0]
@@ -672,6 +675,14 @@ class MCGAlbum:
 
 
     def get_artists(self):
+        if self._albumartists:
+            return [artist for artist in self._artists if artist not in self._albumartists]
+        return self._artists
+
+
+    def get_albumartists(self):
+        if self._albumartists:
+            return self._albumartists
         return self._artists
 
 
@@ -699,6 +710,9 @@ class MCGAlbum:
         for artist in track.get_artists():
             if artist not in self._artists:
                 self._artists.append(artist)
+        for artist in track.get_albumartists():
+            if artist not in self._albumartists:
+                self._albumartists.append(artist)
         if track.get_date() is not None and track.get_date() not in self._dates:
             self._dates.append(track.get_date())
         path = os.path.dirname(track.get_file())
@@ -849,6 +863,7 @@ class MCGTrack:
             file = file[0]
         self._file = file
 
+        self._albumartists = []
         self._track = None
         self._length = 0
         self._date = None
@@ -859,6 +874,20 @@ class MCGTrack:
 
 
     def get_artists(self):
+        if self._albumartists:
+            return [artist for artist in self._artists if artist not in self._albumartists]
+        return self._artists
+
+
+    def set_albumartists(self, artists):
+        if type(artists) is not list:
+            artists = [artists]
+        self._albumartists = artists
+
+
+    def get_albumartists(self):
+        if self._albumartists:
+            return self._albumartists
         return self._artists
 
 
@@ -915,6 +944,7 @@ class MCGPlaylistTrack(MCGTrack):
             track.get_title(),
             track.get_file()
         )
+        self.set_albumartists(track.get_albumartists())
         self.set_track(track.get_track())
         self.set_length(track.get_length())
         self.set_date(track.get_date())

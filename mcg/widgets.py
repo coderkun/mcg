@@ -907,7 +907,7 @@ class CoverPanel(GObject.GObject):
         )
         self._album_artist_label.set_markup(
             GObject.markup_escape_text(
-                ', '.join(album.get_artists())
+                ', '.join(album.get_albumartists())
             )
         )
 
@@ -985,7 +985,7 @@ class CoverPanel(GObject.GObject):
                 cur_length,
                 Gtk.PositionType.RIGHT, 
                 GObject.markup_escape_text(
-                    track.get_title()
+                    Utils.create_track_title(track)
                 )
             )
             length = length + track.get_length()
@@ -1138,7 +1138,7 @@ class PlaylistPanel(GObject.GObject):
 
         # Set labels
         self._standalone_title.set_text(album.get_title())
-        self._standalone_artist.set_text(", ".join(album.get_artists()))
+        self._standalone_artist.set_text(", ".join(album.get_albumartists()))
 
         # Show panel
         self._open_standalone()
@@ -1213,7 +1213,7 @@ class PlaylistPanel(GObject.GObject):
                     GObject.markup_escape_text("\n".join([
                         album.get_title(),
                         ', '.join(album.get_dates()),
-                        ', '.join(album.get_artists())
+                        Utils.create_artists_label(album)
                     ])),
                     album.get_hash()
                 ])
@@ -1454,7 +1454,7 @@ class LibraryPanel(GObject.GObject):
 
         # Set labels
         self._standalone_title.set_text(album.get_title())
-        self._standalone_artist.set_text(", ".join(album.get_artists()))
+        self._standalone_artist.set_text(", ".join(album.get_albumartists()))
 
         # Show panel
         self._open_standalone()
@@ -1581,7 +1581,7 @@ class LibraryPanel(GObject.GObject):
                     GObject.markup_escape_text("\n".join([
                         album.get_title(),
                         ', '.join(album.get_dates()),
-                        ', '.join(album.get_artists())
+                        Utils.create_artists_label(album)
                     ])),
                     hash
                 ])

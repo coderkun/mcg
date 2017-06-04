@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CoverGrid (mcg)\n"
-"POT-Creation-Date: 2017-04-26 12:15+0200\n"
-"PO-Revision-Date: 2017-04-28 11:00+0200\n"
+"POT-Creation-Date: 2017-06-04 15:35+0200\n"
+"PO-Revision-Date: 2017-06-04 15:35+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: en\n"
@@ -15,6 +15,7 @@ msgstr ""
 "X-Poedit-SearchPath-0: data/gtk.glade\n"
 "X-Poedit-SearchPath-1: data/gtk.menu.ui\n"
 "X-Poedit-SearchPath-2: data/gtk.shortcuts.ui\n"
+"X-Poedit-SearchPath-3: mcg\n"
 
 #: data/gtk.glade:21
 msgid "Tracklist"
@@ -88,51 +89,51 @@ msgstr "Image Directory:"
 msgid "Connection"
 msgstr "Connection"
 
-#: data/gtk.glade:698 data/gtk.menu.ui:30
+#: data/gtk.glade:715 data/gtk.menu.ui:30
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:809 data/gtk.menu.ui:36
+#: data/gtk.glade:826 data/gtk.menu.ui:36
 msgid "Playlist"
 msgstr "Playlist"
 
-#: data/gtk.glade:836
+#: data/gtk.glade:853
 msgid "search library"
 msgstr "search library"
 
-#: data/gtk.glade:977 data/gtk.menu.ui:42
+#: data/gtk.glade:994 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Library"
 
-#: data/gtk.glade:1049 data/gtk.shortcuts.ui:74
+#: data/gtk.glade:1066 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Connect or disconnect"
 
-#: data/gtk.glade:1071 data/gtk.shortcuts.ui:81
+#: data/gtk.glade:1088 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
 msgstr "Switch between play and pause"
 
-#: data/gtk.glade:1091
+#: data/gtk.glade:1108
 msgid "Adjust the volume"
 msgstr "Adjust the volume"
 
-#: data/gtk.glade:1149 data/gtk.shortcuts.ui:101
+#: data/gtk.glade:1166 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
 msgstr "Show the cover in fullscreen mode"
 
-#: data/gtk.glade:1172 data/gtk.glade:1277
+#: data/gtk.glade:1189 data/gtk.glade:1294
 msgid "Settings and actions"
 msgstr "Settings and actions"
 
-#: data/gtk.glade:1220 data/gtk.shortcuts.ui:88
+#: data/gtk.glade:1237 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
 msgstr "Clear the playlist"
 
-#: data/gtk.glade:1254 data/gtk.shortcuts.ui:114
+#: data/gtk.glade:1271 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Search the library"
 
-#: data/gtk.glade:1322
+#: data/gtk.glade:1339
 msgid ""
 "CoverGrid is a client for the Music Player Daemon, focusing on albums "
 "instead of single tracks."
@@ -207,6 +208,10 @@ msgstr "Cover Panel"
 #: data/gtk.shortcuts.ui:109
 msgid "Library Panel"
 msgstr "Library Panel"
+
+#: mcg/utils.py:61 mcg/widgets.py:989
+msgid "{} feat. {}"
+msgstr "{} feat. {}"
 
 #~ msgid "Show the keyboard shortcuts (this dialog)"
 #~ msgstr "Show the keyboard shortcuts (this dialog)"
