@@ -367,20 +367,18 @@ class Client(Base):
         pos = 0
         song = self._parse_dict(self._call("currentsong"))
         if song:
-            # Album
-            if 'album' not in song:
-                song['album'] = MCGAlbum.DEFAULT_ALBUM
-            hash = MCGAlbum.hash(song['album'])
-            if hash in self._albums.keys():
-                album = self._albums[hash]
-            # Position
-            if 'pos' in song:
-                pos = int(song['pos'])
-            for palbum in self._playlist:
-                if palbum == album and len(palbum.get_tracks()) >= pos:
-                    album = palbum
-                    break
-                pos = pos - len(palbum.get_tracks())
+            # Track
+            track = self._extract_playlist_track(song)
+            if track:
+                # Album
+                album = self._extract_album(song)
+                # Position
+                pos = track.get_pos()
+                for palbum in self._playlist:
+                    if palbum == album and len(palbum.get_tracks()) >= pos:
+                        album = palbum
+                        break
+                    pos = pos - len(palbum.get_tracks())
         self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, error)
 
 
@@ -388,30 +386,14 @@ class Client(Base):
         """Action: Perform the real update."""
         self._albums = {}
         # Albums
-        for mpdAlbum in self._parse_list(self._call('list album'), ['album']):
-            albumTitle = mpdAlbum['album']
-            if albumTitle == "":
-                albumTitle = MCGAlbum.DEFAULT_ALBUM
-            albumHash = MCGAlbum.hash(albumTitle)
-            if hash in self._albums.keys():
-                album = self._albums[hash]
-            else:
-                album = MCGAlbum(albumTitle, self._host, self._image_dir)
-                self._albums[albumHash] = album
+        for album in self._parse_list(self._call('list album'), ['album']):
+            # Album
+            album = self._extract_album(album)
             self._logger.debug("album: %r", album)
             # Tracks
-            for mpdTrack in self._parse_list(self._call('find album ', mpdAlbum['album']), ['file']):
-                if 'artist' in mpdTrack and 'title' in mpdTrack and 'file' in mpdTrack:
-                    trackNumber = None
-                    if 'track' in mpdTrack:
-                        trackNumber = mpdTrack['track']
-                    trackTime = 0
-                    if 'time' in mpdTrack:
-                        trackTime = mpdTrack['time']
-                    trackDate = None
-                    if 'date' in mpdTrack:
-                        trackDate = mpdTrack['date']
-                    track = MCGTrack(mpdTrack['artist'], mpdTrack['title'], trackNumber, trackTime, trackDate, mpdTrack['file'])
+            for song in self._parse_list(self._call('find album ', album.get_title()), ['file']):
+                track = self._extract_track(song)
+                if track:
                     self._logger.debug("track: %r", track)
                     album.add_track(track)
         self._callback(Client.SIGNAL_LOAD_ALBUMS, self._albums)
@@ -426,22 +408,11 @@ class Client(Base):
         for song in self._parse_list(self._call('playlistinfo'), ['file', 'playlist']):
             self._logger.debug("song: %r", song)
             # Track
-            track = None
-            if 'artist' in song and 'title' in song and 'file' in song:
-                if 'track' not in song:
-                    song['track'] = None
-                if 'time' not in song:
-                    song['time'] = 0
-                if 'date' not in song:
-                    song['date'] = None
-                track = MCGPlaylistTrack(song['artist'], song['title'], song['track'], song['time'], song['date'], song['file'], song['id'], song['pos'])
-                self._logger.debug("track: %r", track)
+            track = self._extract_playlist_track(song)
+            self._logger.debug("track: %r", track)
             # Album
-            if 'album' not in song:
-                song['album'] = MCGAlbum.DEFAULT_ALBUM
-            hash = MCGAlbum.hash(song['album'])
-            if len(self._playlist) == 0 or self._playlist[len(self._playlist)-1].get_hash() != hash:
-                album = MCGAlbum(song['album'], self._host, self._image_dir)
+            album = self._extract_album(song, lookup=False)
+            if len(self._playlist) == 0 or self._playlist[len(self._playlist)-1].get_hash() != album.get_hash():
                 self._playlist.append(album)
             else:
                 album = self._playlist[len(self._playlist)-1]
@@ -631,6 +602,40 @@ class Client(Base):
     def _split_line(self, line):
         parts = line.split(':')
         return parts[0].lower(), ':'.join(parts[1:]).lstrip()
+
+
+    def _extract_album(self, song, lookup=True):
+        album = None
+        if 'album' not in song:
+            song['album'] = MCGAlbum.DEFAULT_ALBUM
+        hash = MCGAlbum.hash(song['album'])
+        if lookup and hash in self._albums.keys():
+            album = self._albums[hash]
+        else:
+            album = MCGAlbum(song['album'], self._host, self._image_dir)
+        if lookup:
+            self._albums[hash] = album
+        return album
+
+
+    def _extract_track(self, song):
+        track = None
+        if 'artist' in song and 'title' in song and 'file' in song:
+            track = MCGTrack(song['artist'], song['title'], song['file'])
+            if 'track' in song:
+                track.set_track(song['track'])
+            if 'time' in song:
+                track.set_length(song['time'])
+            if 'date' in song:
+                track.set_date(song['date'])
+        return track
+
+
+    def _extract_playlist_track(self, song):
+        track = self._extract_track(song)
+        if track and 'id' in song and 'pos' in song:
+            track = MCGPlaylistTrack(track, song['id'], song['pos'])
+        return track
 
 
     def _set_connection_status(self, status):
@@ -833,30 +838,20 @@ class MCGAlbum:
 
 
 class MCGTrack:
-    def __init__(self, artists, title, track, length, date, file):
+    def __init__(self, artists, title, file):
         if type(artists) is not list:
             artists = [artists]
         self._artists = artists
         if type(title) is list:
             title = title[0]
         self._title = title
-        if type(track) is list:
-            track = track[0]
-        if track is not None and '/' in track:
-            track = track[0: track.index('/')]
-        if track is not None:
-            try:
-                track = int(track)
-            except ValueError:
-                track = 0
-        self._track = track
-        self._length = int(length)
-        if type(date) is list:
-            date = date[0]
-        self._date = date
         if type(file) is list:
             file = file[0]
         self._file = file
+
+        self._track = None
+        self._length = 0
+        self._date = None
 
 
     def __eq__(self, other):
@@ -875,12 +870,35 @@ class MCGTrack:
         return self._track
 
 
+    def set_track(self, track):
+        if type(track) is list:
+            track = track[0]
+        if type(track) is str and '/' in track:
+            track = track[0: track.index('/')]
+        if track is not None:
+            try:
+                track = int(track)
+            except ValueError:
+                track = 0
+        self._track = track
+
+
     def get_length(self):
         return self._length
 
 
+    def set_length(self, length):
+        self._length = int(length)
+
+
     def get_date(self):
         return self._date
+
+
+    def set_date(self, date):
+        if type(date) is list:
+            date = date[0]
+        self._date = date
 
 
     def get_file(self):
@@ -890,8 +908,16 @@ class MCGTrack:
 
 
 class MCGPlaylistTrack(MCGTrack):
-    def __init__(self, artists, title, track, length, date, file, id, pos):
-        MCGTrack.__init__(self, artists, title, track, length, date, file)
+    def __init__(self, track, id, pos):
+        MCGTrack.__init__(
+            self,
+            track.get_artists(),
+            track.get_title(),
+            track.get_file()
+        )
+        self.set_track(track.get_track())
+        self.set_length(track.get_length())
+        self.set_date(track.get_date())
         self._id = int(id)
         self._pos = int(pos)
 
