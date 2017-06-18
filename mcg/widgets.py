@@ -87,6 +87,7 @@ class Window():
     SETTING_ITEM_SIZE = 'item-size'
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
+    STOCK_ICON_DEFAULT = 'image-x-generic-symbolic'
     _PANEL_INDEX_CONNECTION = 0
     _PANEL_INDEX_COVER = 1
     _PANEL_INDEX_PLAYLIST = 2
@@ -795,6 +796,7 @@ class CoverPanel(GObject.GObject):
         self._timer = None
         self._properties = {}
         self._tracklist_size = TracklistSize.LARGE
+        self._icon_theme = Gtk.IconTheme.get_default()
 
         # Widgets
         self._appwindow = builder.get_object('appwindow')
@@ -812,6 +814,8 @@ class CoverPanel(GObject.GObject):
         self._cover_scroll = builder.get_object('cover-scroll')
         self._cover_box = builder.get_object('cover-box')
         self._cover_image = builder.get_object('cover-image')
+        self._cover_stack.set_visible_child(self._cover_scroll)
+        self._cover_pixbuf = self._get_default_image()
         # Album Infos
         self._info_revealer = builder.get_object('cover-info-revealer')
         self._info_box = builder.get_object('cover-info-box')
@@ -964,11 +968,10 @@ class CoverPanel(GObject.GObject):
             if url is not None and url is not "":
                 # Load image and draw it
                 self._cover_pixbuf = Utils.load_cover(url)
-                self._resize_image()
             else:
                 # Reset image
-                self._cover_pixbuf = None
-                self._cover_image.clear()
+                self._cover_pixbuf = self._get_default_image()
+            self._resize_image()
         self._cover_stack.set_visible_child(self._cover_scroll)
         self._cover_spinner.stop()
 
@@ -1045,6 +1048,14 @@ class CoverPanel(GObject.GObject):
         self._cover_image.set_allocation(self._cover_scroll.get_allocation())
         self._cover_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
         self._cover_image.show()
+
+
+    def _get_default_image(self):
+        return self._icon_theme.load_icon(
+            Window.STOCK_ICON_DEFAULT,
+            512,
+            Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE
+        )
 
 
 
@@ -1206,7 +1217,11 @@ class PlaylistPanel(GObject.GObject):
                 except Exception as e:
                     print(e)
             if pixbuf is None:
-                pixbuf = self._icon_theme.load_icon('image-x-generic-symbolic', self._item_size, Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE)
+                pixbuf = self._icon_theme.load_icon(
+                    Window.STOCK_ICON_DEFAULT,
+                    self._item_size,
+                    Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE
+                )
             if pixbuf is not None:
                 self._playlist_grid_model.append([
                     pixbuf,
@@ -1573,7 +1588,11 @@ class LibraryPanel(GObject.GObject):
             except Exception as e:
                 print(e)
             if pixbuf is None:
-                pixbuf = self._icon_theme.load_icon('image-x-generic-symbolic', self._item_size, Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE)
+                pixbuf = self._icon_theme.load_icon(
+                    Window.STOCK_ICON_DEFAULT,
+                    self._item_size,
+                    Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE
+                )
             if pixbuf is not None:
                 self._grid_pixbufs[album.get_hash()] = pixbuf
                 self._library_grid_model.append([
