@@ -608,7 +608,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="transition_type">slide-right</property>
-                    <property name="reveal_child">True</property>
                     <child>
                       <object class="GtkScrolledWindow">
                         <property name="visible">True</property>

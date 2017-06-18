@@ -349,8 +349,7 @@ class Window():
 
     def on_mcg_status(self, state, album, pos, time, volume, error):
         # Album
-        if album:
-            GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_album, album)
+        GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_album, album)
         # State
         if state == 'play':
             GObject.idle_add(self._header_bar.set_play)
@@ -803,6 +802,7 @@ class CoverPanel(GObject.GObject):
         self._panel = builder.get_object('cover-panel')
         self._toolbar = builder.get_object('cover-toolbar')
         # Toolbar menu
+        self._toolbar_tracklist = builder.get_object('cover-toolbar-tracklist')
         self._toolbar_tracklist_buttons = {
             TracklistSize.LARGE: builder.get_object('cover-toolbar-tracklist-large'),
             TracklistSize.SMALL: builder.get_object('cover-toolbar-tracklist-small'),
@@ -825,6 +825,9 @@ class CoverPanel(GObject.GObject):
         # Songs
         self._songs_scale = builder.get_object('cover-songs')
         self._songs_scale.override_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1))
+
+        # Initial actions
+        GObject.idle_add(self._enable_tracklist)
 
 
     def get(self):
@@ -862,7 +865,7 @@ class CoverPanel(GObject.GObject):
 
 
     def on_cover_size_allocate(self, widget, allocation):
-        self._resize_image()
+        GObject.idle_add(self._resize_image)
 
 
     def on_songs_start_change(self, widget, event):
@@ -898,28 +901,33 @@ class CoverPanel(GObject.GObject):
 
 
     def set_album(self, album):
-        # Set labels
-        self._album_title_label.set_label(
-            GObject.markup_escape_text(
-                album.get_title()
+        if album:
+            # Set labels
+            self._album_title_label.set_label(
+                GObject.markup_escape_text(
+                    album.get_title()
+                )
             )
-        )
-        self._album_date_label.set_markup(
-            GObject.markup_escape_text(
-                ', '.join(album.get_dates())
+            self._album_date_label.set_markup(
+                GObject.markup_escape_text(
+                    ', '.join(album.get_dates())
+                )
             )
-        )
-        self._album_artist_label.set_markup(
-            GObject.markup_escape_text(
-                ', '.join(album.get_albumartists())
+            self._album_artist_label.set_markup(
+                GObject.markup_escape_text(
+                    ', '.join(album.get_albumartists())
+                )
             )
-        )
+            # Set tracks
+            self._set_tracks(album)
 
-        # Set tracks
-        self._set_tracks(album)
+        # Set current album
+        old_album = self._current_album
+        self._current_album = album
+        self._enable_tracklist()
 
         # Load cover
-        threading.Thread(target=self._set_cover, args=(album,)).start()
+        threading.Thread(target=self._set_cover, args=(old_album, album,)).start()
 
 
     def set_play(self, pos, time):
@@ -959,13 +967,14 @@ class CoverPanel(GObject.GObject):
             )
 
 
-    def _set_cover(self, album):
+    def _set_cover(self, current_album, new_album):
         self._cover_stack.set_visible_child(self._cover_spinner)
         self._cover_spinner.start()
-        if self._current_album is None or album.get_hash() != self._current_album.get_hash():
-            self._current_album = album
-            url = album.get_cover()
-            if url is not None and url is not "":
+        current_hash = current_album.get_hash() if current_album else None
+        new_hash = new_album.get_hash() if new_album else None
+        if not current_hash or not new_hash or current_hash != new_hash:
+            url = new_album.get_cover() if new_album else None
+            if url and url is not "":
                 # Load image and draw it
                 self._cover_pixbuf = Utils.load_cover(url)
             else:
@@ -995,6 +1004,17 @@ class CoverPanel(GObject.GObject):
         self._songs_scale.add_mark(length, Gtk.PositionType.RIGHT, "{0[0]:02d}:{0[1]:02d} minutes".format(divmod(length, 60)))
 
 
+    def _enable_tracklist(self):
+        if self._current_album:
+            # enable
+            self._toolbar_tracklist.set_sensitive(True)
+            self._change_tracklist_size(self._tracklist_size, False, False)
+        else:
+            # disable
+            self._toolbar_tracklist.set_sensitive(False)
+            self._change_tracklist_size(TracklistSize.HIDDEN, False, False)
+
+
     def _change_tracklist_size(self, size, notify=True, store=True):
         # Set tracklist size
         if size == TracklistSize.LARGE:
@@ -1013,7 +1033,7 @@ class CoverPanel(GObject.GObject):
         if notify:
             self.emit('tracklist-size-changed', size)
         # Resize image
-        self._resize_image()
+        GObject.idle_add(self._resize_image)
 
 
     def _playing(self):
