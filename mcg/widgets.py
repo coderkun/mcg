@@ -146,6 +146,7 @@ class Window():
         self._panels[Window._PANEL_INDEX_COVER].connect('set-song', self.on_cover_panel_set_song)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('clear-playlist', self.on_playlist_panel_clear_playlist)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('remove', self.on_playlist_panel_remove)
+        self._panels[Window._PANEL_INDEX_PLAYLIST].connect('remove-multiple', self.on_playlist_panel_remove_multiple)
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('play', self.on_playlist_panel_play)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('update', self.on_library_panel_update)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('play', self.on_library_panel_play)
@@ -285,6 +286,10 @@ class Window():
 
     def on_playlist_panel_remove(self, widget, album):
         self._mcg.remove_album_from_playlist(album)
+
+
+    def on_playlist_panel_remove_multiple(self, widget, albums):
+        self._mcg.remove_albums_from_playlist(albums)
 
 
     def on_playlist_panel_play(self, widget, album):
@@ -1084,6 +1089,7 @@ class PlaylistPanel(GObject.GObject):
     __gsignals__ = {
         'clear-playlist': (GObject.SIGNAL_RUN_FIRST, None, ()),
         'remove': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
+        'remove-multiple': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         'play': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,))
     }
 
@@ -1108,7 +1114,10 @@ class PlaylistPanel(GObject.GObject):
         self._headerbar_standalone = builder.get_object('headerbar-playlist-standalone')
         self._panel_normal = builder.get_object('playlist-panel-normal')
         self._panel_standalone = builder.get_object('playlist-panel-standalone')
+        self._actionbar_revealer = builder.get_object('playlist-actionbar-revealer')
 
+        # Select button
+        self._select_button = builder.get_object('playlist-toolbar-select')
         # Clear button
         self._playlist_clear_button = builder.get_object('playlist-toolbar-clear')
         # Playlist Grid: Model
@@ -1119,6 +1128,14 @@ class PlaylistPanel(GObject.GObject):
         self._playlist_grid.set_pixbuf_column(0)
         self._playlist_grid.set_text_column(-1)
         self._playlist_grid.set_tooltip_column(1)
+        # Action bar (normal)
+        actionbar = builder.get_object('playlist-actionbar')
+        cancel_button = Gtk.Button('cancel')
+        cancel_button.connect('clicked', self.on_selection_cancel_clicked)
+        actionbar.pack_start(cancel_button)
+        remove_button = Gtk.Button('remove')
+        remove_button.connect('clicked', self.on_selection_remove_clicked)
+        actionbar.pack_end(remove_button)
 
         # Standalone labels
         self._standalone_title = builder.get_object('headerbar-playlist-standalone-title')
@@ -1128,14 +1145,14 @@ class PlaylistPanel(GObject.GObject):
         self._standalone_spinner = builder.get_object('playlist-standalone-spinner')
         self._standalone_scroll = builder.get_object('playlist-standalone-scroll')
         self._standalone_image = builder.get_object('playlist-standalone-image')
-        # Action bar
-        action_bar = builder.get_object('playlist-standalone-actionbar')
+        # Action bar (standalone)
+        actionbar_standalone = builder.get_object('playlist-standalone-actionbar')
         play_button = Gtk.Button('play')
         play_button.connect('clicked', self.on_standalone_play_clicked)
-        action_bar.pack_end(play_button)
+        actionbar_standalone.pack_end(play_button)
         remove_button = Gtk.Button('remove')
         remove_button.connect('clicked', self.on_standalone_remove_clicked)
-        action_bar.pack_end(remove_button)
+        actionbar_standalone.pack_end(remove_button)
 
 
     def get(self):
@@ -1148,11 +1165,22 @@ class PlaylistPanel(GObject.GObject):
 
     def get_signal_handlers(self):
         return {
+            'on_playlist-toolbar-select_toggled': self.on_select_toggled,
             'on_playlist-toolbar-clear_clicked': self.clear_clicked,
             'on_playlist-iconview_item_activated': self.on_playlist_grid_clicked,
+            'on_playlist-iconview_selection_changed': self.on_playlist_grid_selection_changed,
             'on_playlist-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
             'on_headerbar-playlist-standalone-close_clicked': self.on_standalone_close_clicked
         }
+
+
+    def on_select_toggled(self, widget):
+        if widget.get_active():
+            self._actionbar_revealer.set_reveal_child(True)
+            self._playlist_grid.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
+        else:
+            self._actionbar_revealer.set_reveal_child(False)
+            self._playlist_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
 
 
     def clear_clicked(self, widget):
@@ -1167,15 +1195,34 @@ class PlaylistPanel(GObject.GObject):
         album = self._playlist_albums[hash]
         self._selected_albums = [album]
 
-        # Set labels
-        self._standalone_title.set_text(album.get_title())
-        self._standalone_artist.set_text(", ".join(album.get_albumartists()))
+        # Show standalone album
+        if widget.get_selection_mode() == Gtk.SelectionMode.SINGLE:
+            # Set labels
+            self._standalone_title.set_text(album.get_title())
+            self._standalone_artist.set_text(", ".join(album.get_albumartists()))
 
-        # Show panel
-        self._open_standalone()
+            # Show panel
+            self._open_standalone()
 
-        # Load cover
-        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+            # Load cover
+            threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+
+
+    def on_playlist_grid_selection_changed(self, widget):
+        self._selected_albums = []
+        for path in widget.get_selected_items():
+            iter = self._playlist_grid_model.get_iter(path)
+            hash = self._playlist_grid_model.get_value(iter, 2)
+            self._selected_albums.append(self._playlist_albums[hash])
+
+
+    def on_selection_cancel_clicked(self, widget):
+        self._select_button.set_active(False)
+
+
+    def on_selection_remove_clicked(self, widget):
+        self.emit('remove-multiple', self._selected_albums)
+        self._select_button.set_active(False)
 
 
     def on_standalone_scroll_size_allocate(self, widget, allocation):

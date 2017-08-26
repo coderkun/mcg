@@ -721,33 +721,64 @@
                 <property name="can_focus">False</property>
                 <property name="transition_type">slide-left-right</property>
                 <child>
-                  <object class="GtkScrolledWindow" id="playlist-panel-normal">
+                  <object class="GtkBox" id="playlist-panel-normal">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkIconView" id="playlist-iconview">
+                      <object class="GtkScrolledWindow">
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
-                        <property name="margin">0</property>
-                        <property name="item_orientation">horizontal</property>
-                        <property name="row_spacing">0</property>
-                        <property name="column_spacing">0</property>
-                        <property name="tooltip_column">1</property>
-                        <property name="item_padding">0</property>
-                        <property name="activate_on_single_click">True</property>
-                        <signal name="item-activated" handler="on_playlist-iconview_item_activated" swapped="no"/>
+                        <child>
+                          <object class="GtkIconView" id="playlist-iconview">
+                            <property name="visible">True</property>
+                            <property name="can_focus">True</property>
+                            <property name="margin">0</property>
+                            <property name="item_orientation">horizontal</property>
+                            <property name="row_spacing">0</property>
+                            <property name="column_spacing">0</property>
+                            <property name="tooltip_column">1</property>
+                            <property name="item_padding">0</property>
+                            <property name="activate_on_single_click">True</property>
+                            <signal name="item-activated" handler="on_playlist-iconview_item_activated" swapped="no"/>
+                            <signal name="selection-changed" handler="on_playlist-iconview_selection_changed" swapped="no"/>
+                            <style>
+                              <class name="no-bg"/>
+                            </style>
+                          </object>
+                        </child>
                         <style>
                           <class name="no-bg"/>
                         </style>
                       </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
                     </child>
-                    <style>
-                      <class name="no-bg"/>
-                    </style>
+                    <child>
+                      <object class="GtkRevealer" id="playlist-actionbar-revealer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="transition_type">slide-up</property>
+                        <child>
+                          <object class="GtkActionBar" id="playlist-actionbar">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
                   </object>
                   <packing>
-                    <property name="name">page0</property>
-                    <property name="title">page0</property>
+                    <property name="name">page2</property>
+                    <property name="title" translatable="yes">page2</property>
                   </packing>
                 </child>
                 <child>
@@ -1229,6 +1260,28 @@
                 <property name="spacing">6</property>
                 <property name="layout_style">end</property>
                 <child>
+                  <object class="GtkToggleButton" id="playlist-toolbar-select">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Select multiple albums</property>
+                    <signal name="toggled" handler="on_playlist-toolbar-select_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">object-select-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkButton" id="playlist-toolbar-clear">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -1246,7 +1299,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">0</property>
+                    <property name="position">1</property>
                     <property name="non_homogeneous">True</property>
                   </packing>
                 </child>

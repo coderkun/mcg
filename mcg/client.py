@@ -201,6 +201,12 @@ class Client(Base):
         self._add_action(self._remove_album_from_playlist, album)
 
 
+    def remove_albums_from_playlist(self, albums):
+        """Remove multiple albums from the playlist in one step."""
+        self._logger.info("remove multiple albums from playlist")
+        self._add_action(self._remove_albums_from_playlist, albums)
+
+
     def play_album_from_playlist(self, album):
         """Play the given album from the playlist."""
         self._logger.info("play album from playlist")
@@ -431,6 +437,14 @@ class Client(Base):
         self._call_list('command_list_begin')
         for track in album.get_tracks():
             self._call_list('deleteid', track.get_id())
+        self._call('command_list_end')
+
+
+    def _remove_albums_from_playlist(self, albums):
+        self._call_list('command_list_begin')
+        for album in albums:
+            for track in album.get_tracks():
+                self._call_list('deleteid', track.get_id())
         self._call('command_list_end')
 
 
