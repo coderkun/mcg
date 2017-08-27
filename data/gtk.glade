@@ -919,7 +919,6 @@
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="margin">0</property>
-                            <property name="selection_mode">none</property>
                             <property name="item_orientation">horizontal</property>
                             <property name="row_spacing">0</property>
                             <property name="column_spacing">0</property>
@@ -927,6 +926,7 @@
                             <property name="item_padding">0</property>
                             <property name="activate_on_single_click">True</property>
                             <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
+                            <signal name="selection-changed" handler="on_library-iconview_selection_changed" swapped="no"/>
                             <style>
                               <class name="no-bg"/>
                             </style>
@@ -940,6 +940,24 @@
                         <property name="expand">True</property>
                         <property name="fill">True</property>
                         <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkRevealer" id="library-actionbar-revealer">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="transition_type">none</property>
+                        <child>
+                          <object class="GtkActionBar" id="library-actionbar">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
                       </packing>
                     </child>
                   </object>
@@ -1339,6 +1357,28 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkToggleButton" id="library-toolbar-select">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="receives_default">True</property>
+                    <property name="tooltip_text" translatable="yes">Select multiple albums</property>
+                    <signal name="toggled" handler="on_library-toolbar-select_toggled" swapped="no"/>
+                    <child>
+                      <object class="GtkImage">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="icon_name">object-select-symbolic</property>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                    <property name="non_homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkMenuButton">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
@@ -1356,7 +1396,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">False</property>
-                    <property name="position">1</property>
+                    <property name="position">2</property>
                     <property name="non_homogeneous">True</property>
                   </packing>
                 </child>

@@ -150,6 +150,7 @@ class Window():
         self._panels[Window._PANEL_INDEX_PLAYLIST].connect('play', self.on_playlist_panel_play)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('update', self.on_library_panel_update)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('play', self.on_library_panel_play)
+        self._panels[Window._PANEL_INDEX_LIBRARY].connect('play-multiple', self.on_library_panel_play_multiple)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('item-size-changed', self.on_library_panel_item_size_changed)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('sort-order-changed', self.on_library_panel_sort_order_changed)
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('sort-type-changed', self.on_library_panel_sort_type_changed)
@@ -317,6 +318,10 @@ class Window():
 
     def on_library_panel_play(self, widget, album):
         self._mcg.play_album(album)
+
+
+    def on_library_panel_play_multiple(self, widget, albums):
+        self._mcg.play_albums(albums)
 
 
     def on_library_panel_item_size_changed(self, widget, size):
@@ -1374,6 +1379,7 @@ class LibraryPanel(GObject.GObject):
     __gsignals__ = {
         'update': (GObject.SIGNAL_RUN_FIRST, None, ()),
         'play': (GObject.SIGNAL_RUN_FIRST, None, (str,)),
+        'play-multiple': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,)),
         'item-size-changed': (GObject.SIGNAL_RUN_FIRST, None, (int,)),
         'sort-order-changed': (GObject.SIGNAL_RUN_FIRST, None, (int,)),
         'sort-type-changed': (GObject.SIGNAL_RUN_FIRST, None, (Gtk.SortType,))
@@ -1405,7 +1411,10 @@ class LibraryPanel(GObject.GObject):
         self._headerbar_standalone = builder.get_object('headerbar-library-standalone')
         self._panel_normal = builder.get_object('library-panel-normal')
         self._panel_standalone = builder.get_object('library-panel-standalone')
+        self._actionbar_revealer = builder.get_object('library-actionbar-revealer')
 
+        # Select button
+        self._select_button = builder.get_object('library-toolbar-select')
         # Filter/search bar
         self._filter_bar = builder.get_object('library-filter-bar')
         self._filter_entry = builder.get_object('library-filter')
@@ -1434,6 +1443,15 @@ class LibraryPanel(GObject.GObject):
         self._library_grid.set_pixbuf_column(0)
         self._library_grid.set_text_column(-1)
         self._library_grid.set_tooltip_column(1)
+        # Action bar (normal)
+        actionbar = builder.get_object('library-actionbar')
+        cancel_button = Gtk.Button('cancel')
+        cancel_button.connect('clicked', self.on_selection_cancel_clicked)
+        actionbar.pack_start(cancel_button)
+        add_button = Gtk.Button('add')
+        add_button.connect('clicked', self.on_selection_add_clicked)
+        actionbar.pack_end(add_button)
+
         # Standalone labels
         self._standalone_title = builder.get_object('headerbar-library-standalone-title')
         self._standalone_artist = builder.get_object('headerbar-library-standalone-artist')
@@ -1442,11 +1460,11 @@ class LibraryPanel(GObject.GObject):
         self._standalone_spinner = builder.get_object('library-standalone-spinner')
         self._standalone_scroll = builder.get_object('library-standalone-scroll')
         self._standalone_image = builder.get_object('library-standalone-image')
-        # Action bar
-        action_bar = builder.get_object('library-standalone-actionbar')
+        # Action bar (standalone)
+        actionbar_standalone = builder.get_object('library-standalone-actionbar')
         play_button = Gtk.Button('play')
         play_button.connect('clicked', self.on_standalone_play_clicked)
-        action_bar.pack_end(play_button)
+        actionbar_standalone.pack_end(play_button)
 
 
     def get(self):
@@ -1460,6 +1478,7 @@ class LibraryPanel(GObject.GObject):
     def get_signal_handlers(self):
         return {
             'on_library-toolbar-search_toggled': self.on_search_toggled,
+            'on_library-toolbar-select_toggled': self.on_select_toggled,
             'on_library-toolbar-scale_change_value': self.on_grid_scale_change,
             'on_library-toolbar-scale_button_release_event': self.on_grid_scale_changed,
             'on_library-toolbar-update_clicked': self.on_update_clicked,
@@ -1468,6 +1487,7 @@ class LibraryPanel(GObject.GObject):
             'on_library-filter-bar_notify': self.on_filter_bar_notify,
             'on_library-filter_search_changed': self.on_filter_entry_changed,
             'on_library-iconview_item_activated': self.on_library_grid_clicked,
+            'on_library-iconview_selection_changed': self.on_library_grid_selection_changed,
             'on_library-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
             'on_headerbar-library-standalone-close_clicked': self.on_standalone_close_clicked
         }
@@ -1475,6 +1495,15 @@ class LibraryPanel(GObject.GObject):
 
     def on_search_toggled(self, widget):
         self._filter_bar.set_search_mode(widget.get_active())
+
+
+    def on_select_toggled(self, widget):
+        if widget.get_active():
+            self._actionbar_revealer.set_reveal_child(True)
+            self._library_grid.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
+        else:
+            self._actionbar_revealer.set_reveal_child(False)
+            self._library_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
 
 
     def on_grid_scale_change(self, widget, scroll, value):
@@ -1534,15 +1563,26 @@ class LibraryPanel(GObject.GObject):
         album = self._albums[hash]
         self._selected_albums = [album]
 
-        # Set labels
-        self._standalone_title.set_text(album.get_title())
-        self._standalone_artist.set_text(", ".join(album.get_albumartists()))
+        # Show standalone album
+        if widget.get_selection_mode() == Gtk.SelectionMode.SINGLE:
+            # Set labels
+            self._standalone_title.set_text(album.get_title())
+            self._standalone_artist.set_text(", ".join(album.get_albumartists()))
 
-        # Show panel
-        self._open_standalone()
+            # Show panel
+            self._open_standalone()
 
-        # Load cover
-        threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+            # Load cover
+            threading.Thread(target=self._show_standalone_image, args=(album,)).start()
+
+
+    def on_library_grid_selection_changed(self, widget):
+        self._selected_albums = []
+        for path in widget.get_selected_items():
+            path = self._library_grid_filter.convert_path_to_child_path(path)
+            iter = self._library_grid_model.get_iter(path)
+            hash = self._library_grid_model.get_value(iter, 2)
+            self._selected_albums.insert(0, self._albums[hash])
 
 
     def on_filter_visible(self, model, iter, data):
@@ -1551,6 +1591,16 @@ class LibraryPanel(GObject.GObject):
             return
         album = self._albums[hash]
         return album.filter(self._filter_string)
+
+
+    def on_selection_cancel_clicked(self, widget):
+        self._select_button.set_active(False)
+
+
+    def on_selection_add_clicked(self, widget):
+        hashes = [album.get_hash() for album in self._selected_albums]
+        self.emit('play-multiple', hashes)
+        self._select_button.set_active(False)
 
 
     def on_standalone_scroll_size_allocate(self, widget, allocation):

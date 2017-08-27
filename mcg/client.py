@@ -225,6 +225,12 @@ class Client(Base):
         self._add_action(self._play_album, album)
 
 
+    def play_albums(self, albums):
+        """Play multiple albums."""
+        self._logger.info("play albums")
+        self._add_action(self._play_albums, albums)
+
+
     def seek(self, pos, time):
         """Seeks to a song at a position"""
         self._logger.info("seek")
@@ -477,6 +483,24 @@ class Client(Base):
                     track_ids.append(track_id)
             if self._state != 'play' and track_ids:
                 self._call('playid', track_ids[0])
+
+
+    def _play_albums(self, albums):
+        track_ids = []
+        for album in albums:
+            self._logger.info("add album %s", album)
+            if album in self._albums:
+                for track in self._albums[album].get_tracks():
+                    self._logger.info("addid: %r", track.get_file())
+                    track_id = None
+                    track_id_response = self._parse_dict(self._call('addid', track.get_file()))
+                    if 'id' in track_id_response:
+                        track_id = track_id_response['id']
+                    self._logger.debug("track id: %r", track_id)
+                    if track_id is not None:
+                        track_ids.append(track_id)
+        if self._state != 'play' and track_ids:
+            self._call('playid', track_ids[0])
 
 
     def _seek(self, pos, time):
