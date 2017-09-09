@@ -18,17 +18,28 @@
     font-weight:bold;
 }
 
-iconview.view:selected,
-iconview.view:selected:focus,
-GtkIconView.cell:selected,
-GtkIconView.cell:selected:focus {
-    background-color:@theme_selected_bg_color;
+actionbar {
+    background-color:@theme_unfocused_bg_color;
 }
 
+/* Icon View in regular mode */
+iconview.view:selected,
+iconview.view:selected:focus {
+    background-color:@theme_selected_bg_color;
+}
 iconview.view:hover {
     -gtk-icon-effect:highlight;
 }
 
-actionbar {
-    background-color:@theme_unfocused_bg_color;
+/* Icon View in selection mode */
+iconview.view.selection {
+    -gtk-icon-effect:dim;
+}
+iconview.view.selection:selected,
+iconview.view.selection:selected:focus {
+    background-color:@theme_selected_bg_color;
+    -gtk-icon-effect:highlight;
+}
+iconview.view.selection:hover {
+    -gtk-icon-effect:none;
 }

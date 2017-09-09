@@ -92,6 +92,7 @@ class Window():
     _PANEL_INDEX_COVER = 1
     _PANEL_INDEX_PLAYLIST = 2
     _PANEL_INDEX_LIBRARY = 3
+    _CSS_SELECTION = 'selection'
 
 
     def __init__(self, app, builder, title, settings):
@@ -1183,9 +1184,11 @@ class PlaylistPanel(GObject.GObject):
         if widget.get_active():
             self._actionbar_revealer.set_reveal_child(True)
             self._playlist_grid.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
+            self._playlist_grid.get_style_context().add_class(Window._CSS_SELECTION)
         else:
             self._actionbar_revealer.set_reveal_child(False)
             self._playlist_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+            self._playlist_grid.get_style_context().remove_class(Window._CSS_SELECTION)
 
 
     def clear_clicked(self, widget):
@@ -1501,9 +1504,11 @@ class LibraryPanel(GObject.GObject):
         if widget.get_active():
             self._actionbar_revealer.set_reveal_child(True)
             self._library_grid.set_selection_mode(Gtk.SelectionMode.MULTIPLE)
+            self._library_grid.get_style_context().add_class(Window._CSS_SELECTION)
         else:
             self._actionbar_revealer.set_reveal_child(False)
             self._library_grid.set_selection_mode(Gtk.SelectionMode.SINGLE)
+            self._library_grid.get_style_context().remove_class(Window._CSS_SELECTION)
 
 
     def on_grid_scale_change(self, widget, scroll, value):
