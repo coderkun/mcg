@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CoverGrid (mcg)\n"
-"POT-Creation-Date: 2017-06-04 15:34+0200\n"
-"PO-Revision-Date: 2017-06-04 15:34+0200\n"
+"POT-Creation-Date: 2017-09-10 14:16+0200\n"
+"PO-Revision-Date: 2017-09-10 14:16+0200\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.1\n"
+"X-Generator: Poedit 2.0.3\n"
 "X-Poedit-Basepath: ../../..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -90,51 +90,55 @@ msgstr "Bildordner:"
 msgid "Connection"
 msgstr "Verbindung"
 
-#: data/gtk.glade:715 data/gtk.menu.ui:30
+#: data/gtk.glade:714 data/gtk.menu.ui:30
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:826 data/gtk.menu.ui:36
+#: data/gtk.glade:856 data/gtk.menu.ui:36
 msgid "Playlist"
 msgstr "Wiedergabeliste"
 
-#: data/gtk.glade:853
+#: data/gtk.glade:883
 msgid "search library"
 msgstr "Bibliothek durchsuchen"
 
-#: data/gtk.glade:994 data/gtk.menu.ui:42
+#: data/gtk.glade:1042 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Bibliothek"
 
-#: data/gtk.glade:1066 data/gtk.shortcuts.ui:74
+#: data/gtk.glade:1114 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Die Verbindung herstellen oder trennen"
 
-#: data/gtk.glade:1088 data/gtk.shortcuts.ui:81
+#: data/gtk.glade:1136 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
 msgstr "Zwischen Abspielen und Pause wechseln"
 
-#: data/gtk.glade:1108
+#: data/gtk.glade:1156
 msgid "Adjust the volume"
 msgstr "Die Lautstärke anpassen"
 
-#: data/gtk.glade:1166 data/gtk.shortcuts.ui:101
+#: data/gtk.glade:1214 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
 msgstr "Das Cover im Vollbildmodus anzeigen"
 
-#: data/gtk.glade:1189 data/gtk.glade:1294
+#: data/gtk.glade:1237 data/gtk.glade:1386
 msgid "Settings and actions"
 msgstr "Einstellungen und Aktionen"
 
-#: data/gtk.glade:1237 data/gtk.shortcuts.ui:88
+#: data/gtk.glade:1285 data/gtk.glade:1364
+msgid "Select multiple albums"
+msgstr "Mehrere Alben auswählen"
+
+#: data/gtk.glade:1307 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
 msgstr "Die Wiedergabeliste leeren"
 
-#: data/gtk.glade:1271 data/gtk.shortcuts.ui:114
+#: data/gtk.glade:1341 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Die Bibliothek durchsuchen"
 
-#: data/gtk.glade:1339
+#: data/gtk.glade:1431
 msgid ""
 "CoverGrid is a client for the Music Player Daemon, focusing on albums "
 "instead of single tracks."
@@ -210,7 +214,7 @@ msgstr "Cover-Paneel"
 msgid "Library Panel"
 msgstr "Bibliothekspaneel"
 
-#: mcg/utils.py:61 mcg/widgets.py:989
+#: mcg/utils.py:61 mcg/utils.py:71
 msgid "{} feat. {}"
 msgstr "{} mit {}"
 
