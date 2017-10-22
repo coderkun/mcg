@@ -76,9 +76,6 @@ setup(
             'de.coderkun.mcg.gresource'
         ]
     },
-    install_requires = [
-        "pygobject"
-    ],
     extras_require = {
         'keyring support': ["python-keyring"]
     },
