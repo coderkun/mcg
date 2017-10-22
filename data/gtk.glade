@@ -1427,7 +1427,7 @@
     <property name="gravity">center</property>
     <property name="transient_for">appwindow</property>
     <property name="program_name">CoverGrid</property>
-    <property name="version">1.2.1</property>
+    <property name="version">1.2.2</property>
     <property name="comments" translatable="yes">CoverGrid is a client for the Music Player Daemon, focusing on albums instead of single tracks.</property>
     <property name="website">http://www.coderkun.de/codes/mcg</property>
     <property name="logo">mcg.svg</property>

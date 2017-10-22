@@ -53,7 +53,7 @@ setup(
         'build_py': build_mcg
     },
     name = "mcg",
-    version = '1.2.1',
+    version = '1.2.2',
     description = "CoverGrid (mcg) is a client for the Music Player Daemon, focusing on albums instead of single tracks.",
     url = "http://www.coderkun.de/codes/mcg",
     author = "coderkun",
