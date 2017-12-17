@@ -53,6 +53,22 @@ Create a distribution package with _setuptools_:
 bc. $ python3 setup.py sdist
 
 
+h2. Cover/image configuration
+
+Since MPD itself does not provide the cover/image/album art binaries, yet, _mcg_ has to look for them itself. In order to find the images a base folder has to be configured on the Connection tab as “Image Directory”. This value can either be a local (absolute) folder (e. g. /home/user/music/) or an http URL (e. g. http://localhost/music/). _mcg_ then adds the (relative) folder of the audio file to this paths and tries different names for the actual file:
+
+# the album name
+# “cover”
+# “folder”
+
+The following file extensions are used:
+
+# png
+# jpg
+
+The first combination that results in an existing file is used as cover image. If no matching file exists, _mcg_ will try to traverse the directory for any image file as fallback—this is done for local paths only though, not for http URLs.
+
+
 h2. Screenshots
 
 !https://www.coderkun.de/images/mcg-cover.png(Cover)!
