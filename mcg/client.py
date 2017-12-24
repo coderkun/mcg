@@ -375,10 +375,14 @@ class Client(Base):
         if 'error' in status:
             error = status['error']
         # Album
+        file = None
         album = None
         pos = 0
         song = self._parse_dict(self._call("currentsong"))
         if song:
+            # File
+            if 'file' in song:
+                file = song['file']
             # Track
             track = self._extract_playlist_track(song)
             if track:
@@ -391,7 +395,15 @@ class Client(Base):
                         album = palbum
                         break
                     pos = pos - len(palbum.get_tracks())
-        self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, error)
+        # Audio
+        audio = None
+        if 'audio' in status:
+            audio = status['audio']
+        # Bitrate
+        bitrate = None
+        if 'bitrate' in status:
+            bitrate = status['bitrate']
+        self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, file, audio, bitrate, error)
 
 
     def _load_albums(self):

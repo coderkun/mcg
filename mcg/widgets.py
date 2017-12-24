@@ -361,7 +361,7 @@ class Window():
             self._panel_action.set_enabled(False)
 
 
-    def on_mcg_status(self, state, album, pos, time, volume, error):
+    def on_mcg_status(self, state, album, pos, time, volume, file, audio, bitrate, error):
         # Album
         GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_album, album)
         # State
@@ -375,6 +375,8 @@ class Window():
             self._play_action.set_state(GLib.Variant.new_boolean(False))
         # Volume
         GObject.idle_add(self._header_bar.set_volume, volume)
+        # Audio
+        self._panels[Window._PANEL_INDEX_SERVER].set_status(file, audio, bitrate, error)
         # Error
         if error is None:
             self._infobar.hide()
@@ -470,8 +472,7 @@ class Window():
     def _save_visible_panel(self):
         panels = [panel.get() for panel in self._panels]
         panel_index_selected = panels.index(self._stack.get_visible_child())
-        if panel_index_selected > 0:
-            self._settings.set_int(Window.SETTING_PANEL, panel_index_selected)
+        self._settings.set_int(Window.SETTING_PANEL, panel_index_selected)
 
 
     def _set_menu_visible_panel(self):
@@ -803,6 +804,12 @@ class ServerPanel(GObject.GObject):
         self._toolbar = builder.get_object('server-toolbar')
         self._stack = builder.get_object('server-stack')
 
+        # Status widgets
+        self._status_file = builder.get_object('server-status-file')
+        self._status_audio = builder.get_object('server-status-audio')
+        self._status_bitrate = builder.get_object('server-status-bitrate')
+        self._status_error = builder.get_object('server-status-error')
+
 
     def get(self):
         return self._panel
@@ -810,6 +817,30 @@ class ServerPanel(GObject.GObject):
 
     def get_toolbar(self):
         return self._toolbar
+
+
+    def set_status(self, file, audio, bitrate, error):
+        if not file:
+            file = ""
+        self._status_file.set_text(file)
+        # Audio information
+        if  audio:
+            parts = audio.split(":")
+            if len(parts) == 3:
+                audio = "{} Hz, {} bit, {} channels".format(parts[0], parts[1], parts[2])
+        else:
+            audio = ""
+        self._status_audio.set_text(audio)
+        # Bitrate
+        if bitrate:
+            bitrate = bitrate + " kb/s"
+        else:
+            bitrate = ""
+        self._status_bitrate.set_text(bitrate)
+        # Error
+        if not error:
+            error = ""
+        self._status_error.set_markup(error)
 
 
 
