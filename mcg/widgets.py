@@ -160,6 +160,7 @@ class Window():
         self._panels[Window._PANEL_INDEX_LIBRARY].connect('sort-type-changed', self.on_library_panel_sort_type_changed)
         self._mcg.connect_signal(client.Client.SIGNAL_CONNECTION, self.on_mcg_connect)
         self._mcg.connect_signal(client.Client.SIGNAL_STATUS, self.on_mcg_status)
+        self._mcg.connect_signal(client.Client.SIGNAL_STATS, self.on_mcg_stats)
         self._mcg.connect_signal(client.Client.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
         self._mcg.connect_signal(client.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
         self._mcg.connect_signal(client.Client.SIGNAL_ERROR, self.on_mcg_error)
@@ -349,6 +350,7 @@ class Window():
             self._mcg.load_playlist()
             self._mcg.load_albums()
             self._mcg.get_status()
+            self._mcg.get_stats()
             self._connect_action.set_state(GLib.Variant.new_boolean(True))
             self._play_action.set_enabled(True)
             self._clear_playlist_action.set_enabled(True)
@@ -375,13 +377,17 @@ class Window():
             self._play_action.set_state(GLib.Variant.new_boolean(False))
         # Volume
         GObject.idle_add(self._header_bar.set_volume, volume)
-        # Audio
+        # Status
         self._panels[Window._PANEL_INDEX_SERVER].set_status(file, audio, bitrate, error)
         # Error
         if error is None:
             self._infobar.hide()
         else:
             self._show_error(error)
+
+
+    def on_mcg_stats(self, artists, albums, songs, dbplaytime, playtime, uptime):
+        self._panels[Window._PANEL_INDEX_SERVER].set_stats(artists, albums, songs, dbplaytime, playtime, uptime)
 
 
     def on_mcg_load_playlist(self, playlist):
@@ -810,6 +816,14 @@ class ServerPanel(GObject.GObject):
         self._status_bitrate = builder.get_object('server-status-bitrate')
         self._status_error = builder.get_object('server-status-error')
 
+        # Stats widgets
+        self._stats_artists = builder.get_object('server-stats-artists')
+        self._stats_albums = builder.get_object('server-stats-albums')
+        self._stats_songs = builder.get_object('server-stats-songs')
+        self._stats_dbplaytime = builder.get_object('server-stats-dbplaytime')
+        self._stats_playtime = builder.get_object('server-stats-playtime')
+        self._stats_uptime = builder.get_object('server-stats-uptime')
+
 
     def get(self):
         return self._panel
@@ -841,6 +855,15 @@ class ServerPanel(GObject.GObject):
         if not error:
             error = ""
         self._status_error.set_markup(error)
+
+
+    def set_stats(self, artists, albums, songs, dbplaytime, playtime, uptime):
+        self._stats_artists.set_text(str(artists))
+        self._stats_albums.set_text(str(albums))
+        self._stats_songs.set_text(str(songs))
+        self._stats_dbplaytime.set_text(str(dbplaytime))
+        self._stats_playtime.set_text(str(playtime))
+        self._stats_uptime.set_text(str(uptime))
 
 
 

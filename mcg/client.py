@@ -108,6 +108,8 @@ class Client(Base):
     SIGNAL_CONNECTION = 'connection'
     # Signal: status
     SIGNAL_STATUS = 'status'
+    # Signal: stats
+    SIGNAL_STATS = 'stats'
     # Signal: load albums
     SIGNAL_LOAD_ALBUMS = 'load-albums'
     # Signal: load playlist
@@ -172,6 +174,12 @@ class Client(Base):
         """Determine the current status."""
         self._logger.info("get status")
         self._add_action(self._get_status)
+
+
+    def get_stats(self):
+        """Load statistics."""
+        self._logger.info("get stats")
+        self._add_action(self._get_stats)
 
 
     def load_albums(self):
@@ -404,6 +412,39 @@ class Client(Base):
         if 'bitrate' in status:
             bitrate = status['bitrate']
         self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, file, audio, bitrate, error)
+
+
+    def _get_stats(self):
+        """Action: Perform the real statistics gathering."""
+        self._logger.info("getting statistics")
+        stats = self._parse_dict(self._call("stats"))
+        self._logger.debug("stats: %r", stats)
+
+        # Artists
+        artists = 0
+        if 'artists' in stats:
+            artists = int(stats['artists'])
+         # Albums
+        albums = 0
+        if 'albums' in stats:
+            albums = int(stats['albums'])
+        # Songs
+        songs = 0
+        if 'songs' in stats:
+            songs = int(stats['songs'])
+        # Database playtime
+        dbplaytime = 0
+        if 'db_playtime' in stats:
+            dbplaytime = stats['db_playtime']
+        # Playtime
+        playtime = 0
+        if 'playtime' in stats:
+            playtime = stats['playtime']
+        # Uptime
+        uptime = 0
+        if 'uptime' in stats:
+            uptime = stats['uptime']
+        self._callback(Client.SIGNAL_STATS, artists, albums, songs, dbplaytime, playtime, uptime)
 
 
     def _load_albums(self):
