@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.20.0 -->
+<!-- Generated with glade 3.20.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkPopover" id="cover-toolbar-popover">
@@ -214,17 +214,20 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkScale" id="library-toolbar-scale">
+            <property name="width_request">350</property>
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="adjustment">library-scale-adjustment</property>
+            <property name="restrict_to_fill_level">False</property>
+            <property name="fill_level">-1</property>
             <property name="round_digits">0</property>
-            <property name="draw_value">False</property>
+            <property name="digits">0</property>
             <property name="has_origin">False</property>
             <signal name="button-release-event" handler="on_library-toolbar-scale_button_release_event" swapped="no"/>
             <signal name="change-value" handler="on_library-toolbar-scale_change_value" swapped="no"/>
           </object>
           <packing>
-            <property name="expand">False</property>
+            <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
@@ -927,6 +930,7 @@
                             <property name="activate_on_single_click">True</property>
                             <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
                             <signal name="selection-changed" handler="on_library-iconview_selection_changed" swapped="no"/>
+                            <signal name="size-allocate" handler="on_library-iconview_size_allocate" swapped="no"/>
                             <style>
                               <class name="no-bg"/>
                             </style>

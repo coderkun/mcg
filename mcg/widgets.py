@@ -1405,6 +1405,7 @@ class LibraryPanel(GObject.GObject):
         self._icon_theme = Gtk.IconTheme.get_default()
         self._standalone_pixbuf = None
         self._selected_albums = []
+        self._allocation = (0, 0)
 
         # Widgets
         self._appwindow = builder.get_object('appwindow')
@@ -1426,6 +1427,7 @@ class LibraryPanel(GObject.GObject):
         self._progress_bar = builder.get_object('library-progress')
         # Toolbar menu
         self._toolbar_search_bar = builder.get_object('library-toolbar-search')
+        self._toolbar_popover = builder.get_object('library-toolbar-popover')
         self._toolbar_sort_buttons = {
             SortOrder.ARTIST: builder.get_object('library-toolbar-sort-artist'),
             SortOrder.TITLE: builder.get_object('library-toolbar-sort-title'),
@@ -1434,6 +1436,7 @@ class LibraryPanel(GObject.GObject):
         self._toolbar_sort_order_button = builder.get_object('library-toolbar-sort-order')
         self._grid_scale = builder.get_object('library-toolbar-scale')
         self._grid_scale.set_value(self._item_size)
+        self._grid_adjustment = builder.get_object('library-scale-adjustment')
         # Library Grid: Model
         self._library_grid_model = Gtk.ListStore(GdkPixbuf.Pixbuf, str, str)
         self._library_grid_model.set_sort_func(2, self.compare_albums, self._sort_order)
@@ -1492,8 +1495,31 @@ class LibraryPanel(GObject.GObject):
             'on_library-iconview_item_activated': self.on_library_grid_clicked,
             'on_library-iconview_selection_changed': self.on_library_grid_selection_changed,
             'on_library-standalone-scroll_size_allocate': self.on_standalone_scroll_size_allocate,
-            'on_headerbar-library-standalone-close_clicked': self.on_standalone_close_clicked
+            'on_headerbar-library-standalone-close_clicked': self.on_standalone_close_clicked,
+            'on_library-iconview_size_allocate': self.on_resize
         }
+
+
+    def on_resize(self, widget, event):
+        new_allocation = (widget.get_allocation().width, widget.get_allocation().height)
+        if new_allocation == self._allocation:
+            return
+        self._allocation = new_allocation
+        self._grid_scale.clear_marks()
+        width = widget.get_allocation().width - 12
+
+        lower = int(self._grid_adjustment.get_lower())
+        upper = int(self._grid_adjustment.get_upper())
+        countMin = max(int(width / upper), 1)
+        countMax = max(int(width / lower), 1)
+        for index in range(countMin, countMax):
+            pixel = int(width / index)
+            pixel = pixel - int(pixel / 100)
+            self._grid_scale.add_mark(
+                pixel,
+                Gtk.PositionType.BOTTOM,
+                None
+            )
 
 
     def on_search_toggled(self, widget):
@@ -1525,9 +1551,11 @@ class LibraryPanel(GObject.GObject):
         size = round(self._grid_scale.get_value())
         range =  self._grid_scale.get_adjustment()
         if size < range.get_lower() or size > range.get_upper():
-            return
+            return False
         self.emit('item-size-changed', size)
+        self._toolbar_popover.popdown()
         self._redraw()
+        return False
 
 
     def on_update_clicked(self, widget):
