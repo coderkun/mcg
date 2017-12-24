@@ -88,7 +88,7 @@ class Window():
     SETTING_SORT_ORDER = 'sort-order'
     SETTING_SORT_TYPE = 'sort-type'
     STOCK_ICON_DEFAULT = 'image-x-generic-symbolic'
-    _PANEL_INDEX_CONNECTION = 0
+    _PANEL_INDEX_SERVER = 0
     _PANEL_INDEX_COVER = 1
     _PANEL_INDEX_PLAYLIST = 2
     _PANEL_INDEX_LIBRARY = 3
@@ -107,8 +107,10 @@ class Window():
         self._maximized = self._settings.get_boolean(Window.SETTING_WINDOW_MAXIMIZED)
         self._fullscreened = False
 
+        # Login screen
+        self._connection_panel = ConnectionPanel(builder)
         # Panels
-        self._panels.append(ConnectionPanel(builder))
+        self._panels.append(ServerPanel(builder))
         self._panels.append(CoverPanel(builder))
         self._panels.append(PlaylistPanel(builder))
         self._panels.append(LibraryPanel(builder))
@@ -117,6 +119,7 @@ class Window():
         # InfoBar
         self._infobar = InfoBar(builder)
         # Stack
+        self._content_stack = builder.get_object('contentstack')
         self._stack = builder.get_object('panelstack')
         # Header
         self._header_bar = HeaderBar(builder)
@@ -125,11 +128,11 @@ class Window():
 
         # Properties
         self._header_bar.set_sensitive(False, False)
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_host(self._settings.get_string(Window.SETTING_HOST))
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_port(self._settings.get_int(Window.SETTING_PORT))
+        self._connection_panel.set_host(self._settings.get_string(Window.SETTING_HOST))
+        self._connection_panel.set_port(self._settings.get_int(Window.SETTING_PORT))
         if use_keyring:
-            self._panels[Window._PANEL_INDEX_CONNECTION].set_password(keyring.get_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME))
-        self._panels[Window._PANEL_INDEX_CONNECTION].set_image_dir(self._settings.get_string(Window.SETTING_IMAGE_DIR))
+            self._connection_panel.set_password(keyring.get_password(ZeroconfProvider.KEYRING_SYSTEM, ZeroconfProvider.KEYRING_USERNAME))
+        self._connection_panel.set_image_dir(self._settings.get_string(Window.SETTING_IMAGE_DIR))
         self._panels[Window._PANEL_INDEX_COVER].set_tracklist_size(self._settings.get_enum(Window.SETTING_TRACKLIST_SIZE))
         self._panels[Window._PANEL_INDEX_PLAYLIST].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
         self._panels[Window._PANEL_INDEX_LIBRARY].set_item_size(self._settings.get_int(Window.SETTING_ITEM_SIZE))
@@ -141,7 +144,7 @@ class Window():
         self._header_bar.connect('toolbar-connect', self.on_header_bar_connect)
         self._header_bar.connect('toolbar-playpause', self.on_header_bar_playpause)
         self._header_bar.connect('toolbar-set-volume', self.on_header_bar_set_volume)
-        self._panels[Window._PANEL_INDEX_CONNECTION].connect('connection-changed', self.on_connection_panel_connection_changed)
+        self._connection_panel.connect('connection-changed', self.on_connection_panel_connection_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect('toggle-fullscreen', self.on_cover_panel_toggle_fullscreen)
         self._panels[Window._PANEL_INDEX_COVER].connect('tracklist-size-changed', self.on_cover_panel_tracklist_size_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect('set-song', self.on_cover_panel_set_song)
@@ -172,7 +175,7 @@ class Window():
         }
         handlers.update(self._header_bar.get_signal_handlers())
         handlers.update(self._infobar.get_signal_handlers())
-        handlers.update(self._panels[Window._PANEL_INDEX_CONNECTION].get_signal_handlers())
+        handlers.update(self._connection_panel.get_signal_handlers())
         handlers.update(self._panels[Window._PANEL_INDEX_COVER].get_signal_handlers())
         handlers.update(self._panels[Window._PANEL_INDEX_PLAYLIST].get_signal_handlers())
         handlers.update(self._panels[Window._PANEL_INDEX_LIBRARY].get_signal_handlers())
@@ -183,7 +186,7 @@ class Window():
         if self._maximized:
             self._appwindow.maximize()
         self._appwindow.show_all()
-        self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION].get())
+        self._content_stack.set_visible_child(self._connection_panel.get())
         if self._settings.get_boolean(Window.SETTING_CONNECTED):
             self._connect()
 
@@ -380,11 +383,11 @@ class Window():
 
 
     def on_mcg_load_playlist(self, playlist):
-        self._panels[self._PANEL_INDEX_PLAYLIST].set_playlist(self._panels[self._PANEL_INDEX_CONNECTION].get_host(), playlist)
+        self._panels[self._PANEL_INDEX_PLAYLIST].set_playlist(self._connection_panel.get_host(), playlist)
 
 
     def on_mcg_load_albums(self, albums):
-        self._panels[self._PANEL_INDEX_LIBRARY].set_albums(self._panels[self._PANEL_INDEX_CONNECTION].get_host(), albums)
+        self._panels[self._PANEL_INDEX_LIBRARY].set_albums(self._connection_panel.get_host(), albums)
 
 
     def on_mcg_error(self, error):
@@ -422,17 +425,16 @@ class Window():
     # Private methods
 
     def _connect(self):
-        connection_panel = self._panels[Window._PANEL_INDEX_CONNECTION]
-        connection_panel.get().set_sensitive(False)
+        self._connection_panel.get().set_sensitive(False)
         self._header_bar.set_sensitive(False, True)
         if self._mcg.is_connected():
             self._mcg.disconnect()
             self._settings.set_boolean(Window.SETTING_CONNECTED, False)
         else:
-            host = connection_panel.get_host()
-            port = connection_panel.get_port()
-            password = connection_panel.get_password()
-            image_dir = connection_panel.get_image_dir()
+            host = self._connection_panel.get_host()
+            port = self._connection_panel.get_port()
+            password = self._connection_panel.get_password()
+            image_dir = self._connection_panel.get_image_dir()
             self._mcg.connect(host, port, password, image_dir)
             self._settings.set_boolean(Window.SETTING_CONNECTED, True)
 
@@ -440,6 +442,7 @@ class Window():
     def _connect_connected(self):
         self._header_bar.connected()
         self._header_bar.set_sensitive(True, False)
+        self._content_stack.set_visible_child(self._stack)
         self._stack.set_visible_child(self._panels[self._settings.get_int(Window.SETTING_PANEL)].get())
 
 
@@ -449,8 +452,8 @@ class Window():
         self._header_bar.disconnected()
         self._header_bar.set_sensitive(False, False)
         self._save_visible_panel()
-        self._stack.set_visible_child(self._panels[Window._PANEL_INDEX_CONNECTION].get())
-        self._panels[Window._PANEL_INDEX_CONNECTION].get().set_sensitive(True)
+        self._content_stack.set_visible_child(self._connection_panel.get())
+        self._connection_panel.get().set_sensitive(True)
 
 
     def _fullscreen(self, fullscreened_new):
@@ -506,6 +509,8 @@ class HeaderBar(GObject.GObject):
 
         # Widgets
         self._header_bar = builder.get_object('headerbar')
+        self._title_stack = builder.get_object('headerbar-title-stack')
+        self._connection_label = builder.get_object('headerbar-connectionn-label')
         self._stack_switcher = StackSwitcher(builder)
         self._button_connect = builder.get_object('headerbar-connection')
         self._button_playpause = builder.get_object('headerbar-playpause')
@@ -580,6 +585,7 @@ class HeaderBar(GObject.GObject):
         self._button_connect.handler_unblock_by_func(
             self.on_connection_active_notify
         )
+        self._title_stack.set_visible_child(self._stack_switcher.get())
 
 
     def disconnected(self):
@@ -591,6 +597,7 @@ class HeaderBar(GObject.GObject):
         self._button_connect.handler_unblock_by_func(
             self.on_connection_active_notify
         )
+        self._title_stack.set_visible_child(self._connection_label)
 
 
     def set_play(self):
@@ -673,8 +680,7 @@ class ConnectionPanel(GObject.GObject):
         self._profile = None
 
         # Widgets
-        self._panel = builder.get_object('server-panel')
-        self._toolbar = builder.get_object('server-toolbar')
+        self._panel = builder.get_object('connection-panel')
         # Zeroconf
         self._zeroconf_list = builder.get_object('server-zeroconf-list')
         self._zeroconf_list.set_model(self._services)
@@ -697,10 +703,6 @@ class ConnectionPanel(GObject.GObject):
 
     def get(self):
         return self._panel
-
-
-    def get_toolbar(self):
-        return self._toolbar
 
 
     def get_signal_handlers(self):
@@ -786,6 +788,28 @@ class ConnectionPanel(GObject.GObject):
 
     def _call_back(self):
         self.emit('connection-changed', self.get_host(), self.get_port(), self.get_password(), self.get_image_dir())
+
+
+
+
+class ServerPanel(GObject.GObject):
+
+
+    def __init__(self, builder):
+        GObject.GObject.__init__(self)
+
+        # Widgets
+        self._panel = builder.get_object('server-panel')
+        self._toolbar = builder.get_object('server-toolbar')
+        self._stack = builder.get_object('server-stack')
+
+
+    def get(self):
+        return self._panel
+
+
+    def get_toolbar(self):
+        return self._toolbar
 
 
 
