@@ -818,6 +818,7 @@ class ServerPanel(GObject.GObject):
 
     def __init__(self, builder):
         GObject.GObject.__init__(self)
+        self._none_label = ""
         self._output_buttons = {}
 
         # Widgets
@@ -830,6 +831,7 @@ class ServerPanel(GObject.GObject):
         self._status_audio = builder.get_object('server-status-audio')
         self._status_bitrate = builder.get_object('server-status-bitrate')
         self._status_error = builder.get_object('server-status-error')
+        self._none_label = self._status_file.get_label()
 
         # Stats widgets
         self._stats_artists = builder.get_object('server-stats-artists')
@@ -856,26 +858,30 @@ class ServerPanel(GObject.GObject):
 
 
     def set_status(self, file, audio, bitrate, error):
-        if not file:
-            file = ""
-        self._status_file.set_text(file)
+        if file:
+            file = GObject.markup_escape_text(file)
+        else:
+            file = self._none_label
+        self._status_file.set_markup(file)
         # Audio information
         if  audio:
             parts = audio.split(":")
             if len(parts) == 3:
                 audio = "{} Hz, {} bit, {} channels".format(parts[0], parts[1], parts[2])
         else:
-            audio = ""
-        self._status_audio.set_text(audio)
+            audio = self._none_label
+        self._status_audio.set_markup(audio)
         # Bitrate
         if bitrate:
             bitrate = bitrate + " kb/s"
         else:
-            bitrate = ""
-        self._status_bitrate.set_text(bitrate)
+            bitrate = self._none_label
+        self._status_bitrate.set_markup(bitrate)
         # Error
-        if not error:
-            error = ""
+        if error:
+            error = GObject.markup_escape_text(error)
+        else:
+            error = self._none_label
         self._status_error.set_markup(error)
 
 
