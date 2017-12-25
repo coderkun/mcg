@@ -1554,8 +1554,14 @@ class LibraryPanel(GObject.GObject):
         self._filter_bar = builder.get_object('library-filter-bar')
         self._filter_entry = builder.get_object('library-filter')
         # Progress Bar
-        self._progress_revealer = builder.get_object('library-progress-revealer')
+        self._stack = builder.get_object('library-stack')
+        self._progress_box = builder.get_object('library-progress-box')
+        self._pgross_image = builder.get_object('library-progress-image')
+        self._pgross_image.set_from_pixbuf(self._get_default_image())
+        self._progress_label = builder.get_object('library-progress-label')
+        self._loading_text = self._progress_label.get_label()
         self._progress_bar = builder.get_object('library-progress')
+        self._scroll = builder.get_object('library-scroll')
         # Toolbar menu
         self._toolbar_search_bar = builder.get_object('library-toolbar-search')
         self._toolbar_sort_buttons = {
@@ -1823,7 +1829,7 @@ class LibraryPanel(GObject.GObject):
         self._library_lock.acquire()
         self._library_stop.clear()
         self._albums = albums
-        GObject.idle_add(self._progress_revealer.set_reveal_child, True)
+        GObject.idle_add(self._stack.set_visible_child, self._progress_box)
         GObject.idle_add(self._progress_bar.set_fraction, 0.0)
         GObject.idle_add(self._library_grid.set_item_padding, size / 100)
         self._library_grid.set_model(None)
@@ -1861,6 +1867,7 @@ class LibraryPanel(GObject.GObject):
 
             i += 1
             GObject.idle_add(self._progress_bar.set_fraction, i/n)
+            GObject.idle_add(self._progress_label.set_markup, self._loading_text.format(i, n))
             if self._library_stop.is_set():
                 self._library_lock.release()
                 return
@@ -1869,7 +1876,7 @@ class LibraryPanel(GObject.GObject):
         self._library_grid.thaw_child_notify()
         self._library_grid.set_item_width(-1)
         self._library_lock.release()
-        self._progress_revealer.set_reveal_child(False)
+        self._stack.set_visible_child(self._scroll)
 
 
     def _set_widget_grid_size(self, grid_widget, size, vertical):
@@ -1982,6 +1989,14 @@ class LibraryPanel(GObject.GObject):
         self._standalone_image.set_allocation(self._standalone_scroll.get_allocation())
         self._standalone_image.set_from_pixbuf(pixbuf.scale_simple(width, height, GdkPixbuf.InterpType.HYPER))
         self._standalone_image.show()
+
+
+    def _get_default_image(self):
+        return self._icon_theme.load_icon(
+            Window.STOCK_ICON_DEFAULT,
+            64,
+            Gtk.IconLookupFlags.FORCE_SVG & Gtk.IconLookupFlags.FORCE_SIZE
+        )
 
 
 

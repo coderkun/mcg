@@ -1395,49 +1395,125 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkRevealer" id="library-progress-revealer">
-                            <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="transition_type">none</property>
-                            <child>
-                              <object class="GtkProgressBar" id="library-progress">
-                                <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="fraction">0.5</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
+                          <placeholder/>
                         </child>
                         <child>
-                          <object class="GtkScrolledWindow" id="library-scroll">
+                          <object class="GtkStack" id="library-stack">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="transition_type">crossfade</property>
                             <child>
-                              <object class="GtkIconView" id="library-iconview">
+                              <object class="GtkBox" id="library-progress-box">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <placeholder/>
+                                </child>
+                                <child type="center">
+                                  <object class="GtkBox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <placeholder/>
+                                    </child>
+                                    <child type="center">
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <property name="halign">center</property>
+                                        <property name="orientation">vertical</property>
+                                        <property name="spacing">10</property>
+                                        <child>
+                                          <object class="GtkImage" id="library-progress-image">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="icon_size">6</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="library-progress-label">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">{} of {} images loaded</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkProgressBar" id="library-progress">
+                                            <property name="width_request">200</property>
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="fraction">0.5</property>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">True</property>
+                                            <property name="position">2</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">True</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                              </object>
+                              <packing>
+                                <property name="name">page1</property>
+                                <property name="title">page1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkScrolledWindow" id="library-scroll">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="margin">0</property>
-                                <property name="item_orientation">horizontal</property>
-                                <property name="row_spacing">0</property>
-                                <property name="column_spacing">0</property>
-                                <property name="tooltip_column">1</property>
-                                <property name="item_padding">0</property>
-                                <property name="activate_on_single_click">True</property>
-                                <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
-                                <signal name="selection-changed" handler="on_library-iconview_selection_changed" swapped="no"/>
+                                <child>
+                                  <object class="GtkIconView" id="library-iconview">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="margin">0</property>
+                                    <property name="item_orientation">horizontal</property>
+                                    <property name="row_spacing">0</property>
+                                    <property name="column_spacing">0</property>
+                                    <property name="tooltip_column">1</property>
+                                    <property name="item_padding">0</property>
+                                    <property name="activate_on_single_click">True</property>
+                                    <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
+                                    <signal name="selection-changed" handler="on_library-iconview_selection_changed" swapped="no"/>
+                                    <style>
+                                      <class name="no-bg"/>
+                                    </style>
+                                  </object>
+                                </child>
                                 <style>
                                   <class name="no-bg"/>
                                 </style>
                               </object>
+                              <packing>
+                                <property name="name">page0</property>
+                                <property name="title">page0</property>
+                                <property name="position">1</property>
+                              </packing>
                             </child>
-                            <style>
-                              <class name="no-bg"/>
-                            </style>
                           </object>
                           <packing>
                             <property name="expand">True</property>
