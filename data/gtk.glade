@@ -470,7 +470,7 @@
                           <object class="GtkSpinButton" id="server-port">
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
-                            <property name="text" translatable="yes">6600</property>
+                            <property name="text">6600</property>
                             <property name="adjustment">server-port-adjustment</property>
                             <property name="value">6600</property>
                           </object>
@@ -544,7 +544,7 @@
               </object>
               <packing>
                 <property name="name">page1</property>
-                <property name="title" translatable="yes">page1</property>
+                <property name="title">page1</property>
               </packing>
             </child>
             <child>
@@ -616,7 +616,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">file:</property>
+                                            <property name="label" translatable="yes">File:</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -628,7 +628,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">audio:</property>
+                                            <property name="label" translatable="yes">Audio:</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -640,7 +640,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">bitrate:</property>
+                                            <property name="label" translatable="yes">Bitrate:</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -652,7 +652,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">error:</property>
+                                            <property name="label" translatable="yes">Error:</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">0</property>
@@ -824,7 +824,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">albums</property>
+                                            <property name="label" translatable="yes">Albums</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -836,7 +836,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">songs</property>
+                                            <property name="label" translatable="yes">Songs</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -848,7 +848,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">artists</property>
+                                            <property name="label" translatable="yes">Artists</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -872,7 +872,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">seconds</property>
+                                            <property name="label" translatable="yes">Seconds</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -919,7 +919,7 @@
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="label" translatable="yes">seconds played</property>
+                                            <property name="label" translatable="yes">Seconds played</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -930,7 +930,7 @@
                                           <object class="GtkLabel">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label" translatable="yes">seconds running</property>
+                                            <property name="label" translatable="yes">Seconds running</property>
                                           </object>
                                           <packing>
                                             <property name="left_attach">1</property>
@@ -1549,7 +1549,7 @@
               </object>
               <packing>
                 <property name="name">page0</property>
-                <property name="title" translatable="yes">page0</property>
+                <property name="title">page0</property>
                 <property name="position">1</property>
               </packing>
             </child>
@@ -1714,7 +1714,7 @@
               </object>
               <packing>
                 <property name="name">page1</property>
-                <property name="title" translatable="yes">page1</property>
+                <property name="title">page1</property>
               </packing>
             </child>
             <child>
@@ -1725,7 +1725,7 @@
               </object>
               <packing>
                 <property name="name">page0</property>
-                <property name="title" translatable="yes">page0</property>
+                <property name="title">page0</property>
                 <property name="position">1</property>
               </packing>
             </child>

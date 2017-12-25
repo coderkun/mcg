@@ -1,15 +1,15 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CoverGrid (mcg)\n"
-"POT-Creation-Date: 2017-09-10 14:16+0200\n"
-"PO-Revision-Date: 2017-09-10 14:16+0200\n"
+"POT-Creation-Date: 2017-12-25 17:10+0100\n"
+"PO-Revision-Date: 2017-12-25 17:10+0100\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.0.5\n"
 "X-Poedit-Basepath: ../../..\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Poedit-SourceCharset: UTF-8\n"
@@ -58,87 +58,147 @@ msgstr "nach Titel"
 msgid "sort by year"
 msgstr "nach Jahr"
 
-#: data/gtk.glade:436
+#: data/gtk.glade:437
 msgid "Enter hostname or IP address"
 msgstr "Hostnamen oder IP-Adresse eingeben"
 
-#: data/gtk.glade:448
+#: data/gtk.glade:449
 msgid "Enter URL or local path"
 msgstr "URL oder lokalen Pfad eingeben"
 
-#: data/gtk.glade:460
+#: data/gtk.glade:461
 msgid "Enter password or leave blank"
 msgstr "Passwort eingeben oder leer lassen"
 
-#: data/gtk.glade:485
+#: data/gtk.glade:487
 msgid "Host:"
 msgstr "Host:"
 
-#: data/gtk.glade:497
+#: data/gtk.glade:499
 msgid "Port:"
 msgstr "Port:"
 
-#: data/gtk.glade:509
+#: data/gtk.glade:511
 msgid "Password:"
 msgstr "Passwort:"
 
-#: data/gtk.glade:521
+#: data/gtk.glade:523
 msgid "Image Directory:"
 msgstr "Bildordner:"
 
-#: data/gtk.glade:545 data/gtk.menu.ui:24
-msgid "Connection"
-msgstr "Verbindung"
+#: data/gtk.glade:619
+msgid "File:"
+msgstr "Datei:"
 
-#: data/gtk.glade:714 data/gtk.menu.ui:30
+#: data/gtk.glade:631
+msgid "Audio:"
+msgstr "Audio:"
+
+#: data/gtk.glade:643
+msgid "Bitrate:"
+msgstr "Bitrate:"
+
+#: data/gtk.glade:655
+msgid "Error:"
+msgstr "Fehler:"
+
+#: data/gtk.glade:667 data/gtk.glade:681 data/gtk.glade:695 data/gtk.glade:709
+msgid "<i>none</i>"
+msgstr "<i>nichts</i>"
+
+#: data/gtk.glade:742
+msgid "Status"
+msgstr "Status"
+
+#: data/gtk.glade:827
+msgid "Albums"
+msgstr "Alben"
+
+#: data/gtk.glade:839
+msgid "Songs"
+msgstr "Songs"
+
+#: data/gtk.glade:851
+msgid "Artists"
+msgstr "Künstler"
+
+#: data/gtk.glade:875
+msgid "Seconds"
+msgstr "Sekunden"
+
+#: data/gtk.glade:922
+msgid "Seconds played"
+msgstr "Sekunden gespielt"
+
+#: data/gtk.glade:933
+msgid "Seconds running"
+msgstr "Sekunden laufend"
+
+#: data/gtk.glade:964
+msgid "Statistics"
+msgstr "Statistiken"
+
+#: data/gtk.glade:1034
+msgid "Audio Devices"
+msgstr "Audiogeräte"
+
+#: data/gtk.glade:1048
+msgid "Server"
+msgstr "Server"
+
+#: data/gtk.glade:1217 data/gtk.menu.ui:30
 msgid "Cover"
 msgstr "Cover"
 
-#: data/gtk.glade:856 data/gtk.menu.ui:36
+#: data/gtk.glade:1359 data/gtk.menu.ui:36
 msgid "Playlist"
 msgstr "Wiedergabeliste"
 
-#: data/gtk.glade:883
+#: data/gtk.glade:1386
 msgid "search library"
 msgstr "Bibliothek durchsuchen"
 
-#: data/gtk.glade:1042 data/gtk.menu.ui:42
+#: data/gtk.glade:1545 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Bibliothek"
 
-#: data/gtk.glade:1114 data/gtk.shortcuts.ui:74
+#: data/gtk.glade:1624 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Die Verbindung herstellen oder trennen"
 
-#: data/gtk.glade:1136 data/gtk.shortcuts.ui:81
+#: data/gtk.glade:1646 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
 msgstr "Zwischen Abspielen und Pause wechseln"
 
-#: data/gtk.glade:1156
+#: data/gtk.glade:1666
 msgid "Adjust the volume"
 msgstr "Die Lautstärke anpassen"
 
-#: data/gtk.glade:1214 data/gtk.shortcuts.ui:101
+#: data/gtk.glade:1710
+msgid "Connect to MPD"
+msgstr "Zu MPD verbinden"
+
+#: data/gtk.glade:1752 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
 msgstr "Das Cover im Vollbildmodus anzeigen"
 
-#: data/gtk.glade:1237 data/gtk.glade:1386
+#: data/gtk.glade:1775 data/gtk.glade:1924
 msgid "Settings and actions"
 msgstr "Einstellungen und Aktionen"
 
-#: data/gtk.glade:1285 data/gtk.glade:1364
+#: data/gtk.glade:1823 data/gtk.glade:1902
 msgid "Select multiple albums"
 msgstr "Mehrere Alben auswählen"
 
-#: data/gtk.glade:1307 data/gtk.shortcuts.ui:88
+#: data/gtk.glade:1845 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
 msgstr "Die Wiedergabeliste leeren"
 
-#: data/gtk.glade:1341 data/gtk.shortcuts.ui:114
+#: data/gtk.glade:1879 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Die Bibliothek durchsuchen"
 
-#: data/gtk.glade:1431
+#: data/gtk.glade:1969
 msgid ""
 "CoverGrid is a client for the Music Player Daemon, focusing on albums "
 "instead of single tracks."
@@ -157,6 +217,10 @@ msgstr "Abspielen"
 #: data/gtk.menu.ui:17
 msgid "Clear Playlist"
 msgstr "Playlist leeren"
+
+#: data/gtk.menu.ui:24
+msgid "Connection"
+msgstr "Verbindung"
 
 #: data/gtk.menu.ui:50
 msgid "Keyboard Shortcuts"
@@ -229,6 +293,3 @@ msgstr "{} mit {}"
 
 #~ msgid "Show the keyboard shortcuts (this dialog)"
 #~ msgstr "Die Tastenkombinationen anzeigen (dieser Dialog)"
-
-#~ msgid "Server"
-#~ msgstr "Server"
