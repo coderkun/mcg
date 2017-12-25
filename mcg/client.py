@@ -114,6 +114,8 @@ class Client(Base):
     SIGNAL_LOAD_ALBUMS = 'load-albums'
     # Signal: load playlist
     SIGNAL_LOAD_PLAYLIST = 'load-playlist'
+    # Signal: load audio output devices
+    SIGNAL_LOAD_OUTPUT_DEVICES = 'load-output-devices'
     # Signal: error
     SIGNAL_ERROR = 'error'
 
@@ -180,6 +182,19 @@ class Client(Base):
         """Load statistics."""
         self._logger.info("get stats")
         self._add_action(self._get_stats)
+
+
+    def get_output_devices(self):
+        """Determine the list of audio output devices."""
+        self._logger.info("get output devices")
+        self._add_action(self._get_output_devices)
+
+
+    def enable_output_device(self, device, enabled):
+        """Enable/disable an audio output device."""
+        self._logger.info("enable output device")
+        self._add_action(self._enable_output_device, device, enabled)
+
 
 
     def load_albums(self):
@@ -351,6 +366,9 @@ class Client(Base):
                 self.load_albums()
                 self.load_playlist()
                 self.get_status()
+            if subsystems['changed'] == 'output':
+                self.get_output_devices()
+                self.get_status()
 
 
     def _noidle(self):
@@ -445,6 +463,24 @@ class Client(Base):
         if 'uptime' in stats:
             uptime = stats['uptime']
         self._callback(Client.SIGNAL_STATS, artists, albums, songs, dbplaytime, playtime, uptime)
+
+
+    def _get_output_devices(self):
+        """Action: Perform the real loading of output devices."""
+        devices = []
+        for output in self._parse_list(self._call('outputs'), ['outputid']):
+            device = OutputDevice(output['outputid'], output['outputname'])
+            device.set_enabled(int(output['outputenabled']) == 1)
+            devices.append(device)
+        self._callback(Client.SIGNAL_LOAD_OUTPUT_DEVICES, devices)
+
+
+    def _enable_output_device(self, device, enabled):
+        """Action: Perform the real enabling/disabling of an output device."""
+        if enabled:
+            self._call('enableoutput ', device.get_id())
+        else:
+            self._call('disableoutput ', device.get_id())
 
 
     def _load_albums(self):
@@ -733,6 +769,33 @@ class Client(Base):
 
     def _set_connection_status(self, status):
         self._callback(Client.SIGNAL_CONNECTION, status)
+
+
+
+
+class OutputDevice:
+
+
+    def __init__(self, id, name):
+        self._id = id
+        self._name = name
+        self._enabled = None
+
+
+    def get_id(self):
+        return self._id
+
+
+    def get_name(self):
+        return self._name
+
+
+    def set_enabled(self, enabled):
+        self._enabled = enabled
+
+
+    def is_enabled(self):
+        return self._enabled
 
 
 

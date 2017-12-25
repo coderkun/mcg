@@ -145,6 +145,7 @@ class Window():
         self._header_bar.connect('toolbar-playpause', self.on_header_bar_playpause)
         self._header_bar.connect('toolbar-set-volume', self.on_header_bar_set_volume)
         self._connection_panel.connect('connection-changed', self.on_connection_panel_connection_changed)
+        self._panels[Window._PANEL_INDEX_SERVER].connect('change-output-device', self.on_server_panel_output_device_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect('toggle-fullscreen', self.on_cover_panel_toggle_fullscreen)
         self._panels[Window._PANEL_INDEX_COVER].connect('tracklist-size-changed', self.on_cover_panel_tracklist_size_changed)
         self._panels[Window._PANEL_INDEX_COVER].connect('set-song', self.on_cover_panel_set_song)
@@ -161,6 +162,7 @@ class Window():
         self._mcg.connect_signal(client.Client.SIGNAL_CONNECTION, self.on_mcg_connect)
         self._mcg.connect_signal(client.Client.SIGNAL_STATUS, self.on_mcg_status)
         self._mcg.connect_signal(client.Client.SIGNAL_STATS, self.on_mcg_stats)
+        self._mcg.connect_signal(client.Client.SIGNAL_LOAD_OUTPUT_DEVICES, self.on_mcg_load_output_devices)
         self._mcg.connect_signal(client.Client.SIGNAL_LOAD_PLAYLIST, self.on_mcg_load_playlist)
         self._mcg.connect_signal(client.Client.SIGNAL_LOAD_ALBUMS, self.on_mcg_load_albums)
         self._mcg.connect_signal(client.Client.SIGNAL_ERROR, self.on_mcg_error)
@@ -302,6 +304,10 @@ class Window():
         self._mcg.play_album_from_playlist(album)
 
 
+    def on_server_panel_output_device_changed(self, widget, device, enabled):
+        self._mcg.enable_output_device(device, enabled)
+
+
     def on_cover_panel_toggle_fullscreen(self, widget):
         if not self._fullscreened:
             self._appwindow.fullscreen()
@@ -351,6 +357,7 @@ class Window():
             self._mcg.load_albums()
             self._mcg.get_status()
             self._mcg.get_stats()
+            self._mcg.get_output_devices()
             self._connect_action.set_state(GLib.Variant.new_boolean(True))
             self._play_action.set_enabled(True)
             self._clear_playlist_action.set_enabled(True)
@@ -388,6 +395,10 @@ class Window():
 
     def on_mcg_stats(self, artists, albums, songs, dbplaytime, playtime, uptime):
         self._panels[Window._PANEL_INDEX_SERVER].set_stats(artists, albums, songs, dbplaytime, playtime, uptime)
+
+
+    def on_mcg_load_output_devices(self, devices):
+        self._panels[Window._PANEL_INDEX_SERVER].set_output_devices(devices)
 
 
     def on_mcg_load_playlist(self, playlist):
@@ -800,10 +811,14 @@ class ConnectionPanel(GObject.GObject):
 
 
 class ServerPanel(GObject.GObject):
+    __gsignals__ = {
+        'change-output-device': (GObject.SIGNAL_RUN_FIRST, None, (GObject.TYPE_PYOBJECT,bool,)),
+    }
 
 
     def __init__(self, builder):
         GObject.GObject.__init__(self)
+        self._output_buttons = {}
 
         # Widgets
         self._panel = builder.get_object('server-panel')
@@ -824,6 +839,9 @@ class ServerPanel(GObject.GObject):
         self._stats_playtime = builder.get_object('server-stats-playtime')
         self._stats_uptime = builder.get_object('server-stats-uptime')
 
+        # Audio ouptut devices widgets
+        self._output_devices = builder.get_object('server-output-devices')
+
 
     def get(self):
         return self._panel
@@ -831,6 +849,10 @@ class ServerPanel(GObject.GObject):
 
     def get_toolbar(self):
         return self._toolbar
+
+
+    def on_output_device_toggled(self, widget, device):
+        self.emit('change-output-device', device, widget.get_active())
 
 
     def set_status(self, file, audio, bitrate, error):
@@ -864,6 +886,32 @@ class ServerPanel(GObject.GObject):
         self._stats_dbplaytime.set_text(str(dbplaytime))
         self._stats_playtime.set_text(str(playtime))
         self._stats_uptime.set_text(str(uptime))
+
+
+    def set_output_devices(self, devices):
+        device_ids = []
+
+        # Add devices
+        for device in devices:
+            device_ids.append(device.get_id())
+            if device.get_id() in self._output_buttons.keys():
+                self._output_buttons[device.get_id()].freeze_notify()
+                self._output_buttons[device.get_id()].set_active(device.is_enabled())
+                self._output_buttons[device.get_id()].thaw_notify()
+            else:
+                button = Gtk.CheckButton(device.get_name())
+                if device.is_enabled():
+                    button.set_active(True)
+                handler = button.connect('toggled', self.on_output_device_toggled, device)
+                self._output_devices.insert(button, -1)
+                self._output_buttons[device.get_id()] = button
+        self._output_devices.show_all()
+
+        # Remove devices
+        for id in self._output_buttons.keys():
+            if id not in device_ids:
+                self._output_devices.remove(self._output_buttons[id].get_parent())
+
 
 
 
