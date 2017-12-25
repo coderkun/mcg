@@ -361,6 +361,8 @@ class Window():
     def on_mcg_status(self, state, album, pos, time, volume, error):
         # Album
         GObject.idle_add(self._panels[Window._PANEL_INDEX_COVER].set_album, album)
+        if not album and self._fullscreened:
+            self._fullscreen(False)
         # State
         if state == 'play':
             GObject.idle_add(self._header_bar.set_play)
@@ -807,12 +809,14 @@ class CoverPanel(GObject.GObject):
         self._properties = {}
         self._tracklist_size = TracklistSize.LARGE
         self._icon_theme = Gtk.IconTheme.get_default()
+        self._fullscreened = False
 
         # Widgets
         self._appwindow = builder.get_object('appwindow')
         self._panel = builder.get_object('cover-panel')
         self._toolbar = builder.get_object('cover-toolbar')
         # Toolbar menu
+        self._toolbar_fullscreen_button = builder.get_object('cover-toolbar-fullscreen')
         self._toolbar_tracklist = builder.get_object('cover-toolbar-tracklist')
         self._toolbar_tracklist_buttons = {
             TracklistSize.LARGE: builder.get_object('cover-toolbar-tracklist-large'),
@@ -871,7 +875,7 @@ class CoverPanel(GObject.GObject):
 
 
     def on_cover_box_pressed(self, widget, event):
-        if event.type == Gdk.EventType._2BUTTON_PRESS:
+        if self._current_album and event.type == Gdk.EventType._2BUTTON_PRESS:
             self.emit('toggle-fullscreen')
 
 
@@ -936,6 +940,7 @@ class CoverPanel(GObject.GObject):
         old_album = self._current_album
         self._current_album = album
         self._enable_tracklist()
+        self._toolbar_fullscreen_button.set_sensitive(self._current_album is not None)
 
         # Load cover
         threading.Thread(target=self._set_cover, args=(old_album, album,)).start()
@@ -968,7 +973,9 @@ class CoverPanel(GObject.GObject):
             self._appwindow.get_window().set_cursor(
                 Gdk.Cursor.new_from_name(Gdk.Display.get_default(), "none")
             )
+            self._fullscreened = True
         else:
+            self._fullscreened = False
             self._change_tracklist_size(self._tracklist_size, False, False)
             self._cover_box.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 0))
             GObject.idle_add(self._resize_image)
@@ -1028,15 +1035,16 @@ class CoverPanel(GObject.GObject):
 
     def _change_tracklist_size(self, size, notify=True, store=True):
         # Set tracklist size
-        if size == TracklistSize.LARGE:
-            self._panel.set_homogeneous(True)
-            self._info_revealer.set_reveal_child(True)
-        elif size == TracklistSize.SMALL:
-            self._panel.set_homogeneous(False)
-            self._info_revealer.set_reveal_child(True)
-        else:
-            self._panel.set_homogeneous(False)
-            self._info_revealer.set_reveal_child(False)
+        if not self._fullscreened:
+            if size == TracklistSize.LARGE:
+                self._panel.set_homogeneous(True)
+                self._info_revealer.set_reveal_child(True)
+            elif size == TracklistSize.SMALL:
+                self._panel.set_homogeneous(False)
+                self._info_revealer.set_reveal_child(True)
+            else:
+                self._panel.set_homogeneous(False)
+                self._info_revealer.set_reveal_child(False)
         # Store size
         if store:
             self._tracklist_size = size
