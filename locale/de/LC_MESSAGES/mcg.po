@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: CoverGrid (mcg)\n"
-"POT-Creation-Date: 2017-12-25 17:10+0100\n"
-"PO-Revision-Date: 2017-12-25 17:10+0100\n"
+"POT-Creation-Date: 2017-12-25 17:40+0100\n"
+"PO-Revision-Date: 2017-12-25 17:40+0100\n"
 "Last-Translator: coderkun <olli@coderkun.de>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -158,47 +158,51 @@ msgstr "Wiedergabeliste"
 msgid "search library"
 msgstr "Bibliothek durchsuchen"
 
-#: data/gtk.glade:1545 data/gtk.menu.ui:42
+#: data/gtk.glade:1444
+msgid "{} of {} images loaded"
+msgstr "{} von {} Bildern geladen"
+
+#: data/gtk.glade:1621 data/gtk.menu.ui:42
 msgid "Library"
 msgstr "Bibliothek"
 
-#: data/gtk.glade:1624 data/gtk.shortcuts.ui:74
+#: data/gtk.glade:1700 data/gtk.shortcuts.ui:74
 msgid "Connect or disconnect"
 msgstr "Die Verbindung herstellen oder trennen"
 
-#: data/gtk.glade:1646 data/gtk.shortcuts.ui:81
+#: data/gtk.glade:1722 data/gtk.shortcuts.ui:81
 msgid "Switch between play and pause"
 msgstr "Zwischen Abspielen und Pause wechseln"
 
-#: data/gtk.glade:1666
+#: data/gtk.glade:1742
 msgid "Adjust the volume"
 msgstr "Die Lautstärke anpassen"
 
-#: data/gtk.glade:1710
+#: data/gtk.glade:1786
 msgid "Connect to MPD"
 msgstr "Zu MPD verbinden"
 
-#: data/gtk.glade:1752 data/gtk.shortcuts.ui:101
+#: data/gtk.glade:1828 data/gtk.shortcuts.ui:101
 msgid "Show the cover in fullscreen mode"
 msgstr "Das Cover im Vollbildmodus anzeigen"
 
-#: data/gtk.glade:1775 data/gtk.glade:1924
+#: data/gtk.glade:1851 data/gtk.glade:2000
 msgid "Settings and actions"
 msgstr "Einstellungen und Aktionen"
 
-#: data/gtk.glade:1823 data/gtk.glade:1902
+#: data/gtk.glade:1899 data/gtk.glade:1978
 msgid "Select multiple albums"
 msgstr "Mehrere Alben auswählen"
 
-#: data/gtk.glade:1845 data/gtk.shortcuts.ui:88
+#: data/gtk.glade:1921 data/gtk.shortcuts.ui:88
 msgid "Clear the playlist"
 msgstr "Die Wiedergabeliste leeren"
 
-#: data/gtk.glade:1879 data/gtk.shortcuts.ui:114
+#: data/gtk.glade:1955 data/gtk.shortcuts.ui:114
 msgid "Search the library"
 msgstr "Die Bibliothek durchsuchen"
 
-#: data/gtk.glade:1969
+#: data/gtk.glade:2045
 msgid ""
 "CoverGrid is a client for the Music Player Daemon, focusing on albums "
 "instead of single tracks."
