@@ -108,10 +108,14 @@ class Client(Base):
     SIGNAL_CONNECTION = 'connection'
     # Signal: status
     SIGNAL_STATUS = 'status'
+    # Signal: stats
+    SIGNAL_STATS = 'stats'
     # Signal: load albums
     SIGNAL_LOAD_ALBUMS = 'load-albums'
     # Signal: load playlist
     SIGNAL_LOAD_PLAYLIST = 'load-playlist'
+    # Signal: load audio output devices
+    SIGNAL_LOAD_OUTPUT_DEVICES = 'load-output-devices'
     # Signal: error
     SIGNAL_ERROR = 'error'
 
@@ -172,6 +176,25 @@ class Client(Base):
         """Determine the current status."""
         self._logger.info("get status")
         self._add_action(self._get_status)
+
+
+    def get_stats(self):
+        """Load statistics."""
+        self._logger.info("get stats")
+        self._add_action(self._get_stats)
+
+
+    def get_output_devices(self):
+        """Determine the list of audio output devices."""
+        self._logger.info("get output devices")
+        self._add_action(self._get_output_devices)
+
+
+    def enable_output_device(self, device, enabled):
+        """Enable/disable an audio output device."""
+        self._logger.info("enable output device")
+        self._add_action(self._enable_output_device, device, enabled)
+
 
 
     def load_albums(self):
@@ -343,6 +366,9 @@ class Client(Base):
                 self.load_albums()
                 self.load_playlist()
                 self.get_status()
+            if subsystems['changed'] == 'output':
+                self.get_output_devices()
+                self.get_status()
 
 
     def _noidle(self):
@@ -375,10 +401,14 @@ class Client(Base):
         if 'error' in status:
             error = status['error']
         # Album
+        file = None
         album = None
         pos = 0
         song = self._parse_dict(self._call("currentsong"))
         if song:
+            # File
+            if 'file' in song:
+                file = song['file']
             # Track
             track = self._extract_playlist_track(song)
             if track:
@@ -391,7 +421,66 @@ class Client(Base):
                         album = palbum
                         break
                     pos = pos - len(palbum.get_tracks())
-        self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, error)
+        # Audio
+        audio = None
+        if 'audio' in status:
+            audio = status['audio']
+        # Bitrate
+        bitrate = None
+        if 'bitrate' in status:
+            bitrate = status['bitrate']
+        self._callback(Client.SIGNAL_STATUS, state, album, pos, time, volume, file, audio, bitrate, error)
+
+
+    def _get_stats(self):
+        """Action: Perform the real statistics gathering."""
+        self._logger.info("getting statistics")
+        stats = self._parse_dict(self._call("stats"))
+        self._logger.debug("stats: %r", stats)
+
+        # Artists
+        artists = 0
+        if 'artists' in stats:
+            artists = int(stats['artists'])
+         # Albums
+        albums = 0
+        if 'albums' in stats:
+            albums = int(stats['albums'])
+        # Songs
+        songs = 0
+        if 'songs' in stats:
+            songs = int(stats['songs'])
+        # Database playtime
+        dbplaytime = 0
+        if 'db_playtime' in stats:
+            dbplaytime = stats['db_playtime']
+        # Playtime
+        playtime = 0
+        if 'playtime' in stats:
+            playtime = stats['playtime']
+        # Uptime
+        uptime = 0
+        if 'uptime' in stats:
+            uptime = stats['uptime']
+        self._callback(Client.SIGNAL_STATS, artists, albums, songs, dbplaytime, playtime, uptime)
+
+
+    def _get_output_devices(self):
+        """Action: Perform the real loading of output devices."""
+        devices = []
+        for output in self._parse_list(self._call('outputs'), ['outputid']):
+            device = OutputDevice(output['outputid'], output['outputname'])
+            device.set_enabled(int(output['outputenabled']) == 1)
+            devices.append(device)
+        self._callback(Client.SIGNAL_LOAD_OUTPUT_DEVICES, devices)
+
+
+    def _enable_output_device(self, device, enabled):
+        """Action: Perform the real enabling/disabling of an output device."""
+        if enabled:
+            self._call('enableoutput ', device.get_id())
+        else:
+            self._call('disableoutput ', device.get_id())
 
 
     def _load_albums(self):
@@ -680,6 +769,33 @@ class Client(Base):
 
     def _set_connection_status(self, status):
         self._callback(Client.SIGNAL_CONNECTION, status)
+
+
+
+
+class OutputDevice:
+
+
+    def __init__(self, id, name):
+        self._id = id
+        self._name = name
+        self._enabled = None
+
+
+    def get_id(self):
+        return self._id
+
+
+    def get_name(self):
+        return self._name
+
+
+    def set_enabled(self, enabled):
+        self._enabled = enabled
+
+
+    def is_enabled(self):
+        return self._enabled
 
 
 
