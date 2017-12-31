@@ -55,6 +55,7 @@ class Application(Gtk.Application):
         self._setup_logging()
         self._load_resource()
         self._load_settings()
+        self._set_default_settings()
         self._load_css()
         self._setup_locale()
         self._load_ui()
@@ -103,6 +104,11 @@ class Application(Gtk.Application):
 
     def _load_settings(self):
         self._settings = Gio.Settings.new(Application.ID)
+
+
+    def _set_default_settings(self):
+        settings = Gtk.Settings.get_default()
+        settings.set_property('gtk-application-prefer-dark-theme', True)
 
 
     def _load_css(self):
