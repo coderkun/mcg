@@ -1503,6 +1503,7 @@
                                     <property name="activate_on_single_click">True</property>
                                     <signal name="item-activated" handler="on_library-iconview_item_activated" swapped="no"/>
                                     <signal name="selection-changed" handler="on_library-iconview_selection_changed" swapped="no"/>
+                                    <signal name="size-allocate" handler="on_library-iconview_size_allocate" swapped="no"/>
                                     <style>
                                       <class name="no-bg"/>
                                     </style>
