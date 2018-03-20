@@ -2,7 +2,7 @@ h1. CoverGrid
 
 CoverGrid (mcg) is a client for the "Music Player Daemon":http://www.musicpd.org (MPD), focusing on albums instead of single tracks. It is not intended to be a replacement for your favorite MPD client but an addition to get a better album-experience.
 
-Website: https://www.coderkun.de/codes/mcg
+Website: https://www.suruatoel.xyz/codes/mcg
 
 License: "GPL":http://www.gnu.org/licenses/gpl.html v3
 
@@ -71,10 +71,10 @@ The first combination that results in an existing file is used as cover image. I
 
 h2. Screenshots
 
-!https://www.coderkun.de/images/mcg-cover.png(Cover)!
+!https://cloud.suruatoel.xyz/s/kx6oyfcXBaytmkD/preview(Cover)!
 
-!https://www.coderkun.de/images/mcg-playlist.png(Playlist)!
+!https://cloud.suruatoel.xyz/s/at84Z9dnbRycWZS/preview(Playlist)!
 
-!https://www.coderkun.de/images/mcg-library-m.png(Library (middle-sized))!
+!https://cloud.suruatoel.xyz/s/AEBZqsJ5E6SKTY2/preview(Library (middle-sized))!
 
-!https://www.coderkun.de/images/mcg-library-s.png(Library (small-sized))!
+!https://cloud.suruatoel.xyz/s/27a28kDSQQ5JTET/preview(Library (small-sized))!
