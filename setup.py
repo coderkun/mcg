@@ -55,9 +55,9 @@ setup(
     name = "mcg",
     version = '1.3',
     description = "CoverGrid (mcg) is a client for the Music Player Daemon, focusing on albums instead of single tracks.",
-    url = "http://www.coderkun.de/codes/mcg",
+    url = "http://www.suruatoel.xyz/codes/mcg",
     author = "coderkun",
-    author_email = "olli@coderkun.de",
+    author_email = "olli@suruatoel.xyz",
     license = "GPL",
     packages = [
         'mcg',
