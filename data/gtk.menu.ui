@@ -23,25 +23,25 @@
                 <attribute name="action">win.panel</attribute>
                 <attribute name="label" translatable="yes">Connection</attribute>
                 <attribute name="target">0</attribute>
-                <attribute name="accel">&lt;alt&gt;KP_1</attribute>
+                <attribute name="accel">&lt;Primary&gt;KP_1</attribute>
             </item>
             <item>
                 <attribute name="action">win.panel</attribute>
                 <attribute name="label" translatable="yes">Cover</attribute>
                 <attribute name="target">1</attribute>
-                <attribute name="accel">&lt;alt&gt;KP_2</attribute>
+                <attribute name="accel">&lt;Primary&gt;KP_2</attribute>
             </item>
             <item>
                 <attribute name="action">win.panel</attribute>
                 <attribute name="label" translatable="yes">Playlist</attribute>
                 <attribute name="target">2</attribute>
-                <attribute name="accel">&lt;alt&gt;KP_3</attribute>
+                <attribute name="accel">&lt;Primary&gt;KP_3</attribute>
             </item>
             <item>
                 <attribute name="action">win.panel</attribute>
                 <attribute name="label" translatable="yes">Library</attribute>
                 <attribute name="target">3</attribute>
-                <attribute name="accel">&lt;alt&gt;KP_4</attribute>
+                <attribute name="accel">&lt;Primary&gt;KP_4</attribute>
             </item>
         </section>
         <section>
